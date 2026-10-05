@@ -125,8 +125,8 @@ func _is_inside_job_shift(character: CharacterState, hour: float) -> bool:
 		return false
 
 	var definition = character.job.definition
-	var start := definition.shift_start_hour
-	var duration := definition.shift_duration_hours
+	var start: float = float(definition.shift_start_hour)
+	var duration: float = float(definition.shift_duration_hours)
 	if (
 		is_nan(start)
 		or is_inf(start)
