@@ -3,6 +3,7 @@ extends RefCounted
 
 const TEMP_SUFFIX := ".tmp"
 const BACKUP_SUFFIX := ".bak"
+const DISK_FORMAT := "lifebox_variant_base64_v1"
 
 static func save_envelope(path: String, snapshot: Dictionary) -> bool:
 	if path.is_empty():
@@ -21,7 +22,11 @@ static func save_envelope(path: String, snapshot: Dictionary) -> bool:
 	if not _ensure_parent_directory(path):
 		return false
 
-	var serialized := JSON.stringify(normalized, "", true, true)
+	var disk_record := {
+		"format": DISK_FORMAT,
+		"data": Marshalls.variant_to_base64(normalized, false),
+	}
+	var serialized := JSON.stringify(disk_record)
 	var temp_file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if temp_file == null:
 		return false
@@ -87,17 +92,36 @@ static func _load_candidate(path: String) -> Dictionary:
 	if parser.parse(raw_text) != OK:
 		return {}
 
-	var parsed = _normalize_json_numbers(parser.data)
+	var parsed = parser.data
 	if not parsed is Dictionary:
 		return {}
 
-	var migrated := SaveMigrator.migrate_to_current(parsed)
+	var decoded := _decode_disk_record(parsed)
+	if decoded.is_empty():
+		return {}
+
+	var migrated := SaveMigrator.migrate_to_current(decoded)
 	if migrated.is_empty():
 		return {}
 	if not SnapshotValidator.validate_envelope(migrated).is_empty():
 		return {}
 
 	return migrated
+
+static func _decode_disk_record(parsed: Dictionary) -> Dictionary:
+	if parsed.get("format", "") == DISK_FORMAT:
+		if not parsed.has("data") or not parsed["data"] is String:
+			return {}
+		var encoded: String = parsed["data"]
+		if encoded.is_empty():
+			return {}
+		var decoded = Marshalls.base64_to_variant(encoded, false)
+		if not decoded is Dictionary:
+			return {}
+		return decoded
+
+	# Backward compatibility: Plan 04 initially wrote plain JSON envelopes.
+	return _normalize_json_numbers(parsed)
 
 static func _ensure_parent_directory(path: String) -> bool:
 	var absolute_path := ProjectSettings.globalize_path(path)
