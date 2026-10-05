@@ -18,6 +18,7 @@ func begin(new_intent: MovementIntent) -> bool:
 	intent = new_intent
 	status = STATUS_MOVING
 	elapsed_sim_seconds = 0.0
+	retry_count = 0
 	return true
 
 func advance_elapsed(sim_delta_seconds: float) -> void:
