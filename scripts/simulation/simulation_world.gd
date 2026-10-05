@@ -7,6 +7,7 @@ var clock := SimulationClock.new()
 var need_system := NeedSystem.new()
 var utility_ai := UtilityAI.new()
 var stuck_recovery_policy := StuckRecoveryPolicy.new()
+var economy_system := EconomySystem.new()
 
 var _characters: Array[CharacterState] = []
 var _smart_objects: Array[SmartObject] = []
@@ -24,7 +25,7 @@ func add_character(character: CharacterState) -> bool:
 		return false
 
 	_characters.append(character)
-	_executors[character.id] = ActionExecutor.new()
+	_executors[character.id] = ActionExecutor.new(economy_system)
 	return true
 
 func register_smart_object(object: SmartObject) -> void:
@@ -63,7 +64,7 @@ func _step_fixed(sim_delta: float) -> void:
 
 		var executor: ActionExecutor = _executors.get(character.id)
 		if executor == null:
-			executor = ActionExecutor.new()
+			executor = ActionExecutor.new(economy_system)
 			_executors[character.id] = executor
 
 		if executor.is_active():
@@ -100,12 +101,31 @@ func _build_candidates(character: CharacterState) -> Array[ActionCandidate]:
 		for interaction in object.list_interactions(character):
 			if interaction == null:
 				continue
+			if not _is_money_eligible(character, interaction):
+				continue
 			var score := _score_interaction(character, interaction)
 			if score <= 0.0:
 				continue
 			candidates.append(ActionCandidate.new(interaction.id, score, object, interaction))
 
 	return candidates
+
+func _is_money_eligible(
+	character: CharacterState,
+	interaction: InteractionDefinition
+) -> bool:
+	if (
+		is_nan(interaction.money_cost)
+		or is_inf(interaction.money_cost)
+		or is_nan(interaction.money_reward)
+		or is_inf(interaction.money_reward)
+		or interaction.money_cost < 0.0
+		or interaction.money_reward < 0.0
+	):
+		return false
+	if is_nan(character.money) or is_inf(character.money) or character.money < 0.0:
+		return false
+	return character.money >= interaction.money_cost
 
 func _score_interaction(character: CharacterState, interaction: InteractionDefinition) -> float:
 	var score := 0.0
