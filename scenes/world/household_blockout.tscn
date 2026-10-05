@@ -1,0 +1,70 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/world/household_blockout.gd" id="1_script"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_house"]
+vertices = PackedVector3Array(-8, 0, -5, 8, 0, -5, 8, 0, 5, -8, 0, 5)
+polygons = [PackedInt32Array(0, 1, 2), PackedInt32Array(0, 2, 3)]
+agent_radius = 0.35
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(16, 0.2, 10)
+
+[node name="HouseholdBlockout" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_house")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.1, 0)
+mesh = SubResource("BoxMesh_floor")
+
+[node name="Spawns" type="Node3D" parent="."]
+
+[node name="ResidentSpawn01" type="Marker3D" parent="Spawns"]
+position = Vector3(-6, 0, -3)
+
+[node name="ResidentSpawn02" type="Marker3D" parent="Spawns"]
+position = Vector3(-3.5, 0, -3)
+
+[node name="ResidentSpawn03" type="Marker3D" parent="Spawns"]
+position = Vector3(-1, 0, -3)
+
+[node name="ResidentSpawn04" type="Marker3D" parent="Spawns"]
+position = Vector3(1.5, 0, -3)
+
+[node name="ResidentSpawn05" type="Marker3D" parent="Spawns"]
+position = Vector3(4, 0, -3)
+
+[node name="ResidentSpawn06" type="Marker3D" parent="Spawns"]
+position = Vector3(6.5, 0, -3)
+
+[node name="Destinations" type="Node3D" parent="."]
+
+[node name="Fridge" type="Marker3D" parent="Destinations"]
+position = Vector3(-6.5, 0, 3.5)
+
+[node name="Bed01" type="Marker3D" parent="Destinations"]
+position = Vector3(-6, 0, 1)
+
+[node name="Bed02" type="Marker3D" parent="Destinations"]
+position = Vector3(-3.75, 0, 1)
+
+[node name="Bed03" type="Marker3D" parent="Destinations"]
+position = Vector3(-1.5, 0, 1)
+
+[node name="Bed04" type="Marker3D" parent="Destinations"]
+position = Vector3(0.75, 0, 1)
+
+[node name="Bed05" type="Marker3D" parent="Destinations"]
+position = Vector3(3, 0, 1)
+
+[node name="Bed06" type="Marker3D" parent="Destinations"]
+position = Vector3(5.25, 0, 1)
+
+[node name="Shower" type="Marker3D" parent="Destinations"]
+position = Vector3(6.5, 0, 3.5)
+
+[node name="Sofa" type="Marker3D" parent="Destinations"]
+position = Vector3(0, 0, 3.5)
