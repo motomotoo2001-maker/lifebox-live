@@ -171,8 +171,8 @@ func _test_rng_continuity(
 		failures.append("RNG continuity requires restored active action")
 		return
 
-	var control_target := control_a.movement.intent.target_object_id
-	var restored_target := restored_a.movement.intent.target_object_id
+	var control_target: StringName = control_a.movement.intent.target_object_id
+	var restored_target: StringName = restored_a.movement.intent.target_object_id
 	if control_target != restored_target:
 		failures.append("control and restored active target must match before RNG continuation")
 		return
