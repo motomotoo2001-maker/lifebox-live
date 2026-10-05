@@ -203,9 +203,9 @@ func _test_disk_backup_recovery(
 		failures.append("recovered soak envelope must contain payload")
 		return
 	var recovered_world = recovered["payload"].get("world", {})
-	if not _snapshots_equivalent(expected_world_snapshot, recovered_world):
+	if recovered_world != expected_world_snapshot:
 		failures.append(
-			"backup recovery must return numerically equivalent saved world snapshot; first diff: %s"
+			"backup recovery must return exact saved world snapshot; first diff: %s"
 			% _first_difference(expected_world_snapshot, recovered_world, "world")
 		)
 
@@ -236,9 +236,9 @@ func _test_disk_backup_recovery(
 			recovered_world
 		)
 		var reencoded: Dictionary = snapshot_script.encode(restore_target["world"])
-		if not _snapshots_equivalent(expected_world_snapshot, reencoded):
+		if reencoded != expected_world_snapshot:
 			failures.append(
-				"disk-recovered world must re-encode to equivalent saved snapshot; first diff: %s"
+				"disk-recovered world must re-encode to exact saved snapshot; first diff: %s"
 				% _first_difference(expected_world_snapshot, reencoded, "world")
 			)
 		_validate_reservations(failures, restore_target, "disk-recovered")
@@ -550,19 +550,11 @@ func _dispose(state: Dictionary) -> void:
 			object.free()
 
 
-const DISK_FLOAT_EPSILON := 0.000000000001
-
 func _first_difference(expected, actual, path: String) -> String:
 	var expected_type := typeof(expected)
 	var actual_type := typeof(actual)
 
 	if expected_type != actual_type:
-		if (
-			(expected is int or expected is float)
-			and (actual is int or actual is float)
-			and absf(float(expected) - float(actual)) <= DISK_FLOAT_EPSILON
-		):
-			return ""
 		return "%s type %s != %s (%s vs %s)" % [
 			path,
 			type_string(expected_type),
@@ -603,7 +595,7 @@ func _first_difference(expected, actual, path: String) -> String:
 		return ""
 
 	if expected is float:
-		if absf(expected - actual) > DISK_FLOAT_EPSILON:
+		if expected != actual:
 			return "%s float delta=%s expected=%s actual=%s" % [
 				path,
 				str(absf(expected - actual)),
@@ -617,36 +609,3 @@ func _first_difference(expected, actual, path: String) -> String:
 
 	return ""
 
-
-func _snapshots_equivalent(expected, actual) -> bool:
-	if expected is int and actual is int:
-		return expected == actual
-
-	if (
-		(expected is int or expected is float)
-		and (actual is int or actual is float)
-	):
-		return absf(float(expected) - float(actual)) <= DISK_FLOAT_EPSILON
-
-	if typeof(expected) != typeof(actual):
-		return false
-
-	if expected is Dictionary:
-		if expected.size() != actual.size():
-			return false
-		for key in expected.keys():
-			if not actual.has(key):
-				return false
-			if not _snapshots_equivalent(expected[key], actual[key]):
-				return false
-		return true
-
-	if expected is Array:
-		if expected.size() != actual.size():
-			return false
-		for index in range(expected.size()):
-			if not _snapshots_equivalent(expected[index], actual[index]):
-				return false
-		return true
-
-	return expected == actual
