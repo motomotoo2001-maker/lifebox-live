@@ -89,6 +89,8 @@ func run() -> Array[String]:
 	var snapshot: Dictionary = codec_script.encode(source_world)
 	if not _is_json_compatible(snapshot):
 		failures.append("world snapshot must be JSON-compatible")
+	if not snapshot["rng"]["seed"] is String or not snapshot["rng"]["state"] is String:
+		failures.append("world RNG seed/state must use lossless integer strings")
 
 	var target := _build_world(
 		world_script,
