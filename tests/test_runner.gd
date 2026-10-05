@@ -22,6 +22,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/runtime/test_resident_actor_contract.gd",
 	"res://tests/runtime/test_household_blockout_contract.gd",
 	"res://tests/soak/test_foundation_soak.gd",
+	"res://tests/soak/test_six_resident_household_soak.gd",
 ]
 
 func _init() -> void:
