@@ -87,7 +87,7 @@ static func _load_candidate(path: String) -> Dictionary:
 	if parser.parse(raw_text) != OK:
 		return {}
 
-	var parsed = parser.data
+	var parsed = _normalize_json_numbers(parser.data)
 	if not parsed is Dictionary:
 		return {}
 
@@ -111,3 +111,30 @@ static func _ensure_parent_directory(path: String) -> bool:
 static func _cleanup_temp(temp_path: String) -> void:
 	if FileAccess.file_exists(temp_path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+
+
+static func _normalize_json_numbers(value):
+	if value is float:
+		if is_nan(value) or is_inf(value):
+			return value
+		if (
+			value >= -9007199254740991.0
+			and value <= 9007199254740991.0
+			and value == floor(value)
+		):
+			return int(value)
+		return value
+
+	if value is Array:
+		var normalized_array: Array = []
+		for item in value:
+			normalized_array.append(_normalize_json_numbers(item))
+		return normalized_array
+
+	if value is Dictionary:
+		var normalized_dictionary: Dictionary = {}
+		for key in value.keys():
+			normalized_dictionary[key] = _normalize_json_numbers(value[key])
+		return normalized_dictionary
+
+	return value
