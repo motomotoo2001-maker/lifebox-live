@@ -9,7 +9,7 @@ Give each resident a deterministic daily rhythm and small personal objectives so
 Each resident has:
 - a repeating 24-hour schedule;
 - a current schedule block;
-- 1–3 active daily goals;
+- 1–3 daily goals are generated; completed goals remain in current-day history while active count may decrease;
 - goal progress/completion/failure state;
 - deterministic daily rollover.
 
@@ -80,6 +80,8 @@ Deferred:
 - residents exhibit different schedules/goals based on personality and job context;
 - urgent hunger/energy can override schedule preferences;
 - no resident receives duplicate/invalid daily goals;
+- successful matching actions can complete goals; cancel/failure cannot;
+- targeted social goals influence actual social partner selection and complete only after a matching social session;
 - goal generation occurs once per simulated day;
 - save/load mid-day restores exact schedule/goal state;
 - same-seed control and restored worlds remain snapshot-identical;
