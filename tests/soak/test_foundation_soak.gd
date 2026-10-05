@@ -82,8 +82,8 @@ func _check_action_and_reservation(
 	if action != &"idle" and action != &"eat" and action != &"sleep":
 		failures.append("%s world has invalid action %s at step %d" % [label, action, step_index])
 
-	var fridge_locked := not fridge.is_available_for(&"reservation_probe")
-	var bed_locked := not bed.is_available_for(&"reservation_probe")
+	var fridge_locked: bool = not bool(fridge.is_available_for(&"reservation_probe"))
+	var bed_locked: bool = not bool(bed.is_available_for(&"reservation_probe"))
 
 	if fridge_locked and bed_locked:
 		failures.append("%s world holds two SmartObject reservations at step %d" % [label, step_index])
