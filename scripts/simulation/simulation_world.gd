@@ -16,11 +16,15 @@ var _pending_sim_seconds: float = 0.0
 func _init() -> void:
 	_rng.seed = 1337
 
-func add_character(character: CharacterState) -> void:
-	if character == null or character in _characters:
-		return
+func add_character(character: CharacterState) -> bool:
+	if character == null or character.id == &"":
+		return false
+	if character in _characters or _executors.has(character.id):
+		return false
+
 	_characters.append(character)
 	_executors[character.id] = ActionExecutor.new()
+	return true
 
 func register_smart_object(object: SmartObject) -> void:
 	if object == null or object in _smart_objects:
