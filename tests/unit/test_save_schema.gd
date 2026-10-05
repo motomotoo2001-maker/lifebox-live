@@ -77,8 +77,6 @@ func run() -> Array[String]:
 		failures.append("current-version migration must not mutate caller snapshot")
 	if current_migrated != wrapped:
 		failures.append("current-version migration must preserve equivalent data")
-	if current_migrated.is_same_typed(wrapped) and current_migrated.hash() == wrapped.hash():
-		pass
 
 	var future_migrated: Dictionary = migrator.migrate({
 		"schema_version": 2,
