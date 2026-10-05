@@ -90,14 +90,17 @@ func run() -> Array[String]:
 	if book.get_session_for(&"a") != null or book.get_session_for(&"b") != null:
 		failures.append("released residents must have no active session")
 
+	if book.release(second.session_id) != true:
+		failures.append("second social session must release successfully")
+
 	var third = book.reserve(&"a", &"c", &"compliment", 20.0)
 	if third == null:
-		failures.append("released resident must be reservable again")
+		failures.append("released residents must be reservable again")
 	elif third.session_id != &"social_000003":
 		failures.append("next successful social session id must remain deterministic")
 
-	book.release(second.session_id)
-	book.release(third.session_id)
+	if third != null:
+		book.release(third.session_id)
 	if not book.active_sessions().is_empty():
 		failures.append("all social reservations must be releasable without stale sessions")
 
