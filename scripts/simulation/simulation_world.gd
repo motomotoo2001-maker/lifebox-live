@@ -11,6 +11,7 @@ var stuck_recovery_policy := StuckRecoveryPolicy.new()
 var economy_system := EconomySystem.new()
 var spending_decision_system := SpendingDecisionSystem.new()
 var decision_bias_system := DecisionBiasSystem.new()
+var daily_planning_system := DailyPlanningSystem.new()
 var job_system := JobSystem.new()
 var household_expense_system := HouseholdExpenseSystem.new()
 var relationship_graph := RelationshipGraph.new()
@@ -43,6 +44,9 @@ func register_smart_object(object: SmartObject) -> void:
 	if object == null or object in _smart_objects:
 		return
 	_smart_objects.append(object)
+
+func characters() -> Array[CharacterState]:
+	return _characters.duplicate()
 
 func get_character(character_id: StringName) -> CharacterState:
 	for character in _characters:
@@ -439,6 +443,11 @@ func step(real_delta: float) -> void:
 func _step_fixed(sim_delta: float) -> void:
 	_processed_sim_seconds += sim_delta
 	_pending_economy_seconds += sim_delta
+	daily_planning_system.advance(
+		self,
+		_processed_sim_seconds,
+		_rng
+	)
 
 	for character in _characters:
 		if character == null:
