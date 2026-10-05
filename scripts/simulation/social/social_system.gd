@@ -422,10 +422,13 @@ func _score_action(
 		trust = relationship.trust
 		tension = relationship.tension
 
+	var goal_target_bonus := _social_goal_target_bonus(initiator, target)
+
 	match action.id:
 		&"compliment":
 			return (
 				base * 0.85
+				+ goal_target_bonus
 				+ kindness * 30.0
 				+ affinity * 0.10
 				+ trust * 0.04
@@ -434,6 +437,7 @@ func _score_action(
 		&"argue":
 			return (
 				base * 0.35
+				+ goal_target_bonus
 				+ impulsiveness * 25.0
 				+ maxf(tension, 0.0) * 0.20
 				- kindness * 15.0
@@ -442,10 +446,35 @@ func _score_action(
 		_:
 			return (
 				base
+				+ goal_target_bonus
 				+ affinity * 0.05
 				+ trust * 0.03
 				- maxf(tension, 0.0) * 0.03
 			)
+
+func _social_goal_target_bonus(
+	initiator: CharacterState,
+	target: CharacterState
+) -> float:
+	if initiator == null or target == null or initiator.goals == null:
+		return 0.0
+
+	var best_priority := -1.0
+	for goal in initiator.goals.active_goals():
+		if goal == null or goal.definition == null:
+			continue
+		if goal.definition.category != &"social":
+			continue
+		if goal.definition.target_resident_id != target.id:
+			continue
+		best_priority = maxf(
+			best_priority,
+			clampf(goal.definition.priority, 0.0, 1.0)
+		)
+
+	if best_priority < 0.0:
+		return 0.0
+	return 15.0 + best_priority * 35.0
 
 func _is_eligible_resident(resident: CharacterState) -> bool:
 	if resident == null or resident.id == &"":
