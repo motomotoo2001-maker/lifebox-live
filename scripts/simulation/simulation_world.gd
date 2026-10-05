@@ -31,6 +31,18 @@ func register_smart_object(object: SmartObject) -> void:
 		return
 	_smart_objects.append(object)
 
+func report_arrival(character_id: StringName, target_object_id: StringName) -> bool:
+	var executor: ActionExecutor = _executors.get(character_id)
+	if executor == null:
+		return false
+	return executor.report_arrival(target_object_id)
+
+func report_movement_failure(character_id: StringName, target_object_id: StringName) -> bool:
+	var executor: ActionExecutor = _executors.get(character_id)
+	if executor == null:
+		return false
+	return executor.report_movement_failure(target_object_id)
+
 func step(real_delta: float) -> void:
 	var sim_delta := clock.advance(real_delta)
 	if is_nan(sim_delta) or sim_delta <= 0.0:
