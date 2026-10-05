@@ -482,7 +482,11 @@ static func _validate_schedule(
 			errors.append("schedule block id must be a non-empty string")
 			continue
 		block.id = StringName(block_data["id"])
-		block.kind = StringName(block_data.get("kind", ""))
+		var raw_kind = block_data.get("kind", "")
+		if not raw_kind is String or raw_kind.is_empty():
+			errors.append("schedule block kind must be a non-empty string")
+		else:
+			block.kind = StringName(raw_kind)
 
 		if (
 			not block_data.has("start_hour")
@@ -570,10 +574,18 @@ static func _validate_goals(
 
 		var definition_data: Dictionary = goal_data["definition"]
 		var definition := GoalDefinition.new()
-		definition.id = StringName(definition_data.get("id", ""))
-		definition.category = StringName(
-			definition_data.get("category", "")
-		)
+
+		var raw_goal_id = definition_data.get("id", "")
+		if not raw_goal_id is String or raw_goal_id.is_empty():
+			errors.append("goal id must be a non-empty string")
+		else:
+			definition.id = StringName(raw_goal_id)
+
+		var raw_category = definition_data.get("category", "")
+		if not raw_category is String or raw_category.is_empty():
+			errors.append("goal category must be a non-empty string")
+		else:
+			definition.category = StringName(raw_category)
 
 		if (
 			not definition_data.has("priority")
