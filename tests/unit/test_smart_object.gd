@@ -25,7 +25,14 @@ func run() -> Array[String]:
 	interaction.need_effects = {"hunger": 25.0}
 
 	var smart_object = smart_object_script.new()
+	smart_object.object_id = &"fridge_main"
+	smart_object.interaction_point = Vector3(2.0, 0.0, -1.0)
 	smart_object.interactions.append(interaction)
+
+	if smart_object.object_id != &"fridge_main":
+		failures.append("SmartObject must expose stable object_id")
+	if smart_object.interaction_point != Vector3(2.0, 0.0, -1.0):
+		failures.append("SmartObject must expose logical interaction_point")
 
 	var listed: Array = smart_object.list_interactions(null)
 	if listed.size() != 1 or listed[0].id != &"eat_snack":
