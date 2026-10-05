@@ -199,6 +199,25 @@ func _test_critical_need_override(
 	if relax_score >= 100.0:
 		failures.append("non-critical preferred action must be suppressed during critical need")
 
+	var extreme_relax_score: float = system.adjust(
+		character,
+		relax,
+		1000000000.0,
+		0.0,
+		relationships
+	)
+	var tiny_eat_score: float = system.adjust(
+		character,
+		eat,
+		1.0,
+		0.0,
+		relationships
+	)
+	if tiny_eat_score <= extreme_relax_score:
+		failures.append(
+			"critical recovery must strictly outrank any non-critical base score"
+		)
+
 	character.needs.hunger.value = 100.0
 	character.needs.energy.value = 10.0
 	var sleep = _interaction(interaction_script, &"sleep", [&"sleep"], {"energy": 50.0})
