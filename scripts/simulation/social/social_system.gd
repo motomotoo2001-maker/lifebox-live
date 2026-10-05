@@ -7,6 +7,7 @@ var reservation_book := SocialReservationBook.new()
 
 var _actions_by_id: Dictionary = {}
 var _completed_sessions: Array[SocialSession] = []
+var _simulation_seconds: float = 0.0
 
 func register_action(action: SocialActionDefinition) -> bool:
 	if action == null or action.id == &"":
@@ -27,9 +28,19 @@ func active_sessions() -> Array[SocialSession]:
 	return reservation_book.active_sessions()
 
 func take_completed_sessions() -> Array[SocialSession]:
-	var completed := _completed_sessions.duplicate()
+	var completed: Array[SocialSession] = _completed_sessions.duplicate()
 	_completed_sessions.clear()
 	return completed
+
+func cancel_session(session_id: StringName, residents: Array) -> bool:
+	var session := _find_session(session_id)
+	if session == null:
+		return false
+
+	var resident_by_id := _build_resident_lookup(residents)
+	_reset_participant_action(resident_by_id, session.initiator_id, session.action_id)
+	_reset_participant_action(resident_by_id, session.target_id, session.action_id)
+	return reservation_book.release(session.session_id)
 
 func advance(
 	residents: Array,
@@ -46,7 +57,13 @@ func advance(
 	):
 		return
 
-	var completed_any := _advance_active_sessions(residents, sim_delta_seconds)
+	_simulation_seconds += sim_delta_seconds
+
+	var completed_any := _advance_active_sessions(
+		residents,
+		relationships,
+		sim_delta_seconds
+	)
 	if completed_any:
 		return
 
@@ -72,6 +89,7 @@ func advance(
 
 func _advance_active_sessions(
 	residents: Array,
+	relationships: RelationshipGraph,
 	sim_delta_seconds: float
 ) -> bool:
 	var completed_any := false
@@ -85,6 +103,7 @@ func _advance_active_sessions(
 		if session.remaining_sim_seconds > 0.0:
 			continue
 
+		_apply_outcome(session, resident_by_id, relationships)
 		_completed_sessions.append(session)
 		_reset_participant_action(resident_by_id, session.initiator_id, session.action_id)
 		_reset_participant_action(resident_by_id, session.target_id, session.action_id)
@@ -92,6 +111,74 @@ func _advance_active_sessions(
 		completed_any = true
 
 	return completed_any
+
+func _apply_outcome(
+	session: SocialSession,
+	resident_by_id: Dictionary,
+	relationships: RelationshipGraph
+) -> void:
+	if (
+		not resident_by_id.has(session.initiator_id)
+		or not resident_by_id.has(session.target_id)
+	):
+		return
+
+	var initiator: CharacterState = resident_by_id[session.initiator_id]
+	var target: CharacterState = resident_by_id[session.target_id]
+
+	var affinity_delta := 5.0
+	var trust_delta := 3.0
+	var tension_delta := -2.0
+	var valence := 0.3
+	var importance := 0.3
+
+	match session.action_id:
+		&"compliment":
+			affinity_delta = 10.0
+			trust_delta = 6.0
+			tension_delta = -4.0
+			valence = 0.7
+			importance = 0.6
+		&"argue":
+			affinity_delta = -10.0
+			trust_delta = -6.0
+			tension_delta = 15.0
+			valence = -0.8
+			importance = 0.7
+
+	var forward := relationships.get_or_create(initiator.id, target.id)
+	var reverse := relationships.get_or_create(target.id, initiator.id)
+	if forward != null:
+		forward.apply_delta(affinity_delta, trust_delta, tension_delta)
+	if reverse != null:
+		reverse.apply_delta(affinity_delta, trust_delta, tension_delta)
+
+	_write_memory(initiator, target.id, session, valence, importance)
+	_write_memory(target, initiator.id, session, valence, importance)
+
+func _write_memory(
+	character: CharacterState,
+	other_resident_id: StringName,
+	session: SocialSession,
+	valence: float,
+	importance: float
+) -> void:
+	if character == null or character.memory == null:
+		return
+
+	var event_id := StringName(
+		"%s_%s" % [session.session_id, character.id]
+	)
+	var related_ids: Array[StringName] = [other_resident_id]
+	var memory := MemoryEvent.new(
+		event_id,
+		session.action_id,
+		_simulation_seconds,
+		related_ids,
+		valence,
+		importance
+	)
+	character.memory.add(memory)
 
 func _choose_candidate(
 	residents: Array,
@@ -116,7 +203,7 @@ func _choose_candidate(
 	action_ids.sort()
 
 	var candidates: Array[Dictionary] = []
-	var best_score := -INF
+	var best_score: float = -INF
 
 	for initiator in eligible:
 		for target in eligible:
@@ -126,7 +213,7 @@ func _choose_candidate(
 			for action_id_text in action_ids:
 				var action_id := StringName(action_id_text)
 				var action: SocialActionDefinition = _actions_by_id[action_id]
-				var score := _score_action(
+				var score: float = _score_action(
 					initiator,
 					target,
 					action,
@@ -236,3 +323,9 @@ func _reset_participant_action(
 	var resident: CharacterState = resident_by_id[resident_id]
 	if resident.current_action_id == action_id:
 		resident.current_action_id = &"idle"
+
+func _find_session(session_id: StringName) -> SocialSession:
+	for session in reservation_book.active_sessions():
+		if session.session_id == session_id:
+			return session
+	return null
