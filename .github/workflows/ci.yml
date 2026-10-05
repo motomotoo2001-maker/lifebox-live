@@ -3,7 +3,7 @@ name: Godot CI
 on:
   push:
     branches:
-      - dev/plan-01-simulation-foundation
+      - 'dev/**'
   pull_request:
     branches:
       - main
