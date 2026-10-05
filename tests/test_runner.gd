@@ -17,6 +17,10 @@ func _init() -> void:
 			failures.append("Unable to load test: %s" % test_path)
 			continue
 
+		if not script.can_instantiate():
+			failures.append("Unable to instantiate test: %s" % test_path)
+			continue
+
 		var test_case = script.new()
 		if not test_case.has_method("run"):
 			failures.append("Test does not expose run(): %s" % test_path)
