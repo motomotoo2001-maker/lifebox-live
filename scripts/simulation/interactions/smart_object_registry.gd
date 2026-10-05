@@ -18,7 +18,7 @@ func unregister_object(object_id: StringName) -> bool:
 	if not _objects.has(object_id):
 		return false
 
-	var object: SmartObject = _objects[object_id]
+	var object = _objects[object_id]
 	_objects.erase(object_id)
 
 	if object != null and is_instance_valid(object):
@@ -31,9 +31,9 @@ func get_object(object_id: StringName) -> SmartObject:
 	if not _objects.has(object_id):
 		return null
 
-	var object: SmartObject = _objects[object_id]
+	var object = _objects[object_id]
 	if object == null or not is_instance_valid(object):
 		_objects.erase(object_id)
 		return null
 
-	return object
+	return object as SmartObject
