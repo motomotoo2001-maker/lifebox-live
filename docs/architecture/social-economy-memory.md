@@ -101,7 +101,7 @@ Needs, actions, navigation watchdogs, and social scheduling remain on the one-se
 
 Jobs and household bills run on a separate 60-simulated-second cadence.
 
-This avoids generating one wage transaction per resident per simulated second while preserving deterministic shift overlap.
+This avoids generating one wage transaction per resident per simulated second while preserving deterministic shift overlap. A dedicated regression verifies that one resident working exactly one simulated hour produces 60 one-minute wage transactions rather than 3600 one-second transactions, while preserving the exact same total pay and worked time.
 
 ```text
 real delta
@@ -265,7 +265,7 @@ Verified on Godot 4.7.2:
 - relationship + memory social outcomes: yes;
 - personality-aware spending: yes;
 - 24-hour deterministic twin-world soak: yes;
-- full headless suite: **33 suites passing**;
+- full headless suite: **34 suites passing**;
 - hidden Godot `SCRIPT ERROR / ERROR / WARNING`: **none**.
 
 ## Deferred
