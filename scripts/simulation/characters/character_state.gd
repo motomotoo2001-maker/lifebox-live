@@ -7,6 +7,7 @@ const MovementStateScript = preload("res://scripts/simulation/movement/movement_
 const MemoryStoreScript = preload("res://scripts/simulation/memory/memory_store.gd")
 const JobStateScript = preload("res://scripts/simulation/economy/job_state.gd")
 const DailyScheduleStateScript = preload("res://scripts/simulation/schedules/daily_schedule_state.gd")
+const GoalSetScript = preload("res://scripts/simulation/goals/goal_set.gd")
 
 var id: StringName
 var display_name: String
@@ -16,6 +17,7 @@ var movement
 var memory
 var job
 var schedule
+var goals
 var money: float = 0.0
 var current_action_id: StringName = &"idle"
 
@@ -28,3 +30,4 @@ func _init(character_id: StringName = &"", character_display_name: String = "") 
 	memory = MemoryStoreScript.new()
 	job = JobStateScript.new()
 	schedule = DailyScheduleStateScript.new()
+	goals = GoalSetScript.new()
