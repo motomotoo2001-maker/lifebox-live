@@ -32,6 +32,162 @@ func take_completed_sessions() -> Array[SocialSession]:
 	_completed_sessions.clear()
 	return completed
 
+func capture_persistence_state() -> Dictionary:
+	var completed: Array = []
+	for session in _completed_sessions:
+		completed.append(session.capture_persistence_state())
+
+	return {
+		"simulation_seconds": _simulation_seconds,
+		"reservation_book": reservation_book.capture_state(),
+		"completed_sessions": completed,
+	}
+
+func restore_persistence_state(
+	data: Dictionary,
+	residents: Array
+) -> bool:
+	var validation := _validate_persistence_state(data, residents)
+	if not validation.is_empty():
+		return false
+
+	var resident_ids: Dictionary = {}
+	var resident_by_id := _build_resident_lookup(residents)
+	for resident_id in resident_by_id.keys():
+		resident_ids[resident_id] = true
+
+	if not reservation_book.restore_state(data["reservation_book"], resident_ids):
+		return false
+
+	var restored_completed: Array[SocialSession] = []
+	for raw_session in data["completed_sessions"]:
+		var session := SocialSession.from_persistence_state(raw_session)
+		if session == null:
+			return false
+		restored_completed.append(session)
+
+	for resident in residents:
+		if not resident is CharacterState:
+			continue
+		if _actions_by_id.has(resident.current_action_id):
+			resident.current_action_id = &"idle"
+
+	for session in reservation_book.active_sessions():
+		var initiator: CharacterState = resident_by_id[session.initiator_id]
+		var target: CharacterState = resident_by_id[session.target_id]
+		initiator.current_action_id = session.action_id
+		target.current_action_id = session.action_id
+
+	_simulation_seconds = float(data["simulation_seconds"])
+	_completed_sessions = restored_completed
+	return true
+
+func _validate_persistence_state(
+	data: Dictionary,
+	residents: Array
+) -> Array[String]:
+	var errors: Array[String] = []
+
+	if (
+		not data.has("simulation_seconds")
+		or not _is_finite_number(data["simulation_seconds"])
+		or float(data["simulation_seconds"]) < 0.0
+	):
+		errors.append("social simulation_seconds must be finite and non-negative")
+
+	if not data.has("reservation_book") or not data["reservation_book"] is Dictionary:
+		errors.append("social reservation_book must be a Dictionary")
+		return errors
+
+	if not data.has("completed_sessions") or not data["completed_sessions"] is Array:
+		errors.append("social completed_sessions must be an Array")
+		return errors
+
+	var resident_ids: Dictionary = {}
+	for raw_resident in residents:
+		if not raw_resident is CharacterState:
+			errors.append("social restore resident must be CharacterState")
+			continue
+		var resident: CharacterState = raw_resident
+		if resident.id == &"":
+			errors.append("social restore resident id must be non-empty")
+			continue
+		if resident_ids.has(resident.id):
+			errors.append("duplicate resident id in social restore roster: %s" % resident.id)
+		resident_ids[resident.id] = true
+
+	var book_errors := reservation_book.validate_persistence_state(
+		data["reservation_book"],
+		resident_ids
+	)
+	for book_error in book_errors:
+		errors.append(book_error)
+
+	var sequence := -1
+	if data["reservation_book"].has("sequence") and data["reservation_book"]["sequence"] is int:
+		sequence = int(data["reservation_book"]["sequence"])
+
+	var seen_session_ids: Dictionary = {}
+	if data["reservation_book"].has("sessions") and data["reservation_book"]["sessions"] is Array:
+		for raw_active in data["reservation_book"]["sessions"]:
+			if not raw_active is Dictionary:
+				continue
+			if raw_active.has("session_id") and raw_active["session_id"] is String:
+				seen_session_ids[raw_active["session_id"]] = true
+			if raw_active.has("action_id") and raw_active["action_id"] is String:
+				if not _actions_by_id.has(StringName(raw_active["action_id"])):
+					errors.append(
+						"active social action is not registered: %s"
+						% raw_active["action_id"]
+					)
+
+	for index in range(data["completed_sessions"].size()):
+		var raw_completed = data["completed_sessions"][index]
+		if not raw_completed is Dictionary:
+			errors.append("completed social session[%d] must be a Dictionary" % index)
+			continue
+		var completed: Dictionary = raw_completed
+		for session_error in SocialSession.validate_persistence_state(completed, true):
+			errors.append(
+				"completed social session[%d]: %s" % [index, session_error]
+			)
+
+		if (
+			completed.has("remaining_sim_seconds")
+			and _is_finite_number(completed["remaining_sim_seconds"])
+			and not is_equal_approx(float(completed["remaining_sim_seconds"]), 0.0)
+		):
+			errors.append(
+				"completed social session[%d] remaining time must be zero" % index
+			)
+
+		for id_key in ["initiator_id", "target_id"]:
+			if completed.has(id_key) and completed[id_key] is String:
+				var resident_id := StringName(completed[id_key])
+				if not resident_ids.has(resident_id):
+					errors.append(
+						"completed social session[%d] %s is not in resident roster"
+						% [index, id_key]
+					)
+
+		if completed.has("action_id") and completed["action_id"] is String:
+			if not _actions_by_id.has(StringName(completed["action_id"])):
+				errors.append(
+					"completed social action is not registered: %s"
+					% completed["action_id"]
+				)
+
+		if completed.has("session_id") and completed["session_id"] is String:
+			var session_id: String = completed["session_id"]
+			if seen_session_ids.has(session_id):
+				errors.append("duplicate social session id across runtime state: %s" % session_id)
+			seen_session_ids[session_id] = true
+			var parsed := _session_sequence_from_id(session_id)
+			if parsed <= 0 or (sequence >= 0 and parsed > sequence):
+				errors.append("completed social session id exceeds restored sequence: %s" % session_id)
+
+	return errors
+
 func cancel_session(session_id: StringName, residents: Array) -> bool:
 	var session := _find_session(session_id)
 	if session == null:
@@ -323,6 +479,23 @@ func _reset_participant_action(
 	var resident: CharacterState = resident_by_id[resident_id]
 	if resident.current_action_id == action_id:
 		resident.current_action_id = &"idle"
+
+func _session_sequence_from_id(session_id: String) -> int:
+	if not session_id.begins_with("social_"):
+		return -1
+	var suffix := session_id.trim_prefix("social_")
+	if suffix.is_empty() or not suffix.is_valid_int():
+		return -1
+	var parsed := int(suffix)
+	if session_id != "social_%06d" % parsed:
+		return -1
+	return parsed
+
+func _is_finite_number(value) -> bool:
+	if not (value is int or value is float):
+		return false
+	var number := float(value)
+	return not is_nan(number) and not is_inf(number)
 
 func _find_session(session_id: StringName) -> SocialSession:
 	for session in reservation_book.active_sessions():
