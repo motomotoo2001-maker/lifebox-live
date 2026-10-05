@@ -23,6 +23,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/integration/test_move_before_interact.gd",
 	"res://tests/integration/test_household_expenses.gd",
 	"res://tests/integration/test_paid_interaction.gd",
+	"res://tests/integration/test_autonomous_social_actions.gd",
 	"res://tests/integration/test_six_resident_contention.gd",
 	"res://tests/integration/test_stuck_recovery.gd",
 	"res://tests/integration/test_simulation_world_invariants.gd",
