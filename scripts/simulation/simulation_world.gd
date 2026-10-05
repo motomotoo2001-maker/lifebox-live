@@ -60,6 +60,356 @@ func get_smart_object(object_id: StringName) -> SmartObject:
 func get_action_executor(character_id: StringName) -> ActionExecutor:
 	return _executors.get(character_id)
 
+
+func capture_persistence_state() -> Dictionary:
+	var residents: Array = []
+	var actions: Array = []
+
+	for character in _characters:
+		if character == null:
+			continue
+		residents.append(CharacterSnapshotCodec.encode(character))
+
+		var executor: ActionExecutor = _executors.get(character.id)
+		if executor != null and executor.is_active():
+			actions.append(executor.capture_state())
+
+	return {
+		"clock": clock.capture_state(),
+		"runtime": {
+			"pending_sim_seconds": _pending_sim_seconds,
+			"processed_sim_seconds": _processed_sim_seconds,
+			"pending_economy_seconds": _pending_economy_seconds,
+			"processed_economy_seconds": _processed_economy_seconds,
+		},
+		"residents": residents,
+		"actions": actions,
+		"relationships": SocialEconomySnapshotCodec.encode_relationships(
+			relationship_graph
+		),
+		"economy": economy_system.capture_persistence_state(),
+		"household_expenses": household_expense_system.capture_persistence_state(),
+		"social": social_system.capture_persistence_state(),
+		"rng": {
+			"seed": _rng.seed,
+			"state": _rng.state,
+		},
+	}
+
+func validate_persistence_state(data: Dictionary) -> Array[String]:
+	var errors: Array[String] = []
+
+	for required_key in [
+		"clock",
+		"runtime",
+		"residents",
+		"actions",
+		"relationships",
+		"economy",
+		"household_expenses",
+		"social",
+		"rng",
+	]:
+		if not data.has(required_key):
+			errors.append("world snapshot missing %s" % required_key)
+
+	if not errors.is_empty():
+		return errors
+
+	if not data["clock"] is Dictionary:
+		errors.append("world clock must be a Dictionary")
+	if not data["runtime"] is Dictionary:
+		errors.append("world runtime must be a Dictionary")
+	if not data["residents"] is Array:
+		errors.append("world residents must be an Array")
+	if not data["actions"] is Array:
+		errors.append("world actions must be an Array")
+	if not data["relationships"] is Array:
+		errors.append("world relationships must be an Array")
+	if not data["economy"] is Dictionary:
+		errors.append("world economy must be a Dictionary")
+	if not data["household_expenses"] is Dictionary:
+		errors.append("world household_expenses must be a Dictionary")
+	if not data["social"] is Dictionary:
+		errors.append("world social must be a Dictionary")
+	if not data["rng"] is Dictionary:
+		errors.append("world rng must be a Dictionary")
+
+	if not errors.is_empty():
+		return errors
+
+	var validation_clock := SimulationClock.new()
+	if not validation_clock.restore_state(data["clock"]):
+		errors.append("world clock state is invalid")
+
+	_validate_runtime_state(
+		data["runtime"],
+		validation_clock.get_simulation_seconds(),
+		errors
+	)
+
+	var decoded_residents: Array[CharacterState] = []
+	var resident_ids: Dictionary = {}
+	for index in range(data["residents"].size()):
+		var raw_resident = data["residents"][index]
+		if not raw_resident is Dictionary:
+			errors.append("resident[%d] must be a Dictionary" % index)
+			continue
+
+		var resident_data: Dictionary = raw_resident
+		var resident_errors := CharacterSnapshotCodec.validate(resident_data)
+		for resident_error in resident_errors:
+			errors.append("resident[%d]: %s" % [index, resident_error])
+		if not resident_errors.is_empty():
+			continue
+
+		var resident_id: String = resident_data["id"]
+		if resident_ids.has(resident_id):
+			errors.append("duplicate resident id: %s" % resident_id)
+			continue
+		resident_ids[resident_id] = true
+
+		var decoded := CharacterSnapshotCodec.decode_stable_state(resident_data)
+		if decoded == null:
+			errors.append("resident[%d] failed stable decode" % index)
+			continue
+		decoded_residents.append(decoded)
+
+	var relationship_errors := SocialEconomySnapshotCodec.validate_relationships(
+		data["relationships"],
+		resident_ids
+	)
+	for relationship_error in relationship_errors:
+		errors.append(relationship_error)
+
+	var validation_economy := EconomySystem.new()
+	if not validation_economy.restore_persistence_state(data["economy"]):
+		errors.append("world economy state is invalid")
+
+	var validation_expenses := HouseholdExpenseSystem.new()
+	if not validation_expenses.restore_persistence_state(
+		data["household_expenses"]
+	):
+		errors.append("world household expense state is invalid")
+
+	_validate_rng_state(data["rng"], errors)
+
+	if not errors.is_empty():
+		return errors
+
+	var validation_bundle := _build_validation_world(decoded_residents)
+	var validation_world: SimulationWorld = validation_bundle["world"]
+	var validation_objects: Array = validation_bundle["objects"]
+
+	var action_errors := ActionSnapshotCodec.validate_collection(
+		data["actions"],
+		validation_world
+	)
+	for action_error in action_errors:
+		errors.append(action_error)
+
+	_validate_action_social_overlap(
+		data["actions"],
+		data["social"],
+		errors
+	)
+
+	if not validation_world.social_system.restore_persistence_state(
+		data["social"],
+		decoded_residents
+	):
+		errors.append("world social runtime state is invalid")
+
+	for object in validation_objects:
+		if object != null and is_instance_valid(object):
+			object.free()
+
+	return errors
+
+func restore_persistence_state(data: Dictionary) -> bool:
+	if not validate_persistence_state(data).is_empty():
+		return false
+
+	var restored_residents: Array[CharacterState] = []
+	for raw_resident in data["residents"]:
+		var resident := CharacterSnapshotCodec.decode_stable_state(raw_resident)
+		if resident == null:
+			return false
+		restored_residents.append(resident)
+
+	var restored_relationships := RelationshipGraph.new()
+	if not SocialEconomySnapshotCodec.restore_relationships(
+		data["relationships"],
+		restored_relationships
+	):
+		return false
+
+	var restored_economy := EconomySystem.new()
+	if not restored_economy.restore_persistence_state(data["economy"]):
+		return false
+
+	var restored_expenses := HouseholdExpenseSystem.new()
+	if not restored_expenses.restore_persistence_state(
+		data["household_expenses"]
+	):
+		return false
+
+	var restored_clock := SimulationClock.new()
+	if not restored_clock.restore_state(data["clock"]):
+		return false
+
+	_clear_runtime_before_restore()
+
+	economy_system = restored_economy
+	household_expense_system = restored_expenses
+	relationship_graph = restored_relationships
+	clock = restored_clock
+	social_system = SocialSystem.new()
+	_register_default_social_actions()
+
+	_characters.clear()
+	_executors.clear()
+	for resident in restored_residents:
+		if not add_character(resident):
+			return false
+
+	for raw_action in data["actions"]:
+		if not ActionSnapshotCodec.restore(raw_action, self):
+			return false
+
+	if not social_system.restore_persistence_state(data["social"], _characters):
+		return false
+
+	var runtime: Dictionary = data["runtime"]
+	_pending_sim_seconds = float(runtime["pending_sim_seconds"])
+	_processed_sim_seconds = float(runtime["processed_sim_seconds"])
+	_pending_economy_seconds = float(runtime["pending_economy_seconds"])
+	_processed_economy_seconds = float(runtime["processed_economy_seconds"])
+
+	var rng_data: Dictionary = data["rng"]
+	_rng.seed = int(rng_data["seed"])
+	_rng.state = int(rng_data["state"])
+
+	return true
+
+func _validate_runtime_state(
+	runtime: Dictionary,
+	clock_simulation_seconds: float,
+	errors: Array[String]
+) -> void:
+	for key in [
+		"pending_sim_seconds",
+		"processed_sim_seconds",
+		"pending_economy_seconds",
+		"processed_economy_seconds",
+	]:
+		if not runtime.has(key) or not _is_finite_non_negative_number(runtime[key]):
+			errors.append("runtime %s must be finite and non-negative" % key)
+
+	if not errors.is_empty():
+		return
+
+	var pending_sim := float(runtime["pending_sim_seconds"])
+	var processed_sim := float(runtime["processed_sim_seconds"])
+	var pending_economy := float(runtime["pending_economy_seconds"])
+	var processed_economy := float(runtime["processed_economy_seconds"])
+
+	if pending_sim >= FIXED_SIM_STEP_SECONDS + 0.000001:
+		errors.append("runtime pending_sim_seconds exceeds fixed-step remainder")
+	if pending_economy >= ECONOMY_STEP_SECONDS + 0.000001:
+		errors.append("runtime pending_economy_seconds exceeds economy-step remainder")
+	if processed_economy > processed_sim + 0.000001:
+		errors.append("runtime processed_economy_seconds exceeds processed simulation")
+
+	if absf((processed_sim + pending_sim) - clock_simulation_seconds) > 0.0001:
+		errors.append("runtime simulation counters do not match clock")
+	if absf((processed_economy + pending_economy) - processed_sim) > 0.0001:
+		errors.append("runtime economy counters do not match processed simulation")
+
+func _validate_rng_state(rng_data: Dictionary, errors: Array[String]) -> void:
+	if not rng_data.has("seed") or not rng_data["seed"] is int:
+		errors.append("rng seed must be an integer")
+	if not rng_data.has("state") or not rng_data["state"] is int:
+		errors.append("rng state must be an integer")
+
+func _validate_action_social_overlap(
+	actions: Array,
+	social_data: Dictionary,
+	errors: Array[String]
+) -> void:
+	var action_residents: Dictionary = {}
+	for raw_action in actions:
+		if not raw_action is Dictionary:
+			continue
+		if not raw_action.get("active", false):
+			continue
+		if raw_action.has("character_id") and raw_action["character_id"] is String:
+			action_residents[raw_action["character_id"]] = true
+
+	if (
+		not social_data.has("reservation_book")
+		or not social_data["reservation_book"] is Dictionary
+	):
+		return
+	var book: Dictionary = social_data["reservation_book"]
+	if not book.has("sessions") or not book["sessions"] is Array:
+		return
+
+	for raw_session in book["sessions"]:
+		if not raw_session is Dictionary:
+			continue
+		for id_key in ["initiator_id", "target_id"]:
+			if raw_session.has(id_key) and raw_session[id_key] is String:
+				var resident_id: String = raw_session[id_key]
+				if action_residents.has(resident_id):
+					errors.append(
+						"resident cannot have active SmartObject and social action: %s"
+						% resident_id
+					)
+
+func _build_validation_world(
+	residents: Array[CharacterState]
+) -> Dictionary:
+	var validation_world := SimulationWorld.new()
+	var validation_objects: Array = []
+
+	for source_object in _smart_objects:
+		if source_object == null or not is_instance_valid(source_object):
+			continue
+
+		var clone := SmartObject.new()
+		clone.object_id = source_object.object_id
+		clone.interaction_point = source_object.interaction_point
+		for interaction in source_object.interactions:
+			clone.interactions.append(interaction)
+		validation_world.register_smart_object(clone)
+		validation_objects.append(clone)
+
+	for resident in residents:
+		validation_world.add_character(resident)
+
+	return {
+		"world": validation_world,
+		"objects": validation_objects,
+	}
+
+func _clear_runtime_before_restore() -> void:
+	for raw_executor in _executors.values():
+		if raw_executor is ActionExecutor:
+			var executor: ActionExecutor = raw_executor
+			if executor.is_active():
+				executor.cancel()
+
+	for object in _smart_objects:
+		if object != null and is_instance_valid(object):
+			object.clear_reservation()
+
+func _is_finite_non_negative_number(value) -> bool:
+	if not (value is int or value is float):
+		return false
+	var number := float(value)
+	return not is_nan(number) and not is_inf(number) and number >= 0.0
+
 func report_arrival(character_id: StringName, target_object_id: StringName) -> bool:
 	var executor: ActionExecutor = _executors.get(character_id)
 	if executor == null:
