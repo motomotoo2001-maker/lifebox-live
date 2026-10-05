@@ -2,6 +2,7 @@ class_name SimulationWorld
 extends RefCounted
 
 const FIXED_SIM_STEP_SECONDS := 1.0
+const ECONOMY_STEP_SECONDS := 60.0
 
 var clock := SimulationClock.new()
 var need_system := NeedSystem.new()
@@ -9,6 +10,8 @@ var utility_ai := UtilityAI.new()
 var stuck_recovery_policy := StuckRecoveryPolicy.new()
 var economy_system := EconomySystem.new()
 var spending_decision_system := SpendingDecisionSystem.new()
+var job_system := JobSystem.new()
+var household_expense_system := HouseholdExpenseSystem.new()
 var relationship_graph := RelationshipGraph.new()
 var social_system := SocialSystem.new()
 
@@ -17,6 +20,8 @@ var _smart_objects: Array[SmartObject] = []
 var _executors: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _pending_sim_seconds: float = 0.0
+var _processed_sim_seconds: float = 0.0
+var _economy_pending_sim_seconds: float = 0.0
 
 func _init() -> void:
 	_rng.seed = 1337
@@ -56,6 +61,7 @@ func step(real_delta: float) -> void:
 
 	_pending_sim_seconds += sim_delta
 	while _pending_sim_seconds >= FIXED_SIM_STEP_SECONDS:
+		_processed_sim_seconds += FIXED_SIM_STEP_SECONDS
 		_step_fixed(FIXED_SIM_STEP_SECONDS)
 		_pending_sim_seconds -= FIXED_SIM_STEP_SECONDS
 
@@ -88,6 +94,34 @@ func _step_fixed(sim_delta: float) -> void:
 		executor.start(choice, character)
 
 	social_system.advance(_characters, relationship_graph, sim_delta, _rng)
+	_advance_economy(sim_delta)
+
+func _advance_economy(sim_delta: float) -> void:
+	_economy_pending_sim_seconds += sim_delta
+
+	while _economy_pending_sim_seconds >= ECONOMY_STEP_SECONDS:
+		var interval_end := (
+			_processed_sim_seconds
+			- (_economy_pending_sim_seconds - ECONOMY_STEP_SECONDS)
+		)
+
+		for character in _characters:
+			if character == null:
+				continue
+			job_system.advance_character(
+				character,
+				ECONOMY_STEP_SECONDS,
+				interval_end,
+				economy_system
+			)
+
+		household_expense_system.advance(
+			_characters,
+			interval_end,
+			economy_system
+		)
+
+		_economy_pending_sim_seconds -= ECONOMY_STEP_SECONDS
 
 func _handle_stuck_movement(character: CharacterState, executor: ActionExecutor) -> void:
 	if not executor.is_active():
