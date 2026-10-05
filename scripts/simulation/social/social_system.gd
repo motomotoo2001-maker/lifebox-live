@@ -311,6 +311,27 @@ func _apply_outcome(
 
 	_write_memory(initiator, target.id, session, valence, importance)
 	_write_memory(target, initiator.id, session, valence, importance)
+	_complete_matching_social_goal(initiator, target.id)
+	_complete_matching_social_goal(target, initiator.id)
+
+func _complete_matching_social_goal(
+	character: CharacterState,
+	other_resident_id: StringName
+) -> void:
+	if character == null or character.goals == null:
+		return
+
+	for goal in character.goals.active_goals():
+		if goal == null or goal.definition == null:
+			continue
+		if goal.definition.category != &"social":
+			continue
+		if (
+			goal.definition.target_resident_id != &""
+			and goal.definition.target_resident_id != other_resident_id
+		):
+			continue
+		goal.complete()
 
 func _write_memory(
 	character: CharacterState,
