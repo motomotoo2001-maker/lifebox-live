@@ -185,6 +185,21 @@ func run() -> Array[String]:
 	if codec_script.validate(bad_status).is_empty():
 		failures.append("unknown restored goal status must fail validation")
 
+	var bad_schedule_kind := encoded.duplicate(true)
+	bad_schedule_kind["schedule"]["definition"]["blocks"][0]["kind"] = 123
+	if codec_script.validate(bad_schedule_kind).is_empty():
+		failures.append("non-string restored schedule kind must fail validation")
+
+	var bad_goal_category := encoded.duplicate(true)
+	bad_goal_category["goals"]["items"][0]["definition"]["category"] = 123
+	if codec_script.validate(bad_goal_category).is_empty():
+		failures.append("non-string restored goal category must fail validation")
+
+	var bad_goal_id := encoded.duplicate(true)
+	bad_goal_id["goals"]["items"][0]["definition"]["id"] = 123
+	if codec_script.validate(bad_goal_id).is_empty():
+		failures.append("non-string restored goal id must fail validation")
+
 	return failures
 
 func _is_json_compatible(value) -> bool:
