@@ -148,7 +148,13 @@ func run() -> Array[String]:
 	_test_disk_backup_recovery(
 		failures,
 		save_service_script,
-		save_mid
+		save_mid,
+		world_script,
+		fixture_script,
+		interaction_script,
+		smart_object_script,
+		job_definition_script,
+		snapshot_script
 	)
 	_test_replay_segment(
 		failures,
@@ -170,7 +176,13 @@ func run() -> Array[String]:
 func _test_disk_backup_recovery(
 	failures: Array[String],
 	save_service_script,
-	expected_world_snapshot: Dictionary
+	expected_world_snapshot: Dictionary,
+	world_script,
+	fixture_script,
+	interaction_script,
+	smart_object_script,
+	job_definition_script,
+	snapshot_script
 ) -> void:
 	if not FileAccess.file_exists(SAVE_PATH + ".bak"):
 		failures.append("second disk save must create backup for recovery test")
@@ -190,8 +202,41 @@ func _test_disk_backup_recovery(
 	if not recovered.has("payload") or not recovered["payload"] is Dictionary:
 		failures.append("recovered soak envelope must contain payload")
 		return
-	if recovered["payload"].get("world", {}) != expected_world_snapshot:
+	var recovered_world = recovered["payload"].get("world", {})
+	if recovered_world != expected_world_snapshot:
 		failures.append("backup recovery must return exact saved world snapshot")
+
+	var restore_target := _build_world(
+		failures,
+		world_script,
+		fixture_script,
+		interaction_script,
+		smart_object_script,
+		job_definition_script,
+		false
+	)
+	if restore_target.is_empty():
+		return
+
+	var restore_errors: Array[String] = snapshot_script.restore(
+		restore_target["world"],
+		recovered_world
+	)
+	if not restore_errors.is_empty():
+		failures.append(
+			"disk-recovered world snapshot must restore: %s"
+			% " | ".join(restore_errors)
+		)
+	else:
+		restore_target["residents"] = _residents_from_snapshot(
+			restore_target["world"],
+			recovered_world
+		)
+		if snapshot_script.encode(restore_target["world"]) != expected_world_snapshot:
+			failures.append("disk-recovered world must re-encode to exact saved snapshot")
+		_validate_reservations(failures, restore_target, "disk-recovered")
+
+	_dispose(restore_target)
 
 func _test_replay_segment(
 	failures: Array[String],
