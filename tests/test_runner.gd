@@ -13,9 +13,20 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/unit/test_utility_ai.gd",
 	"res://tests/unit/test_household_identity.gd",
 	"res://tests/unit/test_household_state.gd",
+	"res://tests/unit/test_relationship_graph.gd",
+	"res://tests/unit/test_memory_store.gd",
+	"res://tests/unit/test_economy_system.gd",
+	"res://tests/unit/test_job_system.gd",
+	"res://tests/unit/test_social_reservation_book.gd",
 	"res://tests/unit/test_movement_state.gd",
 	"res://tests/integration/test_single_resident_day.gd",
 	"res://tests/integration/test_move_before_interact.gd",
+	"res://tests/integration/test_household_expenses.gd",
+	"res://tests/integration/test_paid_interaction.gd",
+	"res://tests/integration/test_autonomous_social_actions.gd",
+	"res://tests/integration/test_social_outcomes.gd",
+	"res://tests/integration/test_autonomous_spending.gd",
+	"res://tests/integration/test_world_economy_cadence.gd",
 	"res://tests/integration/test_six_resident_contention.gd",
 	"res://tests/integration/test_stuck_recovery.gd",
 	"res://tests/integration/test_simulation_world_invariants.gd",
@@ -23,6 +34,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/runtime/test_household_blockout_contract.gd",
 	"res://tests/soak/test_foundation_soak.gd",
 	"res://tests/soak/test_six_resident_household_soak.gd",
+	"res://tests/soak/test_social_economy_day_soak.gd",
 ]
 
 func _init() -> void:
