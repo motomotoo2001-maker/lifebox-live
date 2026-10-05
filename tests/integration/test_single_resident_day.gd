@@ -25,9 +25,16 @@ func run() -> Array[String]:
 	var fridge = fixture["fridge"]
 	var bed = fixture["bed"]
 
+	if not world.has_method("report_arrival"):
+		failures.append("SimulationWorld must expose report_arrival")
+		_dispose(fixture)
+		return failures
+
 	world.step(1.0)
 	if resident.current_action_id != &"eat":
 		failures.append("hungry resident must choose Eat before Sleep")
+	if world.report_arrival(resident.id, fridge.object_id) != true:
+		failures.append("Eat target arrival must be accepted")
 
 	var hunger_before: float = resident.needs.hunger.value
 	world.step(60.0)
@@ -40,6 +47,8 @@ func run() -> Array[String]:
 	world.step(1.0)
 	if resident.current_action_id != &"sleep":
 		failures.append("tired resident must choose Sleep after hunger is satisfied")
+	if world.report_arrival(resident.id, bed.object_id) != true:
+		failures.append("Sleep target arrival must be accepted")
 
 	var energy_before: float = resident.needs.energy.value
 	world.step(60.0)
@@ -48,6 +57,11 @@ func run() -> Array[String]:
 	if not bed.is_available_for(resident.id):
 		failures.append("bed reservation must release after completion")
 
-	fridge.free()
-	bed.free()
+	_dispose(fixture)
 	return failures
+
+func _dispose(fixture: Dictionary) -> void:
+	for key in ["fridge", "bed"]:
+		var object = fixture[key]
+		if is_instance_valid(object):
+			object.free()
