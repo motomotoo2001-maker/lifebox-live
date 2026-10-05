@@ -645,6 +645,12 @@ static func _validate_goals(
 			errors.append("goal status is invalid")
 		elif status == "active":
 			active_count += 1
+			if (
+				goal_data.has("progress")
+				and _is_finite_number(goal_data["progress"])
+				and float(goal_data["progress"]) >= 1.0
+			):
+				errors.append("active goal progress must be below 1")
 		elif (
 			status == "completed"
 			and goal_data.has("progress")
