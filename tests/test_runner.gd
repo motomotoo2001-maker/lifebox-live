@@ -19,6 +19,10 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/unit/test_job_system.gd",
 	"res://tests/unit/test_social_reservation_book.gd",
 	"res://tests/unit/test_movement_state.gd",
+	"res://tests/unit/test_save_schema.gd",
+	"res://tests/unit/test_save_migrator.gd",
+	"res://tests/unit/test_character_snapshot_codec.gd",
+	"res://tests/unit/test_social_economy_snapshot_codec.gd",
 	"res://tests/integration/test_single_resident_day.gd",
 	"res://tests/integration/test_move_before_interact.gd",
 	"res://tests/integration/test_household_expenses.gd",
@@ -27,6 +31,11 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/integration/test_social_outcomes.gd",
 	"res://tests/integration/test_autonomous_spending.gd",
 	"res://tests/integration/test_world_economy_cadence.gd",
+	"res://tests/integration/test_action_snapshot_restore.gd",
+	"res://tests/integration/test_social_snapshot_restore.gd",
+	"res://tests/integration/test_world_snapshot_roundtrip.gd",
+	"res://tests/integration/test_save_service.gd",
+	"res://tests/integration/test_replay_log.gd",
 	"res://tests/integration/test_six_resident_contention.gd",
 	"res://tests/integration/test_stuck_recovery.gd",
 	"res://tests/integration/test_simulation_world_invariants.gd",
@@ -35,6 +44,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/soak/test_foundation_soak.gd",
 	"res://tests/soak/test_six_resident_household_soak.gd",
 	"res://tests/soak/test_social_economy_day_soak.gd",
+	"res://tests/soak/test_persistence_replay_soak.gd",
 ]
 
 func _init() -> void:

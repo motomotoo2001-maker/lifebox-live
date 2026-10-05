@@ -28,6 +28,40 @@ func advance(
 		_charge_day(residents, economy, float(processed_days + 1) * DAY_SECONDS)
 		processed_days += 1
 
+func capture_persistence_state() -> Dictionary:
+	return {
+		"daily_amount": daily_amount,
+		"arrears": arrears,
+		"processed_days": processed_days,
+	}
+
+func restore_persistence_state(data: Dictionary) -> bool:
+	if not _validate_persistence_state(data):
+		return false
+
+	daily_amount = float(data["daily_amount"])
+	arrears = float(data["arrears"])
+	processed_days = int(data["processed_days"])
+	return true
+
+func _validate_persistence_state(data: Dictionary) -> bool:
+	if not data.has("daily_amount") or not _is_finite_number(data["daily_amount"]):
+		return false
+	if float(data["daily_amount"]) < 0.0:
+		return false
+
+	if not data.has("arrears") or not _is_finite_number(data["arrears"]):
+		return false
+	if float(data["arrears"]) < 0.0:
+		return false
+
+	if not data.has("processed_days") or not data["processed_days"] is int:
+		return false
+	if int(data["processed_days"]) < 0:
+		return false
+
+	return true
+
 func _charge_day(
 	residents: Array,
 	economy: EconomySystem,
@@ -65,3 +99,9 @@ func _charge_day(
 					paid = requested_payment
 
 		arrears += share - paid
+
+func _is_finite_number(value) -> bool:
+	if not (value is int or value is float):
+		return false
+	var number := float(value)
+	return not is_nan(number) and not is_inf(number)

@@ -111,6 +111,168 @@ func cancel() -> void:
 	_character.movement.reset()
 	_clear()
 
+func capture_state() -> Dictionary:
+	if not is_active():
+		return {"active": false}
+
+	var target_object_id := ""
+	var interaction_id := ""
+	var arrival_radius := DEFAULT_ARRIVAL_RADIUS
+
+	if _candidate.smart_object != null and is_instance_valid(_candidate.smart_object):
+		target_object_id = str(_candidate.smart_object.object_id)
+	if _candidate.interaction != null:
+		interaction_id = str(_candidate.interaction.id)
+	if _character.movement.intent != null:
+		arrival_radius = _character.movement.intent.arrival_radius
+
+	return {
+		"active": true,
+		"character_id": str(_character.id),
+		"action_id": str(_candidate.id),
+		"phase": str(_phase),
+		"target_object_id": target_object_id,
+		"interaction_id": interaction_id,
+		"remaining_sim_seconds": _remaining_sim_seconds,
+		"movement": {
+			"elapsed_sim_seconds": _character.movement.elapsed_sim_seconds,
+			"retry_count": _character.movement.retry_count,
+			"arrival_radius": arrival_radius,
+		},
+	}
+
+func restore_state(
+	data: Dictionary,
+	character: CharacterState,
+	smart_object: SmartObject,
+	interaction: InteractionDefinition
+) -> bool:
+	if not _validate_restore_state(data, character, smart_object, interaction):
+		return false
+
+	if is_active():
+		cancel()
+
+	if not smart_object.reserve(character.id):
+		return false
+
+	var movement_data: Dictionary = data["movement"]
+	var arrival_radius := float(movement_data["arrival_radius"])
+	var intent := MovementIntent.new(
+		smart_object.object_id,
+		smart_object.interaction_point,
+		arrival_radius
+	)
+	if not intent.is_valid():
+		smart_object.release(character.id)
+		return false
+
+	_candidate = ActionCandidate.new(
+		StringName(data["action_id"]),
+		0.0,
+		smart_object,
+		interaction
+	)
+	_character = character
+	_character.current_action_id = StringName(data["action_id"])
+	_phase = StringName(data["phase"])
+	_remaining_sim_seconds = float(data["remaining_sim_seconds"])
+
+	_character.movement.intent = intent
+	_character.movement.elapsed_sim_seconds = float(
+		movement_data["elapsed_sim_seconds"]
+	)
+	_character.movement.retry_count = int(movement_data["retry_count"])
+
+	if _phase == PHASE_MOVING:
+		_character.movement.status = MovementState.STATUS_MOVING
+	else:
+		_character.movement.status = MovementState.STATUS_ARRIVED
+
+	return true
+
+func _validate_restore_state(
+	data: Dictionary,
+	character: CharacterState,
+	smart_object: SmartObject,
+	interaction: InteractionDefinition
+) -> bool:
+	if character == null or smart_object == null or interaction == null:
+		return false
+	if not is_instance_valid(smart_object):
+		return false
+	if not data.get("active", false):
+		return false
+
+	for key in [
+		"character_id",
+		"action_id",
+		"phase",
+		"target_object_id",
+		"interaction_id",
+		"remaining_sim_seconds",
+		"movement",
+	]:
+		if not data.has(key):
+			return false
+
+	if not data["character_id"] is String or data["character_id"].is_empty():
+		return false
+	if StringName(data["character_id"]) != character.id:
+		return false
+	if not data["action_id"] is String or data["action_id"].is_empty():
+		return false
+	if not data["phase"] is String:
+		return false
+	var phase := StringName(data["phase"])
+	if phase != PHASE_MOVING and phase != PHASE_INTERACTING:
+		return false
+
+	if not data["target_object_id"] is String:
+		return false
+	if StringName(data["target_object_id"]) != smart_object.object_id:
+		return false
+
+	if not data["interaction_id"] is String:
+		return false
+	if StringName(data["interaction_id"]) != interaction.id:
+		return false
+
+	if not _is_finite_number(data["remaining_sim_seconds"]):
+		return false
+	var remaining := float(data["remaining_sim_seconds"])
+	if phase == PHASE_MOVING:
+		if remaining < 0.0:
+			return false
+	else:
+		if remaining <= 0.0:
+			return false
+
+	if not data["movement"] is Dictionary:
+		return false
+	var movement_data: Dictionary = data["movement"]
+
+	if (
+		not movement_data.has("elapsed_sim_seconds")
+		or not _is_finite_number(movement_data["elapsed_sim_seconds"])
+		or float(movement_data["elapsed_sim_seconds"]) < 0.0
+	):
+		return false
+	if (
+		not movement_data.has("retry_count")
+		or not movement_data["retry_count"] is int
+		or int(movement_data["retry_count"]) < 0
+	):
+		return false
+	if (
+		not movement_data.has("arrival_radius")
+		or not _is_finite_number(movement_data["arrival_radius"])
+		or float(movement_data["arrival_radius"]) < 0.0
+	):
+		return false
+
+	return true
+
 func _begin_interaction() -> void:
 	_phase = PHASE_INTERACTING
 	_remaining_sim_seconds = 0.0
@@ -188,3 +350,9 @@ func _clear() -> void:
 	_character = null
 	_remaining_sim_seconds = 0.0
 	_phase = PHASE_IDLE
+
+func _is_finite_number(value) -> bool:
+	if not (value is int or value is float):
+		return false
+	var number := float(value)
+	return not is_nan(number) and not is_inf(number)

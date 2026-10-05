@@ -27,3 +27,36 @@ func advance(real_delta: float) -> float:
 
 func get_simulation_seconds() -> float:
 	return _simulation_seconds
+
+func get_time_scale() -> float:
+	return _time_scale
+
+func capture_state() -> Dictionary:
+	return {
+		"time_scale": _time_scale,
+		"simulation_seconds": _simulation_seconds,
+	}
+
+func restore_state(data: Dictionary) -> bool:
+	if not data.has("time_scale") or not _is_finite_number(data["time_scale"]):
+		return false
+	if not data.has("simulation_seconds") or not _is_finite_number(data["simulation_seconds"]):
+		return false
+
+	var restored_scale := float(data["time_scale"])
+	var restored_seconds := float(data["simulation_seconds"])
+
+	if restored_scale < MIN_TIME_SCALE or restored_scale > MAX_TIME_SCALE:
+		return false
+	if restored_seconds < 0.0:
+		return false
+
+	_time_scale = restored_scale
+	_simulation_seconds = restored_seconds
+	return true
+
+func _is_finite_number(value) -> bool:
+	if not (value is int or value is float):
+		return false
+	var number := float(value)
+	return not is_nan(number) and not is_inf(number)

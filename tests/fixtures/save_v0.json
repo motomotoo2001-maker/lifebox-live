@@ -1,0 +1,16 @@
+{
+  "project_id": "lifebox_live",
+  "schema_version": 0,
+  "payload": {
+    "characters": [
+      {
+        "id": "legacy_resident",
+        "display_name": "Legacy Resident"
+      }
+    ],
+    "marker": "preserve_me",
+    "nested": {
+      "value": 42
+    }
+  }
+}
