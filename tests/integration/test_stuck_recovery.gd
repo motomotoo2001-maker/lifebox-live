@@ -98,7 +98,7 @@ func run() -> Array[String]:
 	if not fridge.is_available_for(&"reservation_probe"):
 		failures.append("failed movement must release reserved target")
 
-	fridge.free()
+	resident.needs.hunger.value = 100.0
 	resident.needs.energy.value = 5.0
 	world.step(1.0)
 	if resident.current_action_id != &"sleep":
@@ -108,5 +108,6 @@ func run() -> Array[String]:
 	if resident.movement.retry_count != 0:
 		failures.append("new movement target must start with a fresh retry count")
 
+	fridge.free()
 	bed.free()
 	return failures
