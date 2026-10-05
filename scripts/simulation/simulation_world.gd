@@ -194,6 +194,14 @@ func validate_persistence_state(data: Dictionary) -> Array[String]:
 				% [index, goal_target_error]
 			)
 
+	if errors.is_empty():
+		_validate_resident_planning_time(
+			data["residents"],
+			decoded_residents,
+			data["runtime"],
+			errors
+		)
+
 	var relationship_errors := SocialEconomySnapshotCodec.validate_relationships(
 		data["relationships"],
 		resident_ids
@@ -310,6 +318,71 @@ func restore_persistence_state(data: Dictionary) -> bool:
 	_rng.state = int(rng_data["state"])
 
 	return true
+
+func _validate_resident_planning_time(
+	resident_data_list: Array,
+	decoded_residents: Array[CharacterState],
+	runtime: Dictionary,
+	errors: Array[String]
+) -> void:
+	if not runtime.has("processed_sim_seconds"):
+		return
+	if not _is_finite_non_negative_number(runtime["processed_sim_seconds"]):
+		return
+
+	var processed_sim_seconds := float(runtime["processed_sim_seconds"])
+	var expected_day := int(floor(
+		processed_sim_seconds / DailyPlanningSystem.DAY_SECONDS
+	))
+	var decoded_by_id: Dictionary = {}
+	for resident in decoded_residents:
+		if resident != null:
+			decoded_by_id[str(resident.id)] = resident
+
+	for index in range(resident_data_list.size()):
+		var raw_resident = resident_data_list[index]
+		if not raw_resident is Dictionary:
+			continue
+		var resident_id := str(raw_resident.get("id", ""))
+		if not decoded_by_id.has(resident_id):
+			continue
+		var resident: CharacterState = decoded_by_id[resident_id]
+
+		if raw_resident.has("schedule"):
+			if resident.schedule.day_index != expected_day:
+				errors.append(
+					"resident[%d] schedule day does not match processed simulation day"
+					% index
+				)
+
+			if processed_sim_seconds >= FIXED_SIM_STEP_SECONDS:
+				var expected_block_id: StringName = &""
+				if resident.schedule.definition != null:
+					var day_seconds := fmod(
+						processed_sim_seconds,
+						DailyPlanningSystem.DAY_SECONDS
+					)
+					var hour := day_seconds / 3600.0
+					var expected_block := resident.schedule.definition.active_block_at(
+						hour
+					)
+					if expected_block != null:
+						expected_block_id = expected_block.id
+				if resident.schedule.active_block_id != expected_block_id:
+					errors.append(
+						"resident[%d] active schedule block does not match processed simulation time"
+						% index
+					)
+
+		if (
+			processed_sim_seconds >= FIXED_SIM_STEP_SECONDS
+			and raw_resident.has("goals")
+			and resident.goals.day_index != expected_day
+		):
+			errors.append(
+				"resident[%d] goal day does not match processed simulation day"
+				% index
+			)
 
 func _validate_runtime_state(
 	runtime: Dictionary,
