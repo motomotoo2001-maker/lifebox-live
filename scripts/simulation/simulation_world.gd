@@ -6,6 +6,7 @@ const FIXED_SIM_STEP_SECONDS := 1.0
 var clock := SimulationClock.new()
 var need_system := NeedSystem.new()
 var utility_ai := UtilityAI.new()
+var stuck_recovery_policy := StuckRecoveryPolicy.new()
 
 var _characters: Array[CharacterState] = []
 var _smart_objects: Array[SmartObject] = []
@@ -67,6 +68,7 @@ func _step_fixed(sim_delta: float) -> void:
 
 		if executor.is_active():
 			executor.advance(sim_delta)
+			_handle_stuck_movement(character, executor)
 			continue
 
 		var candidates := _build_candidates(character)
@@ -76,6 +78,18 @@ func _step_fixed(sim_delta: float) -> void:
 			continue
 
 		executor.start(choice, character)
+
+func _handle_stuck_movement(character: CharacterState, executor: ActionExecutor) -> void:
+	if not executor.is_active():
+		return
+
+	var result := stuck_recovery_policy.evaluate(character.movement)
+	if result != StuckRecoveryPolicy.RESULT_FAIL:
+		return
+	if character.movement.intent == null:
+		return
+
+	executor.report_movement_failure(character.movement.intent.target_object_id)
 
 func _build_candidates(character: CharacterState) -> Array[ActionCandidate]:
 	var candidates: Array[ActionCandidate] = []
