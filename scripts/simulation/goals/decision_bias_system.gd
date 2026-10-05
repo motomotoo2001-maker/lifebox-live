@@ -4,7 +4,8 @@ extends RefCounted
 const DAY_SECONDS := 86400.0
 const HOUR_SECONDS := 3600.0
 const CRITICAL_NEED_THRESHOLD := 20.0
-const CRITICAL_MATCH_MULTIPLIER := 4.0
+const CRITICAL_MATCH_FLOOR := 1000000000.0
+const CRITICAL_MISMATCH_CAP := 999999999.0
 const CRITICAL_MISMATCH_MULTIPLIER := 0.25
 const SCHEDULE_BONUS_MULTIPLIER := 0.35
 const GOAL_BONUS_BASE := 0.25
@@ -25,8 +26,14 @@ func adjust(
 	var critical_needs := _critical_needs(character)
 	if not critical_needs.is_empty():
 		if _helps_any_need(interaction, critical_needs):
-			return base_score * CRITICAL_MATCH_MULTIPLIER
-		return base_score * CRITICAL_MISMATCH_MULTIPLIER
+			return CRITICAL_MATCH_FLOOR + minf(
+				base_score,
+				CRITICAL_MATCH_FLOOR
+			)
+		return minf(
+			base_score * CRITICAL_MISMATCH_MULTIPLIER,
+			CRITICAL_MISMATCH_CAP
+		)
 
 	var score := base_score
 	var active_block := _active_schedule_block(character, simulation_seconds)
