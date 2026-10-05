@@ -43,7 +43,7 @@ func run() -> Array[String]:
 	if expenses.processed_days != 1:
 		failures.append("first completed day must be processed exactly once")
 
-	var tx_count_after_day_one := economy.transactions().size()
+	var tx_count_after_day_one: int = economy.transactions().size()
 	expenses.advance(residents, 90000.0, economy)
 	if economy.transactions().size() != tx_count_after_day_one:
 		failures.append("same simulated day must not charge household twice")
