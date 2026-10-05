@@ -17,6 +17,9 @@ func run() -> Array[String]:
 		failures.append("SaveService must load")
 		return failures
 
+	if not service_script.load_envelope(SAVE_PATH).is_empty():
+		failures.append("missing main and backup must return empty load result")
+
 	var first := SaveSchema.create_envelope({
 		"residents": [],
 		"marker": "first",
