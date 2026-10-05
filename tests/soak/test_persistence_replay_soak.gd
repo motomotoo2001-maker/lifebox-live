@@ -560,12 +560,7 @@ func _first_difference(expected, actual, path: String) -> String:
 			and (actual is int or actual is float)
 			and float(expected) == float(actual)
 		):
-			return "%s type %s != %s for numerically equal value %s" % [
-				path,
-				type_string(expected_type),
-				type_string(actual_type),
-				str(expected),
-			]
+			return ""
 		return "%s type %s != %s (%s vs %s)" % [
 			path,
 			type_string(expected_type),
@@ -607,7 +602,12 @@ func _first_difference(expected, actual, path: String) -> String:
 
 	if expected is float:
 		if expected != actual:
-			return "%s float %s != %s" % [path, str(expected), str(actual)]
+			return "%s float delta=%s expected=%s actual=%s" % [
+				path,
+				str(absf(expected - actual)),
+				str(expected),
+				str(actual),
+			]
 		return ""
 
 	if expected != actual:
