@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
+
+[node name="ResidentActor3D" type="CharacterBody3D"]
+script = ExtResource("1_script")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.25
+target_desired_distance = 0.5
+avoidance_enabled = true
