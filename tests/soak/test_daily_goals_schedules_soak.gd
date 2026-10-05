@@ -431,16 +431,17 @@ func _validate_planning(
 				% [label, resident.id, step_index]
 			)
 
+		var daily_goals: Array = resident.goals.goals()
 		var active_goals: Array = resident.goals.active_goals()
-		if active_goals.size() < 1 or active_goals.size() > 3:
+		if daily_goals.size() < 1 or daily_goals.size() > 3:
 			failures.append(
-				"%s resident %s must have 1..3 active daily goals at step %d"
+				"%s resident %s must have 1..3 generated daily goals at step %d"
 				% [label, resident.id, step_index]
 			)
 
 		var ids: Array[String] = []
 		var seen: Dictionary = {}
-		for goal in active_goals:
+		for goal in daily_goals:
 			var goal_id := str(goal.definition.id)
 			ids.append(goal_id)
 			if seen.has(goal_id):
@@ -454,6 +455,29 @@ func _validate_planning(
 					"%s resident %s goal belongs to wrong day: %s"
 					% [label, resident.id, goal_id]
 				)
+			if goal.status == GoalState.STATUS_COMPLETED:
+				if not is_equal_approx(goal.progress, 1.0):
+					failures.append(
+						"%s resident %s completed goal must have full progress: %s"
+						% [label, resident.id, goal_id]
+					)
+			elif goal.status == GoalState.STATUS_ACTIVE:
+				if goal.progress < 0.0 or goal.progress >= 1.0:
+					failures.append(
+						"%s resident %s active goal progress must stay inside 0..<1: %s"
+						% [label, resident.id, goal_id]
+					)
+			elif goal.status != GoalState.STATUS_FAILED:
+				failures.append(
+					"%s resident %s has invalid goal status: %s"
+					% [label, resident.id, goal_id]
+				)
+
+		if active_goals.size() > daily_goals.size():
+			failures.append(
+				"%s resident %s active goal view exceeds daily goal history"
+				% [label, resident.id]
+			)
 
 		var signature := ",".join(ids)
 		var signature_key := "%s:%d" % [resident.id, day_index]
@@ -478,12 +502,12 @@ func _validate_planning(
 				% [label, resident.id, hour]
 			)
 
-		if resident_index == 0 and not _has_category(active_goals, &"social"):
-			failures.append("dominant social resident must keep social goal each day")
-		if resident_index == 1 and not _has_category(active_goals, &"work"):
-			failures.append("dominant ambitious resident must keep work goal each day")
-		if resident_index == 2 and not _has_category(active_goals, &"fun"):
-			failures.append("dominant impulsive resident must keep fun goal each day")
+		if resident_index == 0 and not _has_category(daily_goals, &"social"):
+			failures.append("dominant social resident must receive social goal each day")
+		if resident_index == 1 and not _has_category(daily_goals, &"work"):
+			failures.append("dominant ambitious resident must receive work goal each day")
+		if resident_index == 2 and not _has_category(daily_goals, &"fun"):
+			failures.append("dominant impulsive resident must receive fun goal each day")
 
 func _validate_three_days_seen(
 	failures: Array[String],
