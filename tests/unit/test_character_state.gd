@@ -45,17 +45,17 @@ func run() -> Array[String]:
 		"jealousy",
 	]
 
-	for trait in traits:
-		var initial_value: float = personality.get(trait)
+	for trait_name in traits:
+		var initial_value: float = personality.get(trait_name)
 		if initial_value < 0.0 or initial_value > 1.0:
-			failures.append("%s must default inside 0..1" % trait)
+			failures.append("%s must default inside 0..1" % trait_name)
 
-		personality.set(trait, 2.0)
-		if not is_equal_approx(float(personality.get(trait)), 1.0):
-			failures.append("%s must clamp values above 1" % trait)
+		personality.set(trait_name, 2.0)
+		if not is_equal_approx(float(personality.get(trait_name)), 1.0):
+			failures.append("%s must clamp values above 1" % trait_name)
 
-		personality.set(trait, -2.0)
-		if not is_equal_approx(float(personality.get(trait)), 0.0):
-			failures.append("%s must clamp values below 0" % trait)
+		personality.set(trait_name, -2.0)
+		if not is_equal_approx(float(personality.get(trait_name)), 0.0):
+			failures.append("%s must clamp values below 0" % trait_name)
 
 	return failures
