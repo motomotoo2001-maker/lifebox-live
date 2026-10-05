@@ -137,16 +137,18 @@ static func _cleanup_temp(temp_path: String) -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
 
 
-static func _normalize_json_numbers(value):
+
+static func _normalize_json_numbers(value, field_name: String = ""):
 	if value is float:
-		if is_nan(value) or is_inf(value):
-			return value
-		if (
-			value >= -9007199254740991.0
-			and value <= 9007199254740991.0
-			and value == floor(value)
-		):
-			return int(value)
+		if field_name in ["capacity", "retry_count", "sequence", "processed_days"]:
+			if (
+				not is_nan(value)
+				and not is_inf(value)
+				and value >= -9007199254740991.0
+				and value <= 9007199254740991.0
+				and value == floor(value)
+			):
+				return int(value)
 		return value
 
 	if value is Array:
@@ -158,7 +160,10 @@ static func _normalize_json_numbers(value):
 	if value is Dictionary:
 		var normalized_dictionary: Dictionary = {}
 		for key in value.keys():
-			normalized_dictionary[key] = _normalize_json_numbers(value[key])
+			normalized_dictionary[key] = _normalize_json_numbers(
+				value[key],
+				str(key)
+			)
 		return normalized_dictionary
 
 	return value
