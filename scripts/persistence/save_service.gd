@@ -21,7 +21,7 @@ static func save_envelope(path: String, snapshot: Dictionary) -> bool:
 	if not _ensure_parent_directory(path):
 		return false
 
-	var serialized := JSON.stringify(normalized)
+	var serialized := JSON.stringify(normalized, "", true, true)
 	var temp_file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if temp_file == null:
 		return false
