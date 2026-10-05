@@ -1,6 +1,8 @@
 class_name SimulationWorld
 extends RefCounted
 
+const FIXED_SIM_STEP_SECONDS := 1.0
+
 var clock := SimulationClock.new()
 var need_system := NeedSystem.new()
 var utility_ai := UtilityAI.new()
@@ -9,6 +11,7 @@ var _characters: Array[CharacterState] = []
 var _smart_objects: Array[SmartObject] = []
 var _executors: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
+var _pending_sim_seconds: float = 0.0
 
 func _init() -> void:
 	_rng.seed = 1337
@@ -26,9 +29,15 @@ func register_smart_object(object: SmartObject) -> void:
 
 func step(real_delta: float) -> void:
 	var sim_delta := clock.advance(real_delta)
-	if sim_delta <= 0.0:
+	if is_nan(sim_delta) or sim_delta <= 0.0:
 		return
 
+	_pending_sim_seconds += sim_delta
+	while _pending_sim_seconds >= FIXED_SIM_STEP_SECONDS:
+		_step_fixed(FIXED_SIM_STEP_SECONDS)
+		_pending_sim_seconds -= FIXED_SIM_STEP_SECONDS
+
+func _step_fixed(sim_delta: float) -> void:
 	for character in _characters:
 		if character == null:
 			continue
@@ -62,6 +71,8 @@ func _build_candidates(character: CharacterState) -> Array[ActionCandidate]:
 			if interaction == null:
 				continue
 			var score := _score_interaction(character, interaction)
+			if score <= 0.0:
+				continue
 			candidates.append(ActionCandidate.new(interaction.id, score, object, interaction))
 
 	return candidates
