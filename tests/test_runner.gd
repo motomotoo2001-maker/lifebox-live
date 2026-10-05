@@ -10,6 +10,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/unit/test_smart_object.gd",
 	"res://tests/unit/test_utility_ai.gd",
 	"res://tests/integration/test_single_resident_day.gd",
+	"res://tests/integration/test_simulation_world_invariants.gd",
 	"res://tests/soak/test_foundation_soak.gd",
 ]
 
