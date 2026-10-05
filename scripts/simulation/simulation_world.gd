@@ -10,6 +10,7 @@ var utility_ai := UtilityAI.new()
 var stuck_recovery_policy := StuckRecoveryPolicy.new()
 var economy_system := EconomySystem.new()
 var spending_decision_system := SpendingDecisionSystem.new()
+var decision_bias_system := DecisionBiasSystem.new()
 var job_system := JobSystem.new()
 var household_expense_system := HouseholdExpenseSystem.new()
 var relationship_graph := RelationshipGraph.new()
@@ -559,7 +560,18 @@ func _score_interaction(character: CharacterState, interaction: InteractionDefin
 		var deficit := 100.0 - clampf(need_state.value, 0.0, 100.0)
 		score += deficit * effect
 
-	return spending_decision_system.adjust_score(character, interaction, score)
+	var spending_score := spending_decision_system.adjust_score(
+		character,
+		interaction,
+		score
+	)
+	return decision_bias_system.adjust(
+		character,
+		interaction,
+		spending_score,
+		_processed_sim_seconds,
+		relationship_graph
+	)
 
 func _register_default_social_actions() -> void:
 	var chat := SocialActionDefinition.new()
