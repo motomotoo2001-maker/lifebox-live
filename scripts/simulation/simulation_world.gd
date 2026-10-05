@@ -91,8 +91,8 @@ func capture_persistence_state() -> Dictionary:
 		"household_expenses": household_expense_system.capture_persistence_state(),
 		"social": social_system.capture_persistence_state(),
 		"rng": {
-			"seed": _rng.seed,
-			"state": _rng.state,
+			"seed": str(_rng.seed),
+			"state": str(_rng.state),
 		},
 	}
 
@@ -327,10 +327,13 @@ func _validate_runtime_state(
 		errors.append("runtime economy counters do not match processed simulation")
 
 func _validate_rng_state(rng_data: Dictionary, errors: Array[String]) -> void:
-	if not rng_data.has("seed") or not rng_data["seed"] is int:
-		errors.append("rng seed must be an integer")
-	if not rng_data.has("state") or not rng_data["state"] is int:
-		errors.append("rng state must be an integer")
+	for key in ["seed", "state"]:
+		if not rng_data.has(key) or not rng_data[key] is String:
+			errors.append("rng %s must be a lossless integer string" % key)
+			continue
+		var value: String = rng_data[key]
+		if value.is_empty() or not value.is_valid_int():
+			errors.append("rng %s must be a valid integer string" % key)
 
 func _validate_action_social_overlap(
 	actions: Array,
