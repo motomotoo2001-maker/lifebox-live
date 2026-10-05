@@ -1,0 +1,35 @@
+name: Godot Headless Tests
+
+on:
+  push:
+    branches:
+      - 'dev/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Verify Godot
+        run: godot --version
+
+      - name: Scan project scripts
+        run: godot --headless --path . --editor --quit
+
+      - name: Run headless tests
+        run: godot --headless --path . -s res://tests/test_runner.gd

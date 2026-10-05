@@ -1,0 +1,2 @@
+class_name HouseholdBlockout
+extends Node3D

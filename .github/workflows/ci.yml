@@ -1,0 +1,43 @@
+name: Godot CI
+
+on:
+  push:
+    branches:
+      - 'dev/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Verify Godot
+        run: godot --version
+
+      - name: Scan project scripts
+        run: godot --headless --path . --editor --quit
+
+      - name: Run headless tests
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM 45s godot --headless --verbose --path . -s res://tests/test_runner.gd 2>&1 | tee godot-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -eq 124 ]; then
+            echo "::error::Godot headless tests exceeded 45 seconds."
+          fi
+          exit "$status"
