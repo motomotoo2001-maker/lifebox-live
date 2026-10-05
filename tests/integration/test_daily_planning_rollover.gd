@@ -122,8 +122,8 @@ func _test_rollover_and_idempotence(
 	var first_ids := _goal_ids(resident.goals.active_goals())
 	var first_refs: Array = resident.goals.active_goals()
 	var rng_state_before := rng.state
-	var money_before := resident.money
-	var worked_before := resident.job.total_worked_sim_seconds
+	var money_before: float = resident.money
+	var worked_before: float = resident.job.total_worked_sim_seconds
 
 	system.advance(world, 9.0 * 3600.0, rng)
 
@@ -154,7 +154,7 @@ func _test_rollover_and_idempotence(
 	if _goal_ids(resident.goals.active_goals()) != day_one_ids:
 		failures.append("repeated day-one timestamp must remain idempotent")
 
-	var before_day := resident.goals.day_index
+	var before_day: int = resident.goals.day_index
 	system.advance(world, -1.0, rng)
 	system.advance(world, NAN, rng)
 	if resident.goals.day_index != before_day:
