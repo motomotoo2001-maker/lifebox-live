@@ -52,6 +52,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/soak/test_six_resident_household_soak.gd",
 	"res://tests/soak/test_social_economy_day_soak.gd",
 	"res://tests/soak/test_persistence_replay_soak.gd",
+	"res://tests/soak/test_daily_goals_schedules_soak.gd",
 ]
 
 func _init() -> void:
