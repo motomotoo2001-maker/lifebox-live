@@ -61,7 +61,10 @@ func run() -> Array[String]:
 
 	var relationships = relationship_graph_script.new()
 	relationships.get_or_create(initiator.id, preferred.id)
-	relationships.get_or_create(initiator.id, other.id)
+	relationships.get_or_create(
+		initiator.id,
+		other.id
+	).apply_delta(80.0, 0.0, 0.0)
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1234
