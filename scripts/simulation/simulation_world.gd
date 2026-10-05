@@ -180,6 +180,20 @@ func validate_persistence_state(data: Dictionary) -> Array[String]:
 			continue
 		decoded_residents.append(decoded)
 
+	for index in range(data["residents"].size()):
+		var raw_resident = data["residents"][index]
+		if not raw_resident is Dictionary:
+			continue
+		var goal_target_errors := CharacterSnapshotCodec.validate_goal_targets(
+			raw_resident,
+			resident_ids
+		)
+		for goal_target_error in goal_target_errors:
+			errors.append(
+				"resident[%d]: %s"
+				% [index, goal_target_error]
+			)
+
 	var relationship_errors := SocialEconomySnapshotCodec.validate_relationships(
 		data["relationships"],
 		resident_ids
