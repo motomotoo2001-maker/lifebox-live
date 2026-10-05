@@ -40,6 +40,23 @@ func register_smart_object(object: SmartObject) -> void:
 		return
 	_smart_objects.append(object)
 
+func get_character(character_id: StringName) -> CharacterState:
+	for character in _characters:
+		if character != null and character.id == character_id:
+			return character
+	return null
+
+func get_smart_object(object_id: StringName) -> SmartObject:
+	for object in _smart_objects:
+		if object == null or not is_instance_valid(object):
+			continue
+		if object.object_id == object_id:
+			return object
+	return null
+
+func get_action_executor(character_id: StringName) -> ActionExecutor:
+	return _executors.get(character_id)
+
 func report_arrival(character_id: StringName, target_object_id: StringName) -> bool:
 	var executor: ActionExecutor = _executors.get(character_id)
 	if executor == null:
