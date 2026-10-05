@@ -40,15 +40,26 @@ static func _migrate_v0_to_v1(snapshot: Dictionary) -> bool:
 	snapshot["schema_version"] = 1
 	return true
 
+static func _is_integral_number(value) -> bool:
+	if not (value is int or value is float):
+		return false
+	var number := float(value)
+	if is_nan(number) or is_inf(number):
+		return false
+	return is_equal_approx(number, roundf(number))
+
 static func _has_valid_base_envelope(snapshot: Dictionary) -> bool:
 	if not snapshot.has("project_id") or not snapshot["project_id"] is String:
 		return false
 	if snapshot["project_id"] != str(AppConstants.PROJECT_ID):
 		return false
 
-	if not snapshot.has("schema_version") or not snapshot["schema_version"] is int:
+	if not snapshot.has("schema_version"):
 		return false
-	var version := int(snapshot["schema_version"])
+	var version_value = snapshot["schema_version"]
+	if not _is_integral_number(version_value):
+		return false
+	var version := int(float(version_value))
 	if version < 0 or version > SaveSchema.CURRENT_VERSION:
 		return false
 
