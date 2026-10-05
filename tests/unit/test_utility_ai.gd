@@ -34,26 +34,29 @@ func run() -> Array[String]:
 	blocked_object.reserve(&"resident_other")
 	var blocked = candidate_script.new(&"blocked", 100.0, blocked_object)
 
+	var candidates: Array[ActionCandidate] = [low, high, invalid, blocked]
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 12345
-	var choice = utility_ai.choose(character, [low, high, invalid, blocked], rng)
+	var choice = utility_ai.choose(character, candidates, rng)
 	if choice == null or choice.id != &"high":
 		failures.append("UtilityAI must choose the highest valid available candidate")
 
+	var empty_candidates: Array[ActionCandidate] = []
 	var empty_rng := RandomNumberGenerator.new()
 	empty_rng.seed = 1
-	var idle_choice = utility_ai.choose(character, [], empty_rng)
+	var idle_choice = utility_ai.choose(character, empty_candidates, empty_rng)
 	if idle_choice == null or idle_choice.id != &"idle":
 		failures.append("UtilityAI must return Idle when no valid candidate exists")
 
 	var tie_a = candidate_script.new(&"tie_a", 50.0)
 	var tie_b = candidate_script.new(&"tie_b", 50.0)
+	var ties: Array[ActionCandidate] = [tie_a, tie_b]
 	var rng_a := RandomNumberGenerator.new()
 	var rng_b := RandomNumberGenerator.new()
 	rng_a.seed = 987654
 	rng_b.seed = 987654
-	var tie_choice_a = utility_ai.choose(character, [tie_a, tie_b], rng_a)
-	var tie_choice_b = utility_ai.choose(character, [tie_a, tie_b], rng_b)
+	var tie_choice_a = utility_ai.choose(character, ties, rng_a)
+	var tie_choice_b = utility_ai.choose(character, ties, rng_b)
 
 	if tie_choice_a == null or tie_choice_b == null:
 		failures.append("UtilityAI tie choice must return a candidate")
