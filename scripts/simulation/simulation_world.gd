@@ -8,6 +8,8 @@ var need_system := NeedSystem.new()
 var utility_ai := UtilityAI.new()
 var stuck_recovery_policy := StuckRecoveryPolicy.new()
 var economy_system := EconomySystem.new()
+var relationship_graph := RelationshipGraph.new()
+var social_system := SocialSystem.new()
 
 var _characters: Array[CharacterState] = []
 var _smart_objects: Array[SmartObject] = []
@@ -17,6 +19,7 @@ var _pending_sim_seconds: float = 0.0
 
 func _init() -> void:
 	_rng.seed = 1337
+	_register_default_social_actions()
 
 func add_character(character: CharacterState) -> bool:
 	if character == null or character.id == &"":
@@ -62,6 +65,9 @@ func _step_fixed(sim_delta: float) -> void:
 
 		need_system.advance_character(character, sim_delta)
 
+		if social_system.reservation_book.is_reserved(character.id):
+			continue
+
 		var executor: ActionExecutor = _executors.get(character.id)
 		if executor == null:
 			executor = ActionExecutor.new(economy_system)
@@ -79,6 +85,8 @@ func _step_fixed(sim_delta: float) -> void:
 			continue
 
 		executor.start(choice, character)
+
+	social_system.advance(_characters, relationship_graph, sim_delta, _rng)
 
 func _handle_stuck_movement(character: CharacterState, executor: ActionExecutor) -> void:
 	if not executor.is_active():
@@ -147,3 +155,19 @@ func _score_interaction(character: CharacterState, interaction: InteractionDefin
 		score += deficit * effect
 
 	return score
+
+func _register_default_social_actions() -> void:
+	var chat := SocialActionDefinition.new()
+	chat.id = &"chat"
+	chat.duration_sim_seconds = 20.0
+	social_system.register_action(chat)
+
+	var compliment := SocialActionDefinition.new()
+	compliment.id = &"compliment"
+	compliment.duration_sim_seconds = 20.0
+	social_system.register_action(compliment)
+
+	var argue := SocialActionDefinition.new()
+	argue.id = &"argue"
+	argue.duration_sim_seconds = 20.0
+	social_system.register_action(argue)
