@@ -3,6 +3,7 @@ extends SceneTree
 const TEST_PATHS: Array[String] = [
 	"res://tests/unit/test_boot.gd",
 	"res://tests/unit/test_save_schema.gd",
+	"res://tests/unit/test_goal_schedule_state.gd",
 	"res://tests/unit/test_simulation_clock.gd",
 	"res://tests/unit/test_simulation_clock_safety.gd",
 	"res://tests/unit/test_event_bus.gd",
