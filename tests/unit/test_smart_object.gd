@@ -25,7 +25,7 @@ func run() -> Array[String]:
 	interaction.need_effects = {"hunger": 25.0}
 
 	var smart_object = smart_object_script.new()
-	smart_object.interactions = [interaction]
+	smart_object.interactions.append(interaction)
 
 	var listed: Array = smart_object.list_interactions(null)
 	if listed.size() != 1 or listed[0].id != &"eat_snack":
