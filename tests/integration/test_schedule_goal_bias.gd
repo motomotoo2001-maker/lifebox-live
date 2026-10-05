@@ -92,7 +92,7 @@ func _test_schedule_bias(
 	block.kind = &"free_time"
 	block.start_hour = 0.0
 	block.duration_hours = 24.0
-	block.preferred_action_tags = [&"relax"]
+	block.preferred_action_tags.append(&"relax")
 	schedule.blocks.append(block)
 	character.schedule.definition = schedule
 
@@ -136,7 +136,7 @@ func _test_goal_bias(
 	goal_definition.id = &"work_today"
 	goal_definition.category = &"work"
 	goal_definition.priority = 1.0
-	goal_definition.preferred_action_tags = [&"work"]
+	goal_definition.preferred_action_tags.append(&"work")
 	if not character.goals.add(goal_state_script.new(goal_definition)):
 		failures.append("goal bias fixture goal must be accepted")
 		return
@@ -183,7 +183,7 @@ func _test_critical_need_override(
 	fun_goal.id = &"fun_today"
 	fun_goal.category = &"fun"
 	fun_goal.priority = 1.0
-	fun_goal.preferred_action_tags = [&"relax"]
+	fun_goal.preferred_action_tags.append(&"relax")
 	character.goals.add(goal_state_script.new(fun_goal))
 
 	var eat = _interaction(interaction_script, &"eat", [&"eat"], {"hunger": 50.0})
