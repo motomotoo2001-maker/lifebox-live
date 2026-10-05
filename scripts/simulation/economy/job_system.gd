@@ -42,7 +42,7 @@ func advance_character(
 	if worked_seconds <= 0.0:
 		return 0.0
 
-	var earned := (
+	var earned: float = (
 		worked_seconds / 3600.0
 		* character.job.definition.pay_per_sim_hour
 	)
