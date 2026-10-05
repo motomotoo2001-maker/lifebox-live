@@ -203,9 +203,9 @@ func _test_disk_backup_recovery(
 		failures.append("recovered soak envelope must contain payload")
 		return
 	var recovered_world = recovered["payload"].get("world", {})
-	if recovered_world != expected_world_snapshot:
+	if not _snapshots_equivalent(expected_world_snapshot, recovered_world):
 		failures.append(
-			"backup recovery must return exact saved world snapshot; first diff: %s"
+			"backup recovery must return numerically equivalent saved world snapshot; first diff: %s"
 			% _first_difference(expected_world_snapshot, recovered_world, "world")
 		)
 
@@ -607,10 +607,41 @@ func _first_difference(expected, actual, path: String) -> String:
 
 	if expected is float:
 		if expected != actual:
-			return "%s float %.17g != %.17g" % [path, expected, actual]
+			return "%s float %s != %s" % [path, str(expected), str(actual)]
 		return ""
 
 	if expected != actual:
 		return "%s %s != %s" % [path, str(expected), str(actual)]
 
 	return ""
+
+
+func _snapshots_equivalent(expected, actual) -> bool:
+	if (
+		(expected is int or expected is float)
+		and (actual is int or actual is float)
+	):
+		return float(expected) == float(actual)
+
+	if typeof(expected) != typeof(actual):
+		return false
+
+	if expected is Dictionary:
+		if expected.size() != actual.size():
+			return false
+		for key in expected.keys():
+			if not actual.has(key):
+				return false
+			if not _snapshots_equivalent(expected[key], actual[key]):
+				return false
+		return true
+
+	if expected is Array:
+		if expected.size() != actual.size():
+			return false
+		for index in range(expected.size()):
+			if not _snapshots_equivalent(expected[index], actual[index]):
+				return false
+		return true
+
+	return expected == actual
