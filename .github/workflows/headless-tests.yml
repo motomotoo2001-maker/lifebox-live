@@ -25,5 +25,8 @@ jobs:
       - name: Verify Godot
         run: godot --version
 
+      - name: Scan project scripts
+        run: godot --headless --path . --editor --quit
+
       - name: Run headless tests
         run: godot --headless --path . -s res://tests/test_runner.gd
