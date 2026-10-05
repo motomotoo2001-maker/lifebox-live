@@ -26,8 +26,9 @@ Needs remain authoritative. Schedules and goals only bias autonomous Utility AI 
 - `GoalState`
   - runtime progress and status: active / completed / failed.
 - `GoalSet`
-  - resident-owned current-day goal set;
+  - resident-owned current-day goal set/history;
   - maximum three active goals;
+  - completed goals remain in the current-day history until rollover;
   - day rollover boundary.
 - `DailyGoalPlanner`
   - creates 1–3 deterministic goals from personality, job and relationships.
@@ -74,6 +75,8 @@ Remaining slots are chosen by deterministic weighted sampling without replacemen
 
 Social target selection is deterministic: highest outgoing affinity wins, with resident ID as the tie-break.
 
+An active targeted social goal also contributes a bounded target bonus inside `SocialSystem`. This means a goal such as “talk to resident_b” affects the actual autonomous partner choice instead of only existing as metadata. Residents without a matching social goal use the original relationship/personality scoring unchanged.
+
 ## Schedule semantics
 
 Schedules repeat every 24 simulated hours.
@@ -113,6 +116,21 @@ If hunger or energy is at or below `20`:
 - schedule and goal bonuses do not override the critical need.
 
 This keeps planning as preference rather than hard scripting.
+
+## Goal completion
+
+Daily goals are not permanent score modifiers.
+
+Successful SmartObject interactions complete active non-targeted goals when at least one `InteractionDefinition.action_tags` entry matches the goal's preferred action tags.
+
+Completion is applied only after the interaction succeeds:
+- cancel does not complete a goal;
+- movement failure does not complete a goal;
+- failed cost settlement does not complete a goal.
+
+Completed social sessions complete matching social goals for either participant when the goal target is empty or matches the other resident.
+
+Completed goals reach progress `1.0` and stop contributing Utility AI bias for the remainder of the day. They remain in the current-day goal history so save/load and UI can report what the resident accomplished.
 
 ## Daily rollover
 
@@ -178,8 +196,9 @@ The soak:
 
 It also checks:
 
-- 1–3 active goals per resident/day;
-- stable same-day goal signatures;
+- 1–3 generated goals per resident/day;
+- stable same-day goal ID signatures even as goals complete;
+- valid active/completed/failed status and completed progress;
 - all three simulated planning days observed;
 - dominant personality goal categories;
 - active schedule block correctness;
