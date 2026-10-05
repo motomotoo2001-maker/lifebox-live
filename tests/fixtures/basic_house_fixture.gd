@@ -33,10 +33,14 @@ func build() -> Dictionary:
 
 	var fridge = smart_object_script.new()
 	fridge.name = "Fridge"
+	fridge.object_id = &"fridge_main"
+	fridge.interaction_point = Vector3(2.0, 0.0, 0.0)
 	fridge.interactions.append(eat)
 
 	var bed = smart_object_script.new()
 	bed.name = "Bed"
+	bed.object_id = &"bed_main"
+	bed.interaction_point = Vector3(-2.0, 0.0, 0.0)
 	bed.interactions.append(sleep)
 
 	var world = world_script.new()
