@@ -2,6 +2,7 @@ class_name SimulationWorld
 extends RefCounted
 
 const FIXED_SIM_STEP_SECONDS := 1.0
+const ECONOMY_STEP_SECONDS := 60.0
 
 var clock := SimulationClock.new()
 var need_system := NeedSystem.new()
@@ -20,6 +21,8 @@ var _executors: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _pending_sim_seconds: float = 0.0
 var _processed_sim_seconds: float = 0.0
+var _pending_economy_seconds: float = 0.0
+var _processed_economy_seconds: float = 0.0
 
 func _init() -> void:
 	_rng.seed = 1337
@@ -64,17 +67,12 @@ func step(real_delta: float) -> void:
 
 func _step_fixed(sim_delta: float) -> void:
 	_processed_sim_seconds += sim_delta
+	_pending_economy_seconds += sim_delta
 
 	for character in _characters:
 		if character == null:
 			continue
 
-		job_system.advance_character(
-			character,
-			sim_delta,
-			_processed_sim_seconds,
-			economy_system
-		)
 		need_system.advance_character(character, sim_delta)
 
 		if social_system.reservation_book.is_reserved(character.id):
@@ -99,9 +97,29 @@ func _step_fixed(sim_delta: float) -> void:
 		executor.start(choice, character)
 
 	social_system.advance(_characters, relationship_graph, sim_delta, _rng)
+
+	while _pending_economy_seconds >= ECONOMY_STEP_SECONDS:
+		_processed_economy_seconds += ECONOMY_STEP_SECONDS
+		_advance_economy(ECONOMY_STEP_SECONDS, _processed_economy_seconds)
+		_pending_economy_seconds -= ECONOMY_STEP_SECONDS
+
+func _advance_economy(
+	sim_delta_seconds: float,
+	simulation_seconds: float
+) -> void:
+	for character in _characters:
+		if character == null:
+			continue
+		job_system.advance_character(
+			character,
+			sim_delta_seconds,
+			simulation_seconds,
+			economy_system
+		)
+
 	household_expense_system.advance(
 		_characters,
-		_processed_sim_seconds,
+		simulation_seconds,
 		economy_system
 	)
 
