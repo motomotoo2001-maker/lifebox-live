@@ -3,6 +3,7 @@ extends RefCounted
 
 const MAX_ACTIVE_GOALS := 3
 
+var day_index: int = -1
 var _goals: Array[GoalState] = []
 
 func add(goal: GoalState) -> bool:
@@ -33,3 +34,15 @@ func get_goal(goal_id: StringName) -> GoalState:
 		if goal != null and goal.definition != null and goal.definition.id == goal_id:
 			return goal
 	return null
+
+
+func begin_day(new_day_index: int) -> bool:
+	if new_day_index < 0 or new_day_index <= day_index:
+		return false
+
+	for goal in _goals:
+		if goal != null and goal.is_active():
+			goal.fail()
+	_goals.clear()
+	day_index = new_day_index
+	return true
