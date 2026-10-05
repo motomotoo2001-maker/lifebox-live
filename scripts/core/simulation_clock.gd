@@ -10,6 +10,9 @@ var _time_scale: float = 1.0
 var _simulation_seconds: float = 0.0
 
 func set_time_scale(value: float) -> void:
+	if is_nan(value) or is_inf(value):
+		_time_scale = MIN_TIME_SCALE
+		return
 	_time_scale = clampf(value, MIN_TIME_SCALE, MAX_TIME_SCALE)
 
 func advance(real_delta: float) -> float:
