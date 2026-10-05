@@ -204,7 +204,10 @@ func _test_disk_backup_recovery(
 		return
 	var recovered_world = recovered["payload"].get("world", {})
 	if recovered_world != expected_world_snapshot:
-		failures.append("backup recovery must return exact saved world snapshot")
+		failures.append(
+			"backup recovery must return exact saved world snapshot; first diff: %s"
+			% _first_difference(expected_world_snapshot, recovered_world, "world")
+		)
 
 	var restore_target := _build_world(
 		failures,
@@ -232,8 +235,12 @@ func _test_disk_backup_recovery(
 			restore_target["world"],
 			recovered_world
 		)
-		if snapshot_script.encode(restore_target["world"]) != expected_world_snapshot:
-			failures.append("disk-recovered world must re-encode to exact saved snapshot")
+		var reencoded: Dictionary = snapshot_script.encode(restore_target["world"])
+		if reencoded != expected_world_snapshot:
+			failures.append(
+				"disk-recovered world must re-encode to exact saved snapshot; first diff: %s"
+				% _first_difference(expected_world_snapshot, reencoded, "world")
+			)
 		_validate_reservations(failures, restore_target, "disk-recovered")
 
 	_dispose(restore_target)
@@ -541,3 +548,69 @@ func _dispose(state: Dictionary) -> void:
 	for object in state.get("objects", []):
 		if object != null and is_instance_valid(object):
 			object.free()
+
+
+func _first_difference(expected, actual, path: String) -> String:
+	var expected_type := typeof(expected)
+	var actual_type := typeof(actual)
+
+	if expected_type != actual_type:
+		if (
+			(expected is int or expected is float)
+			and (actual is int or actual is float)
+			and float(expected) == float(actual)
+		):
+			return "%s type %s != %s for numerically equal value %s" % [
+				path,
+				type_string(expected_type),
+				type_string(actual_type),
+				str(expected),
+			]
+		return "%s type %s != %s (%s vs %s)" % [
+			path,
+			type_string(expected_type),
+			type_string(actual_type),
+			str(expected),
+			str(actual),
+		]
+
+	if expected is Dictionary:
+		var expected_keys: Array = expected.keys()
+		var actual_keys: Array = actual.keys()
+		for key in expected_keys:
+			if not actual.has(key):
+				return "%s missing key %s" % [path, str(key)]
+			var nested := _first_difference(
+				expected[key],
+				actual[key],
+				"%s.%s" % [path, str(key)]
+			)
+			if not nested.is_empty():
+				return nested
+		for key in actual_keys:
+			if not expected.has(key):
+				return "%s unexpected key %s" % [path, str(key)]
+		return ""
+
+	if expected is Array:
+		if expected.size() != actual.size():
+			return "%s array size %d != %d" % [path, expected.size(), actual.size()]
+		for index in range(expected.size()):
+			var nested := _first_difference(
+				expected[index],
+				actual[index],
+				"%s[%d]" % [path, index]
+			)
+			if not nested.is_empty():
+				return nested
+		return ""
+
+	if expected is float:
+		if expected != actual:
+			return "%s float %.17g != %.17g" % [path, expected, actual]
+		return ""
+
+	if expected != actual:
+		return "%s %s != %s" % [path, str(expected), str(actual)]
+
+	return ""
