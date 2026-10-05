@@ -35,6 +35,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/integration/test_social_snapshot_restore.gd",
 	"res://tests/integration/test_world_snapshot_roundtrip.gd",
 	"res://tests/integration/test_save_service.gd",
+	"res://tests/integration/test_replay_log.gd",
 	"res://tests/integration/test_six_resident_contention.gd",
 	"res://tests/integration/test_stuck_recovery.gd",
 	"res://tests/integration/test_simulation_world_invariants.gd",
