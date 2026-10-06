@@ -120,6 +120,10 @@ func _build_house() -> void:
 	_build_lounge()
 	_build_kitchen()
 	_build_bathroom()
+	_add_room_label("BEDROOM", Vector3(-3.2, 0.35, -0.55), Color("9eb5e7"))
+	_add_room_label("LOUNGE", Vector3(3.2, 0.35, -0.55), Color("d3a4ff"))
+	_add_room_label("KITCHEN", Vector3(-3.2, 0.35, 6.2), Color("72e0bd"))
+	_add_room_label("BATH", Vector3(3.2, 0.35, 6.2), Color("76a8b8"))
 
 func _build_bedroom() -> void:
 	var bed_color := Color("7182a8")
@@ -311,6 +315,25 @@ func _build_resident_visuals() -> void:
 			root
 		)
 
+		if index == 0:
+			_make_story_marker(root, RESIDENT_COLORS[index])
+
+		var name_label := Label3D.new()
+		name_label.name = "ResidentLabel"
+		name_label.position = Vector3(0.0, 2.4, 0.0)
+		name_label.text = "%s  •  %s" % [
+			resident.display_name.to_upper(),
+			str(resident.schedule.active_block_id).to_upper(),
+		]
+		name_label.font_size = 28
+		name_label.outline_size = 10
+		name_label.modulate = RESIDENT_COLORS[index].lightened(0.12)
+		name_label.outline_modulate = Color(0.02, 0.025, 0.04, 0.95)
+		name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		name_label.fixed_size = true
+		name_label.no_depth_test = true
+		root.add_child(name_label)
+
 func _build_hud() -> void:
 	var canvas := CanvasLayer.new()
 	canvas.name = "HUD"
@@ -347,7 +370,7 @@ func _build_hud() -> void:
 	top_box.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "DAY 3  •  14:20  •  6 RESIDENTS  •  AUTONOMOUS SIM"
+	subtitle.text = "● LIVE   •   DAY 3   •   14:20   •   6 RESIDENTS   •   AUTONOMOUS SIM"
 	subtitle.add_theme_font_size_override("font_size", 15)
 	subtitle.add_theme_color_override("font_color", Color("8ea6c9"))
 	top_box.add_child(subtitle)
@@ -457,6 +480,43 @@ func _resident_card(resident: CharacterState, index: int) -> PanelContainer:
 	box.add_child(stats)
 
 	return card
+
+func _add_room_label(
+	text_value: String,
+	position: Vector3,
+	color: Color
+) -> void:
+	var label := Label3D.new()
+	label.position = position
+	label.text = text_value
+	label.font_size = 26
+	label.outline_size = 8
+	label.modulate = color
+	label.outline_modulate = Color(0.02, 0.025, 0.04, 0.9)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.fixed_size = true
+	label.no_depth_test = false
+	add_child(label)
+
+func _make_story_marker(parent: Node, color: Color) -> void:
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.88
+	mesh.bottom_radius = 0.88
+	mesh.height = 0.045
+
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color.darkened(0.25)
+	material.emission_enabled = true
+	material.emission = color
+	material.emission_energy_multiplier = 2.2
+	material.roughness = 0.35
+
+	var marker := MeshInstance3D.new()
+	marker.name = "StoryDirectorMarker"
+	marker.position = Vector3(0.0, 0.09, 0.0)
+	marker.mesh = mesh
+	marker.material_override = material
+	parent.add_child(marker)
 
 func _configure_camera() -> void:
 	var camera := Camera3D.new()
