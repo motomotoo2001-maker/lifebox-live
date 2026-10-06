@@ -6,6 +6,8 @@ const RESIDENT_ACTOR_SCENE := preload(
 )
 
 @export var advance_simulation: bool = true
+@export var manual_focus_seconds: float = 6.0
+@export var manual_focus_ortho_size: float = 16.5
 
 @onready var household: HouseholdBlockout = $HouseholdBlockout
 @onready var resident_actors: Node3D = $ResidentActors
@@ -16,6 +18,8 @@ const RESIDENT_ACTOR_SCENE := preload(
 var _world: SimulationWorld = null
 var _actors: Dictionary = {}
 var _active_target_ids: Dictionary = {}
+var _selected_resident_id: StringName = &""
+var _manual_focus_remaining: float = 0.0
 
 func _ready() -> void:
 	if camera_director != null:
@@ -37,6 +41,49 @@ func _process(delta: float) -> void:
 		_world.step(delta)
 	sync_visuals()
 	_update_camera_director(delta)
+	if hud != null:
+		hud.set_simulation_running(advance_simulation)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _world == null or not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+
+	if key_event.keycode == KEY_SPACE:
+		advance_simulation = not advance_simulation
+		if hud != null:
+			hud.set_simulation_running(advance_simulation)
+			hud.set_latest_event(
+				"Simulation resumed" if advance_simulation
+				else "Simulation paused"
+			)
+		get_viewport().set_input_as_handled()
+		return
+
+	var resident_index := -1
+	match key_event.keycode:
+		KEY_1:
+			resident_index = 0
+		KEY_2:
+			resident_index = 1
+		KEY_3:
+			resident_index = 2
+		KEY_4:
+			resident_index = 3
+		KEY_5:
+			resident_index = 4
+		KEY_6:
+			resident_index = 5
+
+	if resident_index < 0:
+		return
+	var residents: Array[CharacterState] = _world.characters()
+	if resident_index >= residents.size() or residents[resident_index] == null:
+		return
+	select_resident(residents[resident_index].id)
+	get_viewport().set_input_as_handled()
 
 func bind_world(world: SimulationWorld) -> bool:
 	if world == null:
@@ -73,8 +120,11 @@ func bind_world(world: SimulationWorld) -> bool:
 		actor.set_visual_color(_palette[index % _palette.size()])
 		actor.movement_arrived.connect(_on_actor_arrived)
 		actor.movement_failed.connect(_on_actor_failed)
+		actor.resident_selected.connect(_on_actor_selected)
 		_actors[character.id] = actor
 
+	if not residents.is_empty() and residents[0] != null:
+		select_resident(residents[0].id, false)
 	sync_visuals()
 	return true
 
@@ -90,6 +140,7 @@ func sync_visuals() -> void:
 			continue
 
 		actor.set_presentation_state(presentation_state_for(character))
+		actor.set_selected(character.id == _selected_resident_id)
 		var badge_text := activity_badge_for(character)
 		if badge_text.is_empty():
 			actor.clear_activity_badge()
@@ -139,9 +190,61 @@ func _presentation_target_for(
 	var slot_index := maxi(suffix - 1, 0) % sofa_slots.size()
 	return target + sofa_slots[slot_index]
 
+func select_resident(
+	character_id: StringName,
+	focus_camera: bool = true
+) -> bool:
+	if _world == null or character_id == &"":
+		return false
+	var character := _world.get_character(character_id)
+	var actor := actor_for(character_id)
+	if character == null or actor == null:
+		return false
+
+	_selected_resident_id = character_id
+	for actor_id in _actors.keys():
+		var candidate := actor_for(actor_id)
+		if candidate != null:
+			candidate.set_selected(actor_id == character_id)
+
+	if hud != null:
+		hud.set_selected_resident(character_id)
+		hud.set_latest_event("Selected %s" % character.display_name)
+
+	if focus_camera:
+		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
+	return true
+
+func selected_resident_id() -> StringName:
+	return _selected_resident_id
+
+func set_simulation_paused(value: bool) -> void:
+	advance_simulation = not value
+	if hud != null:
+		hud.set_simulation_running(advance_simulation)
+
+func is_simulation_paused() -> bool:
+	return not advance_simulation
+
+func _on_actor_selected(character_id: StringName) -> void:
+	select_resident(character_id)
+
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:
 		return
+
+	if _manual_focus_remaining > 0.0:
+		_manual_focus_remaining = maxf(
+			_manual_focus_remaining - maxf(delta, 0.0),
+			0.0
+		)
+		var selected_actor := actor_for(_selected_resident_id)
+		if selected_actor != null and camera_rig != null:
+			camera_rig.focus_world_position(
+				selected_actor.global_position + Vector3(0.0, 0.85, 0.0),
+				manual_focus_ortho_size
+			)
+			return
 
 	for character in _world.characters():
 		if character == null:
@@ -250,6 +353,11 @@ func validate_visual_state() -> Array[String]:
 			% [_actors.size(), residents.size()]
 		)
 
+	if _selected_resident_id != &"" and actor_for(_selected_resident_id) == null:
+		errors.append(
+			"selected resident has no actor: %s" % _selected_resident_id
+		)
+
 	var resident_ids: Dictionary = {}
 	for character in residents:
 		if character == null or character.id == &"":
@@ -261,6 +369,10 @@ func validate_visual_state() -> Array[String]:
 		if actor == null or not is_instance_valid(actor):
 			errors.append("missing actor for resident %s" % character.id)
 			continue
+		if actor.is_selected() != (character.id == _selected_resident_id):
+			errors.append(
+				"selection marker mismatch for %s" % character.id
+			)
 
 		var has_visual_target := _active_target_ids.has(character.id)
 		var is_authoritatively_moving: bool = (
@@ -323,6 +435,8 @@ func _on_actor_failed(character_id: StringName) -> void:
 func _clear_actors() -> void:
 	_active_target_ids.clear()
 	_actors.clear()
+	_selected_resident_id = &""
+	_manual_focus_remaining = 0.0
 
 	if not is_instance_valid(resident_actors):
 		return
