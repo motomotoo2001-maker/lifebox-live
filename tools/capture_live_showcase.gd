@@ -26,7 +26,7 @@ func _capture() -> void:
 		quit(1)
 		return
 
-	var output := "user://lifebox_live_showcase.png"
+	var output := "res://lifebox_live_showcase.png"
 	var error := image.save_png(output)
 	print("LIVE_SHOWCASE_CAPTURE_PATH=", ProjectSettings.globalize_path(output))
 	quit(0 if error == OK else 1)
