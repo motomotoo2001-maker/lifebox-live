@@ -32,7 +32,7 @@ func _process(delta: float) -> void:
 func bind_world(world: SimulationWorld) -> void:
 	_world = world
 	if _world != null and _selected_resident_id == &"":
-		var residents := _world.characters()
+		var residents: Array[CharacterState] = _world.characters()
 		if not residents.is_empty() and residents[0] != null:
 			_selected_resident_id = residents[0].id
 	refresh()
@@ -57,7 +57,7 @@ func refresh() -> void:
 		_clear_resident_panel()
 		return
 
-	var simulation_seconds := _world.clock.get_simulation_seconds()
+	var simulation_seconds: float = _world.clock.get_simulation_seconds()
 	var day_index := int(floor(simulation_seconds / 86400.0))
 	var day_seconds := fmod(simulation_seconds, 86400.0)
 	var hour := int(floor(day_seconds / 3600.0))
@@ -70,7 +70,7 @@ func refresh() -> void:
 	status_label.text = "AUTONOMOUS  •  %d RESIDENTS" % _world.characters().size()
 	event_label.text = _latest_event
 
-	var character := _world.get_character(_selected_resident_id)
+	var character: CharacterState = _world.get_character(_selected_resident_id)
 	if character == null:
 		_clear_resident_panel()
 		return
@@ -95,7 +95,7 @@ func _goal_text(character: CharacterState) -> String:
 	if character.goals == null:
 		return "Goal: —"
 
-	var active := character.goals.active_goals()
+	var active: Array = character.goals.active_goals()
 	if not active.is_empty():
 		var goal = active[0]
 		if goal != null and goal.definition != null:
@@ -107,7 +107,7 @@ func _goal_text(character: CharacterState) -> String:
 				suffix,
 			]
 
-	var history := character.goals.goals()
+	var history: Array = character.goals.goals()
 	if not history.is_empty():
 		var last = history[-1]
 		if last != null and last.definition != null:
