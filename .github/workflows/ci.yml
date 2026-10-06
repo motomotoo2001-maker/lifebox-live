@@ -49,14 +49,12 @@ jobs:
 
 
       - name: Render live showcase
-        if: github.event_name == 'push' && github.ref_name == 'dev/plan-06-vertical-debug-showcase'
         run: |
           xvfb-run -a godot --path . --rendering-method gl_compatibility -s res://tools/capture_live_showcase.gd
           test -s lifebox_live_showcase.png
           file lifebox_live_showcase.png
 
       - name: Upload live showcase
-        if: github.event_name == 'push' && github.ref_name == 'dev/plan-06-vertical-debug-showcase'
         uses: actions/upload-artifact@v4
         with:
           name: lifebox-live-showcase
