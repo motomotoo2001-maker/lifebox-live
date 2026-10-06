@@ -327,7 +327,7 @@ func _sync_actor_targets() -> void:
 			resident.movement.status == MovementState.STATUS_MOVING
 			and resident.movement.intent != null
 		):
-			var target_id := resident.movement.intent.target_object_id
+			var target_id: StringName = resident.movement.intent.target_object_id
 			if actor_targets.get(resident.id, &"") != target_id:
 				actor_targets[resident.id] = target_id
 				actor.set_movement_target(
@@ -339,7 +339,7 @@ func _sync_actor_targets() -> void:
 			actor_targets.erase(resident.id)
 
 func _on_actor_arrived(character_id: StringName) -> void:
-	var resident := world.get_character(character_id)
+	var resident: CharacterState = world.get_character(character_id)
 	if resident == null or resident.movement.intent == null:
 		return
 	var target_id := resident.movement.intent.target_object_id
