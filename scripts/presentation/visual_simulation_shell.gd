@@ -9,7 +9,7 @@ const RESIDENT_ACTOR_SCENE := preload(
 
 @onready var household: HouseholdBlockout = $HouseholdBlockout
 @onready var resident_actors: Node3D = $ResidentActors
-@onready var camera_rig: VerticalCameraRig = $VerticalCameraRig
+@onready var camera_rig: VerticalCameraRig = $VerticalCameraRig\n@onready var hud: VisualHUD = $HUDLayer/VisualHUD
 
 var _world: SimulationWorld = null
 var _actors: Dictionary = {}
@@ -37,6 +37,7 @@ func bind_world(world: SimulationWorld) -> bool:
 
 	_clear_actors()
 	_world = world
+	hud.bind_world(_world)
 
 	var residents := _world.characters()
 	for index in range(residents.size()):
@@ -114,6 +115,7 @@ func _on_actor_arrived(character_id: StringName) -> void:
 		return
 
 	_world.report_arrival(character_id, target_id)
+	hud.set_latest_event("%s arrived at %s" % [character_id, target_id])
 	_active_target_ids.erase(character_id)
 
 func _on_actor_failed(character_id: StringName) -> void:
@@ -124,6 +126,7 @@ func _on_actor_failed(character_id: StringName) -> void:
 		return
 
 	_world.report_movement_failure(character_id, target_id)
+	hud.set_latest_event("%s movement failed: %s" % [character_id, target_id])
 	_active_target_ids.erase(character_id)
 
 func _clear_actors() -> void:
