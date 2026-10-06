@@ -1,0 +1,55 @@
+name: Plan 10 Visual Capture
+
+on:
+  push:
+    branches:
+      - dev/plan-10-kaykit-furniture-art-pass
+    paths-ignore:
+      - 'artifacts/**'
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Scan project scripts and imports
+        run: godot --headless --path . --editor --quit
+
+      - name: Capture art pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          timeout --signal=TERM 90s xvfb-run -a godot \
+            --path . \
+            --rendering-method gl_compatibility \
+            res://scenes/debug/visual_showcase.tscn \
+            -- \
+            --capture="$PWD/artifacts/plan10-kaykit-furniture.png" \
+            --capture-after=5.0 \
+            --validate-visual-state
+          test -s artifacts/plan10-kaykit-furniture.png
+
+      - name: Commit screenshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/plan10-kaykit-furniture.png
+          git commit -m "chore: capture Plan 10 furniture art pass"
+          git push
