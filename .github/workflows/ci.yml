@@ -80,3 +80,22 @@ jobs:
           name: lifebox-live-showcase
           path: lifebox_live_showcase.png
           if-no-files-found: error
+
+
+      - name: Render 3D dollhouse showcase
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a godot --path . --audio-driver Dummy --rendering-method gl_compatibility -s res://tools/capture_live_3d_showcase.gd 2>&1 | tee showcase-3d-render.log
+          status=${PIPESTATUS[0]}
+          test "$status" -eq 0
+          ! grep -E "SCRIPT ERROR:|ERROR:" showcase-3d-render.log
+          test -s lifebox_live_3d_showcase.png
+          file lifebox_live_3d_showcase.png
+
+      - name: Upload 3D dollhouse showcase
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifebox-live-3d-showcase
+          path: lifebox_live_3d_showcase.png
+          if-no-files-found: error
