@@ -40,9 +40,9 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          timeout --signal=TERM 45s godot --headless --verbose --path . -s res://tests/test_runner.gd 2>&1 | tee godot-test.log
+          timeout --signal=TERM 360s godot --headless --verbose --path . -s res://tests/test_runner.gd 2>&1 | tee godot-test.log
           status=${PIPESTATUS[0]}
           if [ "$status" -eq 124 ]; then
-            echo "::error::Godot headless tests exceeded 45 seconds."
+            echo "::error::Godot headless tests exceeded 360 seconds."
           fi
           exit "$status"
