@@ -85,6 +85,51 @@ layout_mode = 2
 toggle_mode = true
 text = "6 —"
 
+[node name="InsightPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 828.0
+offset_right = 700.0
+offset_bottom = 990.0
+
+[node name="TitleLabel" type="Label" parent="InsightPanel"]
+offset_left = 20.0
+offset_top = 12.0
+offset_right = 250.0
+offset_bottom = 38.0
+text = "RESIDENT INSIGHTS"
+
+[node name="CareerLabel" type="Label" parent="InsightPanel"]
+offset_left = 20.0
+offset_top = 46.0
+offset_right = 326.0
+offset_bottom = 76.0
+text = "Job: —"
+
+[node name="HouseholdLabel" type="Label" parent="InsightPanel"]
+offset_left = 20.0
+offset_top = 84.0
+offset_right = 326.0
+offset_bottom = 134.0
+text = "Bills: —"
+autowrap_mode = 2
+
+[node name="RelationshipLabel" type="Label" parent="InsightPanel"]
+offset_left = 340.0
+offset_top = 46.0
+offset_right = 656.0
+offset_bottom = 86.0
+text = "Closest: —"
+autowrap_mode = 2
+
+[node name="MemoryLabel" type="Label" parent="InsightPanel"]
+offset_left = 340.0
+offset_top = 94.0
+offset_right = 656.0
+offset_bottom = 142.0
+text = "Memory: —"
+autowrap_mode = 2
+
 [node name="EventPanel" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 20.0

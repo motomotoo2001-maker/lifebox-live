@@ -9,6 +9,11 @@ signal load_requested
 @onready var status_label: Label = $TopPanel/StatusLabel
 @onready var control_hint_label: Label = $TopPanel/ControlHintLabel
 @onready var event_label: Label = $EventPanel/EventLabel
+@onready var insight_title_label: Label = $InsightPanel/TitleLabel
+@onready var career_label: Label = $InsightPanel/CareerLabel
+@onready var household_label: Label = $InsightPanel/HouseholdLabel
+@onready var relationship_label: Label = $InsightPanel/RelationshipLabel
+@onready var memory_label: Label = $InsightPanel/MemoryLabel
 @onready var save_button: Button = $EventPanel/SaveButton
 @onready var load_button: Button = $EventPanel/LoadButton
 @onready var name_label: Label = $ResidentPanel/NameLabel
@@ -117,6 +122,10 @@ func refresh() -> void:
 	schedule_label.text = _schedule_text(character)
 	goal_label.text = _goal_text(character)
 	action_label.text = "Action: %s" % _action_text(character)
+	career_label.text = _job_text(character)
+	household_label.text = _household_text()
+	relationship_label.text = _relationship_text(character)
+	memory_label.text = _memory_text(character)
 	hunger_bar.value = character.needs.hunger.value
 	energy_bar.value = character.needs.energy.value
 	social_bar.value = character.needs.social.value
@@ -243,9 +252,10 @@ func _goal_text(character: CharacterState) -> String:
 			var suffix := ""
 			if goal.definition.target_resident_id != &"":
 				suffix = " → %s" % goal.definition.target_resident_id
-			return "Goal: %s%s" % [
+			return "Goal: %s%s  %d%%" % [
 				str(goal.definition.category),
 				suffix,
+				int(round(goal.progress * 100.0)),
 			]
 
 	var history: Array = character.goals.goals()
@@ -259,11 +269,140 @@ func _goal_text(character: CharacterState) -> String:
 
 	return "Goal: —"
 
+func _job_text(character: CharacterState) -> String:
+	if character == null or character.job == null:
+		return "Job: —"
+	var definition: JobDefinition = character.job.definition
+	if definition == null:
+		return "Job: unemployed"
+
+	var start_hour := int(floor(definition.shift_start_hour))
+	var start_minute := int(round(
+		(definition.shift_start_hour - float(start_hour)) * 60.0
+	))
+	var end_value := fposmod(
+		definition.shift_start_hour + definition.shift_duration_hours,
+		24.0
+	)
+	var end_hour := int(floor(end_value))
+	var end_minute := int(round((end_value - float(end_hour)) * 60.0))
+	return "Job: %s  $%.0f/h  %02d:%02d–%02d:%02d" % [
+		str(definition.id).replace("_", " "),
+		definition.pay_per_sim_hour,
+		start_hour,
+		start_minute,
+		end_hour,
+		end_minute,
+	]
+
+func _household_text() -> String:
+	if _world == null or _world.household_expense_system == null:
+		return "Bills: —"
+	var expenses := _world.household_expense_system
+	return "Bills: $%.0f/day\nArrears: $%.0f" % [
+		expenses.daily_amount,
+		expenses.arrears,
+	]
+
+func _relationship_text(character: CharacterState) -> String:
+	if _world == null or character == null:
+		return "Closest: —"
+
+	var best_character: CharacterState = null
+	var best_state: RelationshipState = null
+	var best_score := -INF
+
+	for candidate in _world.characters():
+		if candidate == null or candidate.id == character.id:
+			continue
+		var state := _world.relationship_graph.get_relationship(
+			character.id,
+			candidate.id
+		)
+		if state == null:
+			continue
+		var score := (
+			state.affinity
+			+ state.trust * 0.6
+			- maxf(state.tension, 0.0) * 0.8
+		)
+		if (
+			best_character == null
+			or score > best_score + 0.0001
+			or (
+				is_equal_approx(score, best_score)
+				and str(candidate.id) < str(best_character.id)
+			)
+		):
+			best_character = candidate
+			best_state = state
+			best_score = score
+
+	if best_character == null or best_state == null:
+		return "Closest: —"
+
+	return "Closest: %s\nAFF %.0f  TRUST %.0f  TENSION %.0f" % [
+		best_character.display_name,
+		best_state.affinity,
+		best_state.trust,
+		best_state.tension,
+	]
+
+func _memory_text(character: CharacterState) -> String:
+	if character == null or character.memory == null:
+		return "Memory: —"
+	var memories: Array[MemoryEvent] = character.memory.events()
+	if memories.is_empty():
+		return "Memory: none yet"
+
+	var latest: MemoryEvent = memories[0]
+	for memory in memories:
+		if memory == null:
+			continue
+		if (
+			latest == null
+			or memory.simulation_seconds > latest.simulation_seconds
+			or (
+				is_equal_approx(
+					memory.simulation_seconds,
+					latest.simulation_seconds
+				)
+				and str(memory.event_id) > str(latest.event_id)
+			)
+		):
+			latest = memory
+
+	if latest == null:
+		return "Memory: none yet"
+
+	var partner := ""
+	if not latest.related_resident_ids.is_empty() and _world != null:
+		var related := _world.get_character(latest.related_resident_ids[0])
+		if related != null:
+			partner = " with %s" % related.display_name
+
+	var tone := "neutral"
+	if latest.valence > 0.15:
+		tone = "positive"
+	elif latest.valence < -0.15:
+		tone = "negative"
+
+	return "Memory: %s%s\n%s • importance %d%%" % [
+		str(latest.kind).replace("_", " "),
+		partner,
+		tone,
+		int(round(latest.importance * 100.0)),
+	]
+
 func _clear_resident_panel() -> void:
 	name_label.text = "NO RESIDENT"
 	schedule_label.text = "Schedule: —"
 	goal_label.text = "Goal: —"
 	action_label.text = "Action: —"
+	career_label.text = "Job: —"
+	household_label.text = "Bills: —"
+	relationship_label.text = "Closest: —"
+	memory_label.text = "Memory: —"
 	money_label.text = "$0"
 	hunger_label.text = "HUNGER --"
 	energy_label.text = "ENERGY --"
@@ -273,7 +412,7 @@ func _clear_resident_panel() -> void:
 		bar.value = 0.0
 
 func _apply_styles() -> void:
-	for panel in [$TopPanel, $EventPanel, $ResidentPanel]:
+	for panel in [$TopPanel, $InsightPanel, $EventPanel, $ResidentPanel]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.05, 0.08, 0.13, 0.9)
 		style.border_color = Color("3b4d65")
@@ -288,6 +427,16 @@ func _apply_styles() -> void:
 	action_label.add_theme_font_size_override("font_size", 13)
 	action_label.modulate = Color("d5dde8")
 	event_label.add_theme_font_size_override("font_size", 14)
+	insight_title_label.add_theme_font_size_override("font_size", 13)
+	insight_title_label.modulate = Color("ffd65a")
+	for insight_label in [
+		career_label,
+		household_label,
+		relationship_label,
+		memory_label,
+	]:
+		insight_label.add_theme_font_size_override("font_size", 12)
+		insight_label.modulate = Color("c9d3df")
 
 	for persistence_button in [save_button, load_button]:
 		persistence_button.add_theme_font_size_override("font_size", 11)
