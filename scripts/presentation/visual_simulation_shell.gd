@@ -89,6 +89,8 @@ func sync_visuals() -> void:
 		if actor == null:
 			continue
 
+		actor.set_presentation_state(presentation_state_for(character))
+
 		if (
 			character.movement.status == MovementState.STATUS_MOVING
 			and character.movement.intent != null
@@ -146,6 +148,27 @@ func _presentation_interest(character: CharacterState) -> float:
 		score += 5.0
 
 	return score
+
+func presentation_state_for(character: CharacterState) -> StringName:
+	if character == null:
+		return ResidentActor3D.STATE_IDLE
+
+	if (
+		character.movement.status == MovementState.STATUS_MOVING
+		and character.movement.intent != null
+	):
+		return ResidentActor3D.STATE_WALK
+
+	if (
+		_world != null
+		and _world.social_system.reservation_book.is_reserved(character.id)
+	):
+		return ResidentActor3D.STATE_SOCIAL
+
+	if character.current_action_id != &"idle":
+		return ResidentActor3D.STATE_INTERACT
+
+	return ResidentActor3D.STATE_IDLE
 
 func actor_for(character_id: StringName) -> ResidentActor3D:
 	return _actors.get(character_id) as ResidentActor3D
