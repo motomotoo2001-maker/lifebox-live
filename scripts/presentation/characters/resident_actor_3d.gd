@@ -32,6 +32,10 @@ signal resident_selected(character_id: StringName)
 @onready var eye_right: MeshInstance3D = $Visuals/EyeRight
 @onready var mouth_mesh: MeshInstance3D = $Visuals/Mouth
 @onready var activity_badge: Label3D = $Visuals/ActivityBadge
+@onready var book_prop: MeshInstance3D = $Visuals/ActionProps/Book
+@onready var meal_tray: MeshInstance3D = $Visuals/ActionProps/MealTray
+@onready var food_prop: MeshInstance3D = $Visuals/ActionProps/Food
+@onready var sleep_bubble: Label3D = $Visuals/ActionProps/SleepBubble
 @onready var selection_marker: MeshInstance3D = $Visuals/SelectionMarker
 @onready var click_area: Area3D = $ClickArea
 
@@ -56,6 +60,7 @@ var _visual_profile_index: int = 0
 var _presentation_state: StringName = STATE_IDLE
 var _badge_time_remaining: float = 0.0
 var _selected: bool = false
+var _action_visual_id: StringName = &"idle"
 
 func _ready() -> void:
 	navigation_agent.velocity_computed.connect(_on_velocity_computed)
@@ -97,6 +102,12 @@ func set_presentation_state(state: StringName) -> void:
 
 func presentation_state() -> StringName:
 	return _presentation_state
+
+func set_action_visual(action_id: StringName) -> void:
+	_action_visual_id = action_id if action_id != &"" else &"idle"
+
+func action_visual_id() -> StringName:
+	return _action_visual_id
 
 func set_selected(value: bool) -> void:
 	_selected = value
@@ -250,6 +261,8 @@ func _animate_visuals() -> void:
 		_:
 			_animate_idle_state()
 
+	_update_action_props(state)
+
 func _animate_idle_state() -> void:
 	var phase := sin(_visual_time * 2.0)
 	visuals.position.y = phase * 0.012
@@ -308,6 +321,82 @@ func _animate_social_state() -> void:
 		hand_left.position += Vector3(0.0, 0.12 + phase * 0.05, -0.06)
 	if is_instance_valid(hand_right):
 		hand_right.position += Vector3(0.0, 0.18 - phase * 0.04, -0.12)
+
+func _update_action_props(state: StringName) -> void:
+	var interacting := state == STATE_INTERACT
+	if is_instance_valid(book_prop):
+		book_prop.visible = false
+	if is_instance_valid(meal_tray):
+		meal_tray.visible = false
+	if is_instance_valid(food_prop):
+		food_prop.visible = false
+	if is_instance_valid(sleep_bubble):
+		sleep_bubble.visible = false
+
+	if not interacting:
+		return
+
+	var phase := sin(_visual_time * 3.5)
+	var action_text := str(_action_visual_id)
+
+	if action_text == "read":
+		if is_instance_valid(book_prop):
+			book_prop.visible = true
+			book_prop.position.y = 1.0 + phase * 0.018
+			book_prop.rotation.z = phase * 0.035
+		if is_instance_valid(hand_left):
+			hand_left.position += Vector3(0.12, 0.30, -0.28)
+		if is_instance_valid(hand_right):
+			hand_right.position += Vector3(-0.12, 0.30, -0.28)
+		if is_instance_valid(arm_left):
+			arm_left.rotation.x = -0.62 + phase * 0.03
+		if is_instance_valid(arm_right):
+			arm_right.rotation.x = -0.62 - phase * 0.03
+		return
+
+	if action_text == "eat":
+		if is_instance_valid(meal_tray):
+			meal_tray.visible = true
+			meal_tray.position.y = 0.92 + phase * 0.012
+		if is_instance_valid(food_prop):
+			food_prop.visible = true
+			food_prop.position.y = 0.99 + phase * 0.012
+		if is_instance_valid(hand_left):
+			hand_left.position += Vector3(0.13, 0.24, -0.25)
+		if is_instance_valid(hand_right):
+			hand_right.position += Vector3(-0.06, 0.34 + phase * 0.04, -0.34)
+		return
+
+	if action_text == "shower" or action_text == "wash_up":
+		if is_instance_valid(hand_left):
+			hand_left.position += Vector3(0.18, 0.58 + phase * 0.04, -0.08)
+		if is_instance_valid(hand_right):
+			hand_right.position += Vector3(-0.18, 0.54 - phase * 0.04, -0.10)
+		if is_instance_valid(head_mesh):
+			head_mesh.rotation.z += phase * 0.035
+		return
+
+	if action_text == "watch_tv":
+		if is_instance_valid(head_mesh):
+			head_mesh.rotation.x = -0.06 + phase * 0.012
+		if is_instance_valid(arm_left):
+			arm_left.rotation.x = -0.12
+		if is_instance_valid(arm_right):
+			arm_right.rotation.x = -0.12
+		return
+
+	if action_text == "relax":
+		visuals.position.y -= 0.035
+		if is_instance_valid(head_mesh):
+			head_mesh.rotation.z += phase * 0.028
+		return
+
+	if action_text.begins_with("sleep"):
+		if is_instance_valid(sleep_bubble):
+			sleep_bubble.visible = true
+			sleep_bubble.position.y = 2.46 + abs(phase) * 0.08
+		if is_instance_valid(head_mesh):
+			head_mesh.rotation.z = 0.12 + phase * 0.02
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	if not _has_target:
@@ -414,6 +503,13 @@ func _apply_visual_style() -> void:
 			resident_color.lightened(0.18),
 			0.76
 		)
+
+	if is_instance_valid(book_prop):
+		book_prop.material_override = _material(Color("4b78b8"), 0.82)
+	if is_instance_valid(meal_tray):
+		meal_tray.material_override = _material(Color("e8e2d6"), 0.74)
+	if is_instance_valid(food_prop):
+		food_prop.material_override = _material(Color("e59a45"), 0.86)
 
 	var shoe_color := Color("1c2430").lightened(
 		float(_visual_profile_index % 3) * 0.05

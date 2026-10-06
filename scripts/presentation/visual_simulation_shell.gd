@@ -168,6 +168,7 @@ func sync_visuals() -> void:
 			continue
 
 		actor.set_presentation_state(presentation_state_for(character))
+		actor.set_action_visual(character.current_action_id)
 		actor.set_selected(character.id == _selected_resident_id)
 		var badge_text := activity_badge_for(character)
 		if badge_text.is_empty():

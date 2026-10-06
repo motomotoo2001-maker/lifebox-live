@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
 
@@ -56,6 +56,19 @@ size = Vector3(0.24, 0.20, 0.035)
 
 [sub_resource type="BoxMesh" id="BoxMesh_cap_brim"]
 size = Vector3(0.34, 0.055, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_book"]
+size = Vector3(0.48, 0.055, 0.34)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_meal"]
+top_radius = 0.19
+bottom_radius = 0.16
+height = 0.08
+radial_segments = 20
+
+[sub_resource type="SphereMesh" id="SphereMesh_food"]
+radius = 0.105
+height = 0.11
 
 [node name="ResidentActor3D" type="CharacterBody3D"]
 script = ExtResource("1_script")
@@ -171,6 +184,34 @@ mesh = SubResource("SphereMesh_eye")
 position = Vector3(0, 1.43, -0.278)
 scale = Vector3(2.2, 0.45, 0.55)
 mesh = SubResource("BoxMesh_nose")
+
+[node name="ActionProps" type="Node3D" parent="Visuals"]
+
+[node name="Book" type="MeshInstance3D" parent="Visuals/ActionProps"]
+visible = false
+position = Vector3(0, 1.0, -0.5)
+rotation = Vector3(-0.4, 0, 0)
+mesh = SubResource("BoxMesh_book")
+
+[node name="MealTray" type="MeshInstance3D" parent="Visuals/ActionProps"]
+visible = false
+position = Vector3(0, 0.92, -0.48)
+mesh = SubResource("CylinderMesh_meal")
+
+[node name="Food" type="MeshInstance3D" parent="Visuals/ActionProps"]
+visible = false
+position = Vector3(0, 0.99, -0.48)
+scale = Vector3(1.2, 0.65, 1.2)
+mesh = SubResource("SphereMesh_food")
+
+[node name="SleepBubble" type="Label3D" parent="Visuals/ActionProps"]
+visible = false
+position = Vector3(0.42, 2.46, 0)
+text = "Zzz"
+font_size = 22
+outline_size = 7
+billboard = 1
+modulate = Color(0.72, 0.82, 1, 1)
 
 [node name="NameLabel" type="Label3D" parent="Visuals"]
 position = Vector3(0, 2.08, 0)

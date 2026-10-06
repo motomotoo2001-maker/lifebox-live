@@ -40,6 +40,8 @@ func run() -> Array[String]:
 		"set_visual_profile",
 		"set_presentation_state",
 		"presentation_state",
+		"set_action_visual",
+		"action_visual_id",
 		"set_selected",
 		"is_selected",
 		"set_activity_badge",
@@ -82,6 +84,11 @@ func run() -> Array[String]:
 		"Visuals/EyeLeft",
 		"Visuals/EyeRight",
 		"Visuals/Mouth",
+		"Visuals/ActionProps",
+		"Visuals/ActionProps/Book",
+		"Visuals/ActionProps/MealTray",
+		"Visuals/ActionProps/Food",
+		"Visuals/ActionProps/SleepBubble",
 		"Visuals/NameLabel",
 		"Visuals/ActivityBadge",
 	]:
@@ -105,6 +112,14 @@ func run() -> Array[String]:
 		actor.set_selected(false)
 		if actor.is_selected():
 			failures.append("set_selected(false) must clear selection state")
+
+	if actor.has_method("set_action_visual") and actor.has_method("action_visual_id"):
+		actor.set_action_visual(&"read")
+		if actor.action_visual_id() != &"read":
+			failures.append("set_action_visual must preserve action id")
+		actor.set_action_visual(&"")
+		if actor.action_visual_id() != &"idle":
+			failures.append("empty action visual must normalize to idle")
 
 	if actor.has_method("set_visual_profile"):
 		actor.set_visual_profile(3)
