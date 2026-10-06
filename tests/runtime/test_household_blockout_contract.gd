@@ -54,6 +54,11 @@ func run() -> Array[String]:
 	for method_name in [
 		"get_resident_spawn",
 		"get_destination",
+		"_build_walls",
+		"_build_fridge",
+		"_build_sofa",
+		"_build_shower",
+		"_build_bed",
 	]:
 		if not root.has_method(method_name):
 			failures.append("Household blockout must expose %s()" % method_name)
