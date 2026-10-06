@@ -43,6 +43,10 @@ func run() -> Array[String]:
 		"actor_for",
 		"actor_count",
 		"active_movement_count",
+		"select_resident",
+		"selected_resident_id",
+		"set_simulation_paused",
+		"is_simulation_paused",
 		"presentation_state_for",
 		"validate_visual_state",
 	]:
