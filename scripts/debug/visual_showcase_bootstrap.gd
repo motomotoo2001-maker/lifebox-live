@@ -15,7 +15,7 @@ func _ready() -> void:
 	_parse_user_args()
 	_build_world()
 	shell.bind_world(_world)
-	shell.hud.set_selected_resident(&"resident_001")
+	shell.select_resident(&"resident_001")
 	shell.hud.set_latest_event("Autonomous household online")
 
 func _process(delta: float) -> void:
