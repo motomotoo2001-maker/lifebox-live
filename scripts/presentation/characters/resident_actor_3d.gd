@@ -86,12 +86,18 @@ func presentation_state() -> StringName:
 
 func set_selected(value: bool) -> void:
 	_selected = value
-	if is_instance_valid(selection_marker):
-		selection_marker.visible = value
-	if is_instance_valid(name_label):
-		name_label.modulate = (
-			Color("fff3a6") if value else Color.WHITE
-		)
+
+	var marker: MeshInstance3D = selection_marker
+	if not is_instance_valid(marker) and has_node("Visuals/SelectionMarker"):
+		marker = get_node("Visuals/SelectionMarker") as MeshInstance3D
+	if is_instance_valid(marker):
+		marker.visible = value
+
+	var label: Label3D = name_label
+	if not is_instance_valid(label) and has_node("Visuals/NameLabel"):
+		label = get_node("Visuals/NameLabel") as Label3D
+	if is_instance_valid(label):
+		label.modulate = Color("fff3a6") if value else Color.WHITE
 
 func is_selected() -> bool:
 	return _selected
