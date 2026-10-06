@@ -17,6 +17,7 @@ signal social_action_requested(
 @onready var save_button: Button = $EventPanel/SaveButton
 @onready var load_button: Button = $EventPanel/LoadButton
 @onready var social_target_option: OptionButton = $SocialPanel/TargetOption
+@onready var relationship_label: Label = $SocialPanel/RelationshipLabel
 @onready var social_action_buttons: Array[Button] = [
 	$SocialPanel/ChatButton,
 	$SocialPanel/ComplimentButton,
@@ -34,6 +35,7 @@ signal social_action_requested(
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
 @onready var action_label: Label = $ResidentPanel/ActionLabel
+@onready var memory_label: Label = $ResidentPanel/MemoryLabel
 @onready var money_label: Label = $ResidentPanel/MoneyLabel
 @onready var hunger_label: Label = $ResidentPanel/HungerLabel
 @onready var energy_label: Label = $ResidentPanel/EnergyLabel
@@ -143,6 +145,7 @@ func refresh() -> void:
 	schedule_label.text = _schedule_text(character)
 	goal_label.text = _goal_text(character)
 	action_label.text = "Action: %s" % _action_text(character)
+	memory_label.text = _memory_text(character)
 	hunger_bar.value = character.needs.hunger.value
 	energy_bar.value = character.needs.energy.value
 	social_bar.value = character.needs.social.value
@@ -222,6 +225,9 @@ func _refresh_social_controls() -> void:
 	var selected_index := _social_target_ids.find(_social_target_id)
 	if selected_index >= 0:
 		social_target_option.select(selected_index)
+
+	if is_instance_valid(relationship_label):
+		relationship_label.text = _relationship_text()
 
 	var enabled := _social_target_id != &""
 	social_target_option.disabled = not enabled
@@ -323,6 +329,65 @@ func _refresh_resident_buttons() -> void:
 			_action_text(character),
 		]
 
+func _relationship_text() -> String:
+	if (
+		_world == null
+		or _selected_resident_id == &""
+		or _social_target_id == &""
+	):
+		return "AFF —  •  TRUST —  •  TENSION —"
+
+	var relationship := _world.relationship_graph.get_relationship(
+		_selected_resident_id,
+		_social_target_id
+	)
+	if relationship == null:
+		return "AFF 0  •  TRUST 0  •  TENSION 0"
+
+	return "AFF %s  •  TRUST %s  •  TENSION %s" % [
+		_signed_int(relationship.affinity),
+		_signed_int(relationship.trust),
+		_signed_int(relationship.tension),
+	]
+
+func _signed_int(value: float) -> String:
+	var rounded := int(round(value))
+	if rounded > 0:
+		return "+%d" % rounded
+	return "%d" % rounded
+
+func _memory_text(character: CharacterState) -> String:
+	if character == null or character.memory == null:
+		return "Memory: —"
+
+	var memories: Array[MemoryEvent] = character.memory.events()
+	if memories.is_empty():
+		return "Memory: —"
+
+	var memory: MemoryEvent = memories[-1]
+	var related_name := ""
+	if not memory.related_resident_ids.is_empty() and _world != null:
+		var related_id: StringName = memory.related_resident_ids[0]
+		var related := _world.get_character(related_id)
+		related_name = related.display_name if related != null else str(related_id)
+
+	var valence := ""
+	if memory.valence > 0.05:
+		valence = "+"
+	elif memory.valence < -0.05:
+		valence = "-"
+
+	var suffix := ""
+	if not related_name.is_empty():
+		suffix = " • %s" % related_name
+	if not valence.is_empty():
+		suffix += " %s" % valence
+
+	return "Memory: %s%s" % [
+		str(memory.kind).replace("_", " "),
+		suffix,
+	]
+
 func _action_text(character: CharacterState) -> String:
 	var value := str(character.current_action_id).strip_edges()
 	if value.is_empty() or value == "idle":
@@ -388,6 +453,7 @@ func _clear_resident_panel() -> void:
 	schedule_label.text = "Schedule: —"
 	goal_label.text = "Goal: —"
 	action_label.text = "Action: —"
+	memory_label.text = "Memory: —"
 	money_label.text = "$0"
 	hunger_label.text = "HUNGER --"
 	energy_label.text = "ENERGY --"
@@ -415,8 +481,10 @@ func _apply_styles() -> void:
 	status_label.add_theme_font_size_override("font_size", 12)
 	control_hint_label.add_theme_font_size_override("font_size", 11)
 	name_label.add_theme_font_size_override("font_size", 24)
-	action_label.add_theme_font_size_override("font_size", 13)
+	action_label.add_theme_font_size_override("font_size", 12)
 	action_label.modulate = Color("d5dde8")
+	memory_label.add_theme_font_size_override("font_size", 10)
+	relationship_label.add_theme_font_size_override("font_size", 11)
 	event_label.add_theme_font_size_override("font_size", 14)
 
 	if is_instance_valid(social_target_option):

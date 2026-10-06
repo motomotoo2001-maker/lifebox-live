@@ -44,6 +44,7 @@ func run() -> Array[String]:
 		"SocialPanel/ChatButton",
 		"SocialPanel/ComplimentButton",
 		"SocialPanel/ArgueButton",
+		"SocialPanel/RelationshipLabel",
 		"CommandPanel",
 		"CommandPanel/TitleLabel",
 		"CommandPanel/ActionStrip",
@@ -60,6 +61,7 @@ func run() -> Array[String]:
 		"ResidentPanel/ScheduleLabel",
 		"ResidentPanel/GoalLabel",
 		"ResidentPanel/ActionLabel",
+		"ResidentPanel/MemoryLabel",
 		"ResidentPanel/MoneyLabel",
 		"ResidentPanel/HungerLabel",
 		"ResidentPanel/EnergyLabel",
@@ -88,6 +90,8 @@ func run() -> Array[String]:
 		"set_selected_resident",
 		"set_simulation_running",
 		"set_latest_event",
+		"_relationship_text",
+		"_memory_text",
 		"refresh",
 	]:
 		if not hud.has_method(method_name):
