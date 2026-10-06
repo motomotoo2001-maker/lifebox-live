@@ -46,6 +46,17 @@ static func replay(
 						% event.sequence
 					)
 					return errors
+			&"interaction_request":
+				if not world.request_interaction(
+					StringName(event.payload["character_id"]),
+					StringName(event.payload["object_id"]),
+					StringName(event.payload["interaction_id"])
+				):
+					errors.append(
+						"replay interaction_request rejected at sequence %d"
+						% event.sequence
+					)
+					return errors
 
 	return errors
 

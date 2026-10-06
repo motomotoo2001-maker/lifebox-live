@@ -40,6 +40,14 @@ static func validate_input(
 					errors.append("%s %s must be a string" % [kind, key])
 				elif payload[key].is_empty():
 					errors.append("%s %s must be non-empty" % [kind, key])
+		&"interaction_request":
+			for key in ["character_id", "object_id", "interaction_id"]:
+				if not payload.has(key):
+					errors.append("interaction_request %s is required" % key)
+				elif not payload[key] is String:
+					errors.append("interaction_request %s must be a string" % key)
+				elif payload[key].is_empty():
+					errors.append("interaction_request %s must be non-empty" % key)
 		_:
 			errors.append("unknown replay event kind: %s" % kind)
 

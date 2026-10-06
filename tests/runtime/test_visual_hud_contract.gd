@@ -38,6 +38,14 @@ func run() -> Array[String]:
 		"TopPanel/ResidentStrip/ResidentButton4",
 		"TopPanel/ResidentStrip/ResidentButton5",
 		"TopPanel/ResidentStrip/ResidentButton6",
+		"CommandPanel",
+		"CommandPanel/CommandStrip",
+		"CommandPanel/CommandStrip/EatButton",
+		"CommandPanel/CommandStrip/RelaxButton",
+		"CommandPanel/CommandStrip/ShowerButton",
+		"CommandPanel/CommandStrip/TVButton",
+		"CommandPanel/CommandStrip/ReadButton",
+		"CommandPanel/CommandStrip/SleepButton",
 		"InsightPanel",
 		"InsightPanel/TitleLabel",
 		"InsightPanel/CareerLabel",
@@ -66,10 +74,14 @@ func run() -> Array[String]:
 
 	if not hud.has_signal("resident_requested"):
 		failures.append("VisualHUD must expose resident_requested signal")
+	if not hud.has_signal("command_requested"):
+		failures.append("VisualHUD must expose command_requested signal")
 
 	for method_name in [
 		"bind_world",
 		"_day_phase_text",
+		"_connect_command_buttons",
+		"_on_command_button_pressed",
 		"_job_text",
 		"_household_text",
 		"_relationship_text",

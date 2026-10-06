@@ -4,6 +4,7 @@ extends Control
 signal resident_requested(character_id: StringName)
 signal save_requested
 signal load_requested
+signal command_requested(command_id: StringName)
 
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
@@ -29,6 +30,14 @@ signal load_requested
 @onready var energy_bar: ProgressBar = $ResidentPanel/EnergyBar
 @onready var social_bar: ProgressBar = $ResidentPanel/SocialBar
 @onready var mood_bar: ProgressBar = $ResidentPanel/MoodBar
+@onready var command_buttons: Array[Button] = [
+	$CommandPanel/CommandStrip/EatButton,
+	$CommandPanel/CommandStrip/RelaxButton,
+	$CommandPanel/CommandStrip/ShowerButton,
+	$CommandPanel/CommandStrip/TVButton,
+	$CommandPanel/CommandStrip/ReadButton,
+	$CommandPanel/CommandStrip/SleepButton,
+]
 @onready var resident_buttons: Array[Button] = [
 	$TopPanel/ResidentStrip/ResidentButton1,
 	$TopPanel/ResidentStrip/ResidentButton2,
@@ -46,6 +55,7 @@ var _simulation_running: bool = true
 
 func _ready() -> void:
 	_connect_resident_buttons()
+	_connect_command_buttons()
 	_connect_persistence_buttons()
 	_apply_styles()
 	refresh()
@@ -134,6 +144,28 @@ func refresh() -> void:
 	energy_label.text = "ENERGY %02d" % int(round(character.needs.energy.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _connect_command_buttons() -> void:
+	var command_ids: Array[StringName] = [
+		&"eat",
+		&"relax",
+		&"shower",
+		&"watch_tv",
+		&"read",
+		&"sleep",
+	]
+	for index in range(command_buttons.size()):
+		var button: Button = command_buttons[index]
+		if button == null or index >= command_ids.size():
+			continue
+		button.pressed.connect(
+			_on_command_button_pressed.bind(command_ids[index])
+		)
+
+func _on_command_button_pressed(command_id: StringName) -> void:
+	if command_id == &"":
+		return
+	command_requested.emit(command_id)
 
 func _connect_persistence_buttons() -> void:
 	if is_instance_valid(save_button) and not save_button.pressed.is_connected(
@@ -412,7 +444,13 @@ func _clear_resident_panel() -> void:
 		bar.value = 0.0
 
 func _apply_styles() -> void:
-	for panel in [$TopPanel, $InsightPanel, $EventPanel, $ResidentPanel]:
+	for panel in [
+		$TopPanel,
+		$CommandPanel,
+		$InsightPanel,
+		$EventPanel,
+		$ResidentPanel,
+	]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.05, 0.08, 0.13, 0.9)
 		style.border_color = Color("3b4d65")
@@ -437,6 +475,22 @@ func _apply_styles() -> void:
 	]:
 		insight_label.add_theme_font_size_override("font_size", 12)
 		insight_label.modulate = Color("c9d3df")
+
+	for command_button in command_buttons:
+		command_button.add_theme_font_size_override("font_size", 11)
+		var command_style := StyleBoxFlat.new()
+		command_style.bg_color = Color("172638")
+		command_style.border_color = Color("45627f")
+		command_style.set_border_width_all(1)
+		command_style.set_corner_radius_all(9)
+		command_button.add_theme_stylebox_override("normal", command_style)
+
+		var command_hover := StyleBoxFlat.new()
+		command_hover.bg_color = Color("263c53")
+		command_hover.border_color = Color("72a7d8")
+		command_hover.set_border_width_all(1)
+		command_hover.set_corner_radius_all(9)
+		command_button.add_theme_stylebox_override("hover", command_hover)
 
 	for persistence_button in [save_button, load_button]:
 		persistence_button.add_theme_font_size_override("font_size", 11)

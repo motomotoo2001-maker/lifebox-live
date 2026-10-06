@@ -85,6 +85,50 @@ layout_mode = 2
 toggle_mode = true
 text = "6 —"
 
+[node name="CommandPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 758.0
+offset_right = 700.0
+offset_bottom = 816.0
+
+[node name="CommandStrip" type="HBoxContainer" parent="CommandPanel"]
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 668.0
+offset_bottom = 50.0
+theme_override_constants/separation = 6
+
+[node name="EatButton" type="Button" parent="CommandPanel/CommandStrip"]
+custom_minimum_size = Vector2(103, 40)
+layout_mode = 2
+text = "EAT"
+
+[node name="RelaxButton" type="Button" parent="CommandPanel/CommandStrip"]
+custom_minimum_size = Vector2(103, 40)
+layout_mode = 2
+text = "RELAX"
+
+[node name="ShowerButton" type="Button" parent="CommandPanel/CommandStrip"]
+custom_minimum_size = Vector2(103, 40)
+layout_mode = 2
+text = "SHOWER"
+
+[node name="TVButton" type="Button" parent="CommandPanel/CommandStrip"]
+custom_minimum_size = Vector2(103, 40)
+layout_mode = 2
+text = "TV"
+
+[node name="ReadButton" type="Button" parent="CommandPanel/CommandStrip"]
+custom_minimum_size = Vector2(103, 40)
+layout_mode = 2
+text = "READ"
+
+[node name="SleepButton" type="Button" parent="CommandPanel/CommandStrip"]
+custom_minimum_size = Vector2(103, 40)
+layout_mode = 2
+text = "SLEEP"
+
 [node name="InsightPanel" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 20.0

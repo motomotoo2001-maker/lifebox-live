@@ -25,13 +25,15 @@ var _manual_focus_remaining: float = 0.0
 func _ready() -> void:
 	if camera_director != null:
 		camera_director.bind_camera_rig(camera_rig)
-	if (
-		hud != null
-		and not hud.resident_requested.is_connected(
+	if hud != null:
+		if not hud.resident_requested.is_connected(
 			_on_hud_resident_requested
-		)
-	):
-		hud.resident_requested.connect(_on_hud_resident_requested)
+		):
+			hud.resident_requested.connect(_on_hud_resident_requested)
+		if not hud.command_requested.is_connected(
+			_on_hud_command_requested
+		):
+			hud.command_requested.connect(_on_hud_command_requested)
 
 var _palette: Array[Color] = [
 	Color("58a6ff"),
@@ -355,6 +357,86 @@ func _on_actor_selected(character_id: StringName) -> void:
 
 func _on_hud_resident_requested(character_id: StringName) -> void:
 	select_resident(character_id)
+
+func _on_hud_command_requested(command_id: StringName) -> void:
+	if _world == null or _selected_resident_id == &"":
+		return
+	var target := _command_target(command_id, _selected_resident_id)
+	if target.is_empty():
+		if hud != null:
+			hud.set_latest_event("Unknown command: %s" % command_id)
+		return
+
+	var character := _world.get_character(_selected_resident_id)
+	if character == null:
+		return
+
+	var accepted := _world.request_interaction(
+		_selected_resident_id,
+		target["object_id"],
+		target["interaction_id"]
+	)
+	if hud != null:
+		if accepted:
+			hud.set_latest_event(
+				"%s → %s" % [
+					character.display_name,
+					target["label"],
+				]
+			)
+		else:
+			hud.set_latest_event(
+				"%s cannot %s right now" % [
+					character.display_name,
+					target["label"],
+				]
+			)
+
+func _command_target(
+	command_id: StringName,
+	character_id: StringName
+) -> Dictionary:
+	match command_id:
+		&"eat":
+			return {
+				"object_id": &"fridge_main",
+				"interaction_id": &"eat",
+				"label": "eat",
+			}
+		&"relax":
+			return {
+				"object_id": &"sofa_main",
+				"interaction_id": &"relax",
+				"label": "relax",
+			}
+		&"shower":
+			return {
+				"object_id": &"shower_main",
+				"interaction_id": &"shower",
+				"label": "shower",
+			}
+		&"watch_tv":
+			return {
+				"object_id": &"tv_main",
+				"interaction_id": &"watch_tv",
+				"label": "watch TV",
+			}
+		&"read":
+			return {
+				"object_id": &"bookshelf_main",
+				"interaction_id": &"read",
+				"label": "read",
+			}
+		&"sleep":
+			var suffix := str(character_id).get_slice("_", 1).to_int()
+			if suffix <= 0:
+				return {}
+			return {
+				"object_id": StringName("bed_%02d" % suffix),
+				"interaction_id": StringName("sleep_%02d" % suffix),
+				"label": "sleep",
+			}
+	return {}
 
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:

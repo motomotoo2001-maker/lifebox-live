@@ -505,6 +505,49 @@ func _is_finite_non_negative_number(value) -> bool:
 	var number := float(value)
 	return not is_nan(number) and not is_inf(number) and number >= 0.0
 
+func request_interaction(
+	character_id: StringName,
+	object_id: StringName,
+	interaction_id: StringName = &""
+) -> bool:
+	var character := get_character(character_id)
+	if character == null or character.movement == null:
+		return false
+	if social_system.reservation_book.is_reserved(character_id):
+		return false
+	if character.movement.status != MovementState.STATUS_IDLE:
+		return false
+
+	var executor := get_action_executor(character_id)
+	if executor == null or executor.is_active():
+		return false
+
+	var object := get_smart_object(object_id)
+	if object == null or not object.is_available_for(character_id):
+		return false
+
+	var chosen: InteractionDefinition = null
+	for interaction in object.list_interactions(character):
+		if interaction == null:
+			continue
+		if interaction_id != &"" and interaction.id != interaction_id:
+			continue
+		if not _is_money_eligible(character, interaction):
+			continue
+		chosen = interaction
+		break
+
+	if chosen == null:
+		return false
+
+	var candidate := ActionCandidate.new(
+		chosen.id,
+		maxf(_score_interaction(character, chosen), 1.0),
+		object,
+		chosen
+	)
+	return executor.start(candidate, character)
+
 func report_arrival(character_id: StringName, target_object_id: StringName) -> bool:
 	var executor: ActionExecutor = _executors.get(character_id)
 	if executor == null:

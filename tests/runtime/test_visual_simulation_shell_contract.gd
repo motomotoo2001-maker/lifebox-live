@@ -49,6 +49,8 @@ func run() -> Array[String]:
 		"set_simulation_paused",
 		"is_simulation_paused",
 		"_on_hud_resident_requested",
+		"_on_hud_command_requested",
+		"_command_target",
 		"presentation_state_for",
 		"_social_target_for",
 		"validate_visual_state",
