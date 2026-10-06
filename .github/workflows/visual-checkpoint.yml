@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev/plan-06-visual-simulation-shell
+      - dev/plan-07-visual-art-pass-02
     paths:
       - 'scripts/presentation/**'
       - 'scripts/debug/**'
