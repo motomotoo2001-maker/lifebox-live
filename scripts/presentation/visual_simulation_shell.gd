@@ -18,6 +18,7 @@ const RESIDENT_ACTOR_SCENE := preload(
 var _world: SimulationWorld = null
 var _actors: Dictionary = {}
 var _active_target_ids: Dictionary = {}
+var _social_session_ids: Dictionary = {}
 var _selected_resident_id: StringName = &""
 var _manual_focus_remaining: float = 0.0
 
@@ -172,10 +173,14 @@ func sync_visuals() -> void:
 		else:
 			actor.set_activity_badge(badge_text)
 
+		var social_session: SocialSession = (
+			_world.social_system.reservation_book.get_session_for(character.id)
+		)
 		if (
 			character.movement.status == MovementState.STATUS_MOVING
 			and character.movement.intent != null
 		):
+			_social_session_ids.erase(character.id)
 			var intent: MovementIntent = character.movement.intent
 			var active_target: StringName = _active_target_ids.get(
 				character.id,
@@ -191,6 +196,67 @@ func sync_visuals() -> void:
 			if _active_target_ids.has(character.id):
 				actor.stop_movement()
 				_active_target_ids.erase(character.id)
+			_sync_social_presentation(
+				character.id,
+				actor,
+				social_session
+			)
+
+func _sync_social_presentation(
+	character_id: StringName,
+	actor: ResidentActor3D,
+	session: SocialSession
+) -> void:
+	if actor == null:
+		return
+
+	if session == null:
+		if _social_session_ids.has(character_id):
+			actor.stop_movement()
+			_social_session_ids.erase(character_id)
+		return
+
+	var active_session: StringName = _social_session_ids.get(
+		character_id,
+		&""
+	)
+	if active_session == session.session_id:
+		return
+
+	var target := _social_target_for(session, character_id)
+	actor.set_movement_target(target, 0.32)
+	_social_session_ids[character_id] = session.session_id
+
+func _social_target_for(
+	session: SocialSession,
+	character_id: StringName
+) -> Vector3:
+	if session == null:
+		return Vector3.ZERO
+
+	var initiator_actor := actor_for(session.initiator_id)
+	var target_actor := actor_for(session.target_id)
+	if initiator_actor == null or target_actor == null:
+		var fallback := actor_for(character_id)
+		return fallback.global_position if fallback != null else Vector3.ZERO
+
+	var initiator_position := initiator_actor.global_position
+	var target_position := target_actor.global_position
+	var direction := target_position - initiator_position
+	direction.y = 0.0
+	if direction.length_squared() <= 0.0001:
+		direction = Vector3(1.0, 0.0, 0.0)
+	else:
+		direction = direction.normalized()
+
+	var midpoint := (initiator_position + target_position) * 0.5
+	var half_spacing := 0.62
+	if character_id == session.initiator_id:
+		return midpoint - direction * half_spacing
+	return midpoint + direction * half_spacing
+
+func social_presentation_count() -> int:
+	return _social_session_ids.size()
 
 func _presentation_target_for(
 	character_id: StringName,
@@ -471,6 +537,18 @@ func validate_visual_state() -> Array[String]:
 		if not resident_ids.has(moving_id):
 			errors.append("orphan visual movement owner %s" % moving_id)
 
+	for social_id in _social_session_ids.keys():
+		if not resident_ids.has(social_id):
+			errors.append("orphan social presentation owner %s" % social_id)
+			continue
+		var session := _world.social_system.reservation_book.get_session_for(
+			social_id
+		)
+		if session == null:
+			errors.append("stale social presentation owner %s" % social_id)
+		elif _social_session_ids[social_id] != session.session_id:
+			errors.append("social presentation session mismatch for %s" % social_id)
+
 	return errors
 
 func _target_display_name(target_id: StringName) -> String:
@@ -543,6 +621,7 @@ func _on_actor_failed(character_id: StringName) -> void:
 
 func _clear_actors() -> void:
 	_active_target_ids.clear()
+	_social_session_ids.clear()
 	_actors.clear()
 	_selected_resident_id = &""
 	_manual_focus_remaining = 0.0

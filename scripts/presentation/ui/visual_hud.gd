@@ -191,6 +191,26 @@ func _action_text(character: CharacterState) -> String:
 	var value := str(character.current_action_id).strip_edges()
 	if value.is_empty() or value == "idle":
 		return "idle"
+
+	if _world != null:
+		var session := _world.social_system.reservation_book.get_session_for(
+			character.id
+		)
+		if session != null:
+			var other_id := (
+				session.target_id
+				if session.initiator_id == character.id
+				else session.initiator_id
+			)
+			var other := _world.get_character(other_id)
+			var other_name := (
+				other.display_name if other != null else str(other_id)
+			)
+			return "%s with %s" % [
+				value.replace("_", " "),
+				other_name,
+			]
+
 	return value.replace("_", " ")
 
 func _schedule_text(character: CharacterState) -> String:

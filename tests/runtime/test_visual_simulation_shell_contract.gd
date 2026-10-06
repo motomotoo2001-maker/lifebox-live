@@ -43,12 +43,14 @@ func run() -> Array[String]:
 		"actor_for",
 		"actor_count",
 		"active_movement_count",
+		"social_presentation_count",
 		"select_resident",
 		"selected_resident_id",
 		"set_simulation_paused",
 		"is_simulation_paused",
 		"_on_hud_resident_requested",
 		"presentation_state_for",
+		"_social_target_for",
 		"validate_visual_state",
 	]:
 		if not shell.has_method(method_name):

@@ -539,8 +539,16 @@ func _step_fixed(sim_delta: float) -> void:
 	for character in _characters:
 		if character == null:
 			continue
-
 		need_system.advance_character(character, sim_delta)
+
+	# Social decisions get a deterministic scheduling window before idle
+	# residents commit to SmartObject actions. Existing active sessions are
+	# advanced here as well, so their participants remain reserved below.
+	social_system.advance(_characters, relationship_graph, sim_delta, _rng)
+
+	for character in _characters:
+		if character == null:
+			continue
 
 		if social_system.reservation_book.is_reserved(character.id):
 			continue
@@ -562,8 +570,6 @@ func _step_fixed(sim_delta: float) -> void:
 			continue
 
 		executor.start(choice, character)
-
-	social_system.advance(_characters, relationship_graph, sim_delta, _rng)
 
 	while _pending_economy_seconds >= ECONOMY_STEP_SECONDS:
 		_processed_economy_seconds += ECONOMY_STEP_SECONDS
