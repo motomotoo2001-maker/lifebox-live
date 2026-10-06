@@ -2,6 +2,7 @@ class_name HouseholdBlockout
 extends Node3D
 
 const VENDOR_FURNITURE_ROOT := "res://assets/vendor/kaykit_furniture_bits/obj"
+const VENDOR_RESTAURANT_ROOT := "res://assets/vendor/kaykit_restaurant_bits/obj"
 
 @export var use_vendor_furniture: bool = true
 
@@ -136,7 +137,15 @@ func _build_walls() -> void:
 func _build_furniture() -> void:
 	var fridge := get_destination(&"Fridge")
 	if fridge != null:
-		_build_fridge(fridge.position)
+		var has_vendor_fridge := _add_restaurant_mesh(
+			"fridge_A_decorated",
+			&"KayKitKitchenFridge",
+			fridge.position + Vector3(0.0, 0.0, 0.18),
+			PI,
+			Vector3(0.50, 0.66, 0.50)
+		)
+		if not has_vendor_fridge:
+			_build_fridge(fridge.position)
 
 	var sofa := get_destination(&"Sofa")
 	if sofa != null:
@@ -176,29 +185,50 @@ func _build_furniture() -> void:
 
 
 func _build_kitchen_details() -> void:
-	var cabinet := Color("9b785f")
-	var counter := Color("d2b08b")
-	_make_box(
-		furniture,
-		&"KitchenCounter",
-		Vector3(-5.35, 0.42, 4.35),
-		Vector3(2.0, 0.82, 0.55),
-		cabinet
+	var has_vendor_sink := _add_restaurant_mesh(
+		"kitchencounter_sink_backsplash",
+		&"KayKitKitchenSinkCounter",
+		Vector3(-5.15, 0.0, 4.30),
+		PI,
+		Vector3(0.78, 0.52, 0.48)
 	)
-	_make_box(
-		furniture,
-		&"KitchenCounterTop",
-		Vector3(-5.35, 0.86, 4.35),
-		Vector3(2.12, 0.08, 0.62),
-		counter
-	)
-	for index in range(3):
+	if not has_vendor_sink:
 		_make_box(
 			furniture,
-			StringName("KitchenCabinetDoor%02d" % (index + 1)),
-			Vector3(-6.0 + float(index) * 0.65, 0.42, 4.055),
-			Vector3(0.52, 0.62, 0.025),
-			Color("6f5547")
+			&"KitchenCounter",
+			Vector3(-5.35, 0.42, 4.35),
+			Vector3(2.0, 0.82, 0.55),
+			Color("9b785f")
+		)
+		_make_box(
+			furniture,
+			&"KitchenCounterTop",
+			Vector3(-5.35, 0.86, 4.35),
+			Vector3(2.12, 0.08, 0.62),
+			Color("d2b08b")
+		)
+
+	_add_restaurant_mesh(
+		"oven",
+		&"KayKitKitchenOven",
+		Vector3(-3.55, 0.0, 4.20),
+		PI,
+		Vector3(0.48, 0.48, 0.44)
+	)
+	_add_restaurant_mesh(
+		"cuttingboard",
+		&"KayKitKitchenCuttingBoard",
+		Vector3(-5.25, 0.99, 4.06),
+		0.0,
+		Vector3(0.38, 0.38, 0.38)
+	)
+	for jar_index in range(3):
+		_add_restaurant_mesh(
+			"jar_A_medium",
+			StringName("KayKitKitchenJar%02d" % (jar_index + 1)),
+			Vector3(-4.75 + float(jar_index) * 0.24, 0.94, 4.13),
+			0.0,
+			Vector3(0.30, 0.30, 0.30)
 		)
 
 	var table_position := Vector3(-4.6, 0.0, 2.72)
@@ -437,10 +467,43 @@ func _add_vendor_mesh(
 	rotation_y: float = 0.0,
 	scale_value: Vector3 = Vector3.ONE
 ) -> bool:
+	return _add_mesh_from_vendor_root(
+		VENDOR_FURNITURE_ROOT,
+		asset_name,
+		node_name,
+		position_value,
+		rotation_y,
+		scale_value
+	)
+
+func _add_restaurant_mesh(
+	asset_name: String,
+	node_name: StringName,
+	position_value: Vector3,
+	rotation_y: float = 0.0,
+	scale_value: Vector3 = Vector3.ONE
+) -> bool:
+	return _add_mesh_from_vendor_root(
+		VENDOR_RESTAURANT_ROOT,
+		asset_name,
+		node_name,
+		position_value,
+		rotation_y,
+		scale_value
+	)
+
+func _add_mesh_from_vendor_root(
+	root_path: String,
+	asset_name: String,
+	node_name: StringName,
+	position_value: Vector3,
+	rotation_y: float,
+	scale_value: Vector3
+) -> bool:
 	if not use_vendor_furniture or not is_instance_valid(furniture):
 		return false
 
-	var path := "%s/%s.obj" % [VENDOR_FURNITURE_ROOT, asset_name]
+	var path := "%s/%s.obj" % [root_path, asset_name]
 	if not ResourceLoader.exists(path):
 		return false
 
