@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   render:
@@ -51,6 +51,21 @@ jobs:
             res://scenes/debug/debug_showcase.tscn \
             -- --capture-showcase 2>&1 | tee showcase.log
           test -f debug_output/lifebox_debug_showcase.png
+
+      - name: Commit screenshot to branch
+        shell: bash
+        run: |
+          mkdir -p docs/screenshots
+          cp debug_output/lifebox_debug_showcase.png docs/screenshots/lifebox_debug_showcase.png
+          git config user.name "lifebox-ci"
+          git config user.email "lifebox-ci@users.noreply.github.com"
+          git add docs/screenshots/lifebox_debug_showcase.png
+          if git diff --cached --quiet; then
+            echo "Screenshot unchanged."
+          else
+            git commit -m "chore: update debug showcase screenshot"
+            git push origin HEAD:dev/plan-05-daily-goals-schedules
+          fi
 
       - name: Upload screenshot
         uses: actions/upload-artifact@v4
