@@ -411,7 +411,11 @@ func _on_actor_arrived(character_id: StringName) -> void:
 		return
 
 	_world.report_arrival(character_id, target_id)
-	hud.set_latest_event("%s arrived at %s" % [character_id, target_id])
+	var character := _world.get_character(character_id)
+	var display_name := (
+		character.display_name if character != null else str(character_id)
+	)
+	hud.set_latest_event("%s arrived at %s" % [display_name, target_id])
 	var actor := actor_for(character_id)
 	if camera_director != null and actor != null:
 		camera_director.suggest_focus(
@@ -429,7 +433,11 @@ func _on_actor_failed(character_id: StringName) -> void:
 		return
 
 	_world.report_movement_failure(character_id, target_id)
-	hud.set_latest_event("%s movement failed: %s" % [character_id, target_id])
+	var character := _world.get_character(character_id)
+	var display_name := (
+		character.display_name if character != null else str(character_id)
+	)
+	hud.set_latest_event("%s movement failed: %s" % [display_name, target_id])
 	_active_target_ids.erase(character_id)
 
 func _clear_actors() -> void:
