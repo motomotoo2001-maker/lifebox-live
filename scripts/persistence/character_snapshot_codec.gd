@@ -62,6 +62,8 @@ static func encode(character: CharacterState) -> Dictionary:
 			"definition": job_definition,
 			"total_worked_sim_seconds": character.job.total_worked_sim_seconds,
 		},
+		"schedule": _encode_schedule(character),
+		"goals": _encode_goals(character),
 	}
 
 static func validate(data: Dictionary) -> Array[String]:
@@ -73,6 +75,8 @@ static func validate(data: Dictionary) -> Array[String]:
 	_validate_personality(data, errors)
 	_validate_memory(data, errors)
 	_validate_job(data, errors)
+	_validate_schedule(data, errors)
+	_validate_goals(data, errors)
 
 	return errors
 
@@ -125,6 +129,12 @@ static func decode_stable_state(data: Dictionary) -> CharacterState:
 		definition.shift_duration_hours = float(definition_data["shift_duration_hours"])
 		character.job.assign(definition)
 	character.job.total_worked_sim_seconds = float(job_data["total_worked_sim_seconds"])
+
+	if data.has("schedule"):
+		_decode_schedule(character, data["schedule"])
+	if data.has("goals"):
+		if not _decode_goals(character, data["goals"]):
+			return null
 
 	return character
 
@@ -322,3 +332,395 @@ static func _is_finite_number(value) -> bool:
 		return false
 	var number := float(value)
 	return not is_nan(number) and not is_inf(number)
+
+
+static func validate_goal_targets(
+	data: Dictionary,
+	resident_ids: Dictionary
+) -> Array[String]:
+	var errors: Array[String] = []
+	if not data.has("goals") or not data["goals"] is Dictionary:
+		return errors
+
+	var goals: Dictionary = data["goals"]
+	if not goals.has("items") or not goals["items"] is Array:
+		return errors
+
+	var self_id := str(data.get("id", ""))
+	for raw_goal in goals["items"]:
+		if not raw_goal is Dictionary:
+			continue
+		var definition = raw_goal.get("definition")
+		if not definition is Dictionary:
+			continue
+		var target = definition.get("target_resident_id", "")
+		if not target is String or target.is_empty():
+			continue
+		if target == self_id:
+			errors.append(
+				"goal target resident must not be self: %s"
+				% target
+			)
+		elif not resident_ids.has(target):
+			errors.append(
+				"goal target resident is missing: %s"
+				% target
+			)
+
+	return errors
+
+static func _encode_schedule(character: CharacterState) -> Dictionary:
+	var definition_data = null
+	if character.schedule != null and character.schedule.definition != null:
+		var blocks: Array = []
+		for block in character.schedule.definition.blocks:
+			var tags: Array = []
+			for tag in block.preferred_action_tags:
+				tags.append(str(tag))
+			blocks.append({
+				"id": str(block.id),
+				"kind": str(block.kind),
+				"start_hour": block.start_hour,
+				"duration_hours": block.duration_hours,
+				"preferred_action_tags": tags,
+			})
+		definition_data = {"blocks": blocks}
+
+	return {
+		"day_index": character.schedule.day_index if character.schedule != null else 0,
+		"active_block_id": (
+			str(character.schedule.active_block_id)
+			if character.schedule != null
+			else ""
+		),
+		"definition": definition_data,
+	}
+
+static func _encode_goals(character: CharacterState) -> Dictionary:
+	var items: Array = []
+	if character.goals != null:
+		for goal in character.goals.goals():
+			if goal == null or goal.definition == null:
+				continue
+			var tags: Array = []
+			for tag in goal.definition.preferred_action_tags:
+				tags.append(str(tag))
+			items.append({
+				"definition": {
+					"id": str(goal.definition.id),
+					"category": str(goal.definition.category),
+					"priority": goal.definition.priority,
+					"preferred_action_tags": tags,
+					"target_resident_id": str(goal.definition.target_resident_id),
+				},
+				"progress": goal.progress,
+				"status": str(goal.status),
+			})
+
+	return {
+		"day_index": character.goals.day_index if character.goals != null else -1,
+		"items": items,
+	}
+
+static func _validate_schedule(
+	data: Dictionary,
+	errors: Array[String]
+) -> void:
+	if not data.has("schedule"):
+		return
+	if not data["schedule"] is Dictionary:
+		errors.append("schedule must be a Dictionary")
+		return
+
+	var schedule: Dictionary = data["schedule"]
+	if (
+		not schedule.has("day_index")
+		or not schedule["day_index"] is int
+		or int(schedule["day_index"]) < 0
+	):
+		errors.append("schedule day_index must be an integer >= 0")
+
+	if (
+		not schedule.has("active_block_id")
+		or not schedule["active_block_id"] is String
+	):
+		errors.append("schedule active_block_id must be a string")
+
+	if not schedule.has("definition"):
+		errors.append("schedule definition key is required")
+		return
+
+	var definition = schedule["definition"]
+	if definition == null:
+		if schedule.get("active_block_id", "") != "":
+			errors.append(
+				"schedule without definition cannot have active block"
+			)
+		return
+	if not definition is Dictionary:
+		errors.append("schedule definition must be null or Dictionary")
+		return
+	if not definition.has("blocks") or not definition["blocks"] is Array:
+		errors.append("schedule definition blocks must be an Array")
+		return
+
+	var parsed := ScheduleDefinition.new()
+	var block_ids: Dictionary = {}
+	for raw_block in definition["blocks"]:
+		if not raw_block is Dictionary:
+			errors.append("schedule block must be a Dictionary")
+			continue
+
+		var block_data: Dictionary = raw_block
+		var block := ScheduleBlock.new()
+
+		if (
+			not block_data.has("id")
+			or not block_data["id"] is String
+			or block_data["id"].is_empty()
+		):
+			errors.append("schedule block id must be a non-empty string")
+			continue
+		block.id = StringName(block_data["id"])
+		var raw_kind = block_data.get("kind", "")
+		if not raw_kind is String or raw_kind.is_empty():
+			errors.append("schedule block kind must be a non-empty string")
+		else:
+			block.kind = StringName(raw_kind)
+
+		if (
+			not block_data.has("start_hour")
+			or not _is_finite_number(block_data["start_hour"])
+		):
+			errors.append("schedule block start_hour must be finite")
+			continue
+		if (
+			not block_data.has("duration_hours")
+			or not _is_finite_number(block_data["duration_hours"])
+		):
+			errors.append("schedule block duration_hours must be finite")
+			continue
+		block.start_hour = float(block_data["start_hour"])
+		block.duration_hours = float(block_data["duration_hours"])
+
+		if (
+			not block_data.has("preferred_action_tags")
+			or not block_data["preferred_action_tags"] is Array
+		):
+			errors.append("schedule preferred_action_tags must be an Array")
+		else:
+			for raw_tag in block_data["preferred_action_tags"]:
+				if not raw_tag is String or raw_tag.is_empty():
+					errors.append(
+						"schedule action tag must be a non-empty string"
+					)
+				else:
+					block.preferred_action_tags.append(
+						StringName(raw_tag)
+					)
+
+		parsed.blocks.append(block)
+		block_ids[str(block.id)] = true
+
+	for schedule_error in parsed.validate():
+		errors.append(schedule_error)
+
+	var active_block_id = schedule.get("active_block_id", "")
+	if (
+		active_block_id is String
+		and not active_block_id.is_empty()
+		and not block_ids.has(active_block_id)
+	):
+		errors.append(
+			"schedule active block id is missing from definition"
+		)
+
+static func _validate_goals(
+	data: Dictionary,
+	errors: Array[String]
+) -> void:
+	if not data.has("goals"):
+		return
+	if not data["goals"] is Dictionary:
+		errors.append("goals must be a Dictionary")
+		return
+
+	var goals: Dictionary = data["goals"]
+	if (
+		not goals.has("day_index")
+		or not goals["day_index"] is int
+		or int(goals["day_index"]) < -1
+	):
+		errors.append("goal day_index must be an integer >= -1")
+
+	if not goals.has("items") or not goals["items"] is Array:
+		errors.append("goal items must be an Array")
+		return
+
+	var seen_ids: Dictionary = {}
+	var active_count := 0
+	for raw_goal in goals["items"]:
+		if not raw_goal is Dictionary:
+			errors.append("goal item must be a Dictionary")
+			continue
+		var goal_data: Dictionary = raw_goal
+
+		if (
+			not goal_data.has("definition")
+			or not goal_data["definition"] is Dictionary
+		):
+			errors.append("goal definition must be a Dictionary")
+			continue
+
+		var definition_data: Dictionary = goal_data["definition"]
+		var definition := GoalDefinition.new()
+
+		var raw_goal_id = definition_data.get("id", "")
+		if not raw_goal_id is String or raw_goal_id.is_empty():
+			errors.append("goal id must be a non-empty string")
+		else:
+			definition.id = StringName(raw_goal_id)
+
+		var raw_category = definition_data.get("category", "")
+		if not raw_category is String or raw_category.is_empty():
+			errors.append("goal category must be a non-empty string")
+		else:
+			definition.category = StringName(raw_category)
+
+		if (
+			not definition_data.has("priority")
+			or not _is_finite_number(definition_data["priority"])
+		):
+			errors.append("goal priority must be finite")
+		else:
+			definition.priority = float(definition_data["priority"])
+
+		var target = definition_data.get("target_resident_id", "")
+		if not target is String:
+			errors.append("goal target_resident_id must be a string")
+		else:
+			definition.target_resident_id = StringName(target)
+
+		if (
+			not definition_data.has("preferred_action_tags")
+			or not definition_data["preferred_action_tags"] is Array
+		):
+			errors.append("goal preferred_action_tags must be an Array")
+		else:
+			for raw_tag in definition_data["preferred_action_tags"]:
+				if not raw_tag is String or raw_tag.is_empty():
+					errors.append(
+						"goal action tag must be a non-empty string"
+					)
+				else:
+					definition.preferred_action_tags.append(
+						StringName(raw_tag)
+					)
+
+		for goal_error in definition.validate():
+			errors.append(goal_error)
+
+		var goal_id := str(definition.id)
+		if seen_ids.has(goal_id):
+			errors.append("duplicate goal id: %s" % goal_id)
+		else:
+			seen_ids[goal_id] = true
+
+		if (
+			not goal_data.has("progress")
+			or not _is_finite_number(goal_data["progress"])
+		):
+			errors.append("goal progress must be finite")
+		else:
+			var progress := float(goal_data["progress"])
+			if progress < 0.0 or progress > 1.0:
+				errors.append("goal progress must be inside 0..1")
+
+		if not goal_data.has("status") or not goal_data["status"] is String:
+			errors.append("goal status must be a string")
+			continue
+
+		var status: String = goal_data["status"]
+		if status not in ["active", "completed", "failed"]:
+			errors.append("goal status is invalid")
+		elif status == "active":
+			active_count += 1
+			if (
+				goal_data.has("progress")
+				and _is_finite_number(goal_data["progress"])
+				and float(goal_data["progress"]) >= 1.0
+			):
+				errors.append("active goal progress must be below 1")
+		elif (
+			status == "completed"
+			and goal_data.has("progress")
+			and _is_finite_number(goal_data["progress"])
+			and not is_equal_approx(float(goal_data["progress"]), 1.0)
+		):
+			errors.append("completed goal must have full progress")
+
+	if active_count > GoalSet.MAX_ACTIVE_GOALS:
+		errors.append("too many active goals")
+
+	if (
+		goals.has("day_index")
+		and goals["day_index"] is int
+		and int(goals["day_index"]) < 0
+		and not goals["items"].is_empty()
+	):
+		errors.append("unplanned goal day cannot contain items")
+
+static func _decode_schedule(
+	character: CharacterState,
+	data: Dictionary
+) -> void:
+	character.schedule.day_index = int(data["day_index"])
+	character.schedule.active_block_id = StringName(
+		data["active_block_id"]
+	)
+
+	if data["definition"] == null:
+		return
+
+	var definition := ScheduleDefinition.new()
+	for raw_block in data["definition"]["blocks"]:
+		var block_data: Dictionary = raw_block
+		var block := ScheduleBlock.new()
+		block.id = StringName(block_data["id"])
+		block.kind = StringName(block_data["kind"])
+		block.start_hour = float(block_data["start_hour"])
+		block.duration_hours = float(block_data["duration_hours"])
+		for raw_tag in block_data["preferred_action_tags"]:
+			block.preferred_action_tags.append(StringName(raw_tag))
+		definition.blocks.append(block)
+
+	character.schedule.definition = definition
+
+static func _decode_goals(
+	character: CharacterState,
+	data: Dictionary
+) -> bool:
+	character.goals.day_index = int(data["day_index"])
+
+	for raw_goal in data["items"]:
+		var goal_data: Dictionary = raw_goal
+		var definition_data: Dictionary = goal_data["definition"]
+		var definition := GoalDefinition.new()
+		definition.id = StringName(definition_data["id"])
+		definition.category = StringName(definition_data["category"])
+		definition.priority = float(definition_data["priority"])
+		definition.target_resident_id = StringName(
+			definition_data["target_resident_id"]
+		)
+		for raw_tag in definition_data["preferred_action_tags"]:
+			definition.preferred_action_tags.append(
+				StringName(raw_tag)
+			)
+
+		var goal := GoalState.new(definition)
+		goal.progress = float(goal_data["progress"])
+		goal.status = StringName(goal_data["status"])
+		if not character.goals.add(goal):
+			return false
+
+	return true

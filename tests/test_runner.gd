@@ -23,6 +23,15 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/unit/test_save_migrator.gd",
 	"res://tests/unit/test_character_snapshot_codec.gd",
 	"res://tests/unit/test_social_economy_snapshot_codec.gd",
+	"res://tests/unit/test_schedule_definition.gd",
+	"res://tests/unit/test_daily_schedule_state.gd",
+	"res://tests/unit/test_goal_state.gd",
+	"res://tests/integration/test_daily_goal_planner.gd",
+	"res://tests/integration/test_schedule_goal_bias.gd",
+	"res://tests/integration/test_social_goal_target_bias.gd",
+	"res://tests/integration/test_goal_completion_hooks.gd",
+	"res://tests/integration/test_daily_planning_rollover.gd",
+	"res://tests/integration/test_goal_schedule_snapshot_restore.gd",
 	"res://tests/integration/test_single_resident_day.gd",
 	"res://tests/integration/test_move_before_interact.gd",
 	"res://tests/integration/test_household_expenses.gd",
@@ -45,6 +54,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/soak/test_six_resident_household_soak.gd",
 	"res://tests/soak/test_social_economy_day_soak.gd",
 	"res://tests/soak/test_persistence_replay_soak.gd",
+	"res://tests/soak/test_daily_goals_schedules_soak.gd",
 ]
 
 func _init() -> void:

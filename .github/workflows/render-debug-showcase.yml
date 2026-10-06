@@ -1,0 +1,75 @@
+name: Render Debug Showcase
+
+on:
+  push:
+    branches:
+      - dev/plan-05-daily-goals-schedules
+    paths:
+      - 'scripts/debug/**'
+      - 'scenes/debug/**'
+      - 'scripts/simulation/**'
+      - 'scripts/persistence/**'
+      - '.github/workflows/render-debug-showcase.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: render-debug-showcase-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Scan project scripts
+        run: godot --headless --path . --editor --quit
+
+      - name: Render showcase
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a godot \
+            --path . \
+            --rendering-method gl_compatibility \
+            --windowed \
+            --resolution 540x960 \
+            res://scenes/debug/debug_showcase.tscn \
+            -- --capture-showcase 2>&1 | tee showcase.log
+          test -f debug_output/lifebox_debug_showcase.png
+
+      - name: Commit screenshot to branch
+        shell: bash
+        run: |
+          mkdir -p docs/screenshots
+          cp debug_output/lifebox_debug_showcase.png docs/screenshots/lifebox_debug_showcase.png
+          git config user.name "lifebox-ci"
+          git config user.email "lifebox-ci@users.noreply.github.com"
+          git add docs/screenshots/lifebox_debug_showcase.png
+          if git diff --cached --quiet; then
+            echo "Screenshot unchanged."
+          else
+            git commit -m "chore: update debug showcase screenshot"
+            git push origin HEAD:dev/plan-05-daily-goals-schedules
+          fi
+
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifebox-debug-showcase
+          path: debug_output/lifebox_debug_showcase.png
+          if-no-files-found: error

@@ -10,6 +10,8 @@ var utility_ai := UtilityAI.new()
 var stuck_recovery_policy := StuckRecoveryPolicy.new()
 var economy_system := EconomySystem.new()
 var spending_decision_system := SpendingDecisionSystem.new()
+var decision_bias_system := DecisionBiasSystem.new()
+var daily_planning_system := DailyPlanningSystem.new()
 var job_system := JobSystem.new()
 var household_expense_system := HouseholdExpenseSystem.new()
 var relationship_graph := RelationshipGraph.new()
@@ -42,6 +44,9 @@ func register_smart_object(object: SmartObject) -> void:
 	if object == null or object in _smart_objects:
 		return
 	_smart_objects.append(object)
+
+func characters() -> Array[CharacterState]:
+	return _characters.duplicate()
 
 func get_character(character_id: StringName) -> CharacterState:
 	for character in _characters:
@@ -175,6 +180,28 @@ func validate_persistence_state(data: Dictionary) -> Array[String]:
 			continue
 		decoded_residents.append(decoded)
 
+	for index in range(data["residents"].size()):
+		var raw_resident = data["residents"][index]
+		if not raw_resident is Dictionary:
+			continue
+		var goal_target_errors := CharacterSnapshotCodec.validate_goal_targets(
+			raw_resident,
+			resident_ids
+		)
+		for goal_target_error in goal_target_errors:
+			errors.append(
+				"resident[%d]: %s"
+				% [index, goal_target_error]
+			)
+
+	if errors.is_empty():
+		_validate_resident_planning_time(
+			data["residents"],
+			decoded_residents,
+			data["runtime"],
+			errors
+		)
+
 	var relationship_errors := SocialEconomySnapshotCodec.validate_relationships(
 		data["relationships"],
 		resident_ids
@@ -291,6 +318,71 @@ func restore_persistence_state(data: Dictionary) -> bool:
 	_rng.state = int(rng_data["state"])
 
 	return true
+
+func _validate_resident_planning_time(
+	resident_data_list: Array,
+	decoded_residents: Array[CharacterState],
+	runtime: Dictionary,
+	errors: Array[String]
+) -> void:
+	if not runtime.has("processed_sim_seconds"):
+		return
+	if not _is_finite_non_negative_number(runtime["processed_sim_seconds"]):
+		return
+
+	var processed_sim_seconds := float(runtime["processed_sim_seconds"])
+	var expected_day := int(floor(
+		processed_sim_seconds / DailyPlanningSystem.DAY_SECONDS
+	))
+	var decoded_by_id: Dictionary = {}
+	for resident in decoded_residents:
+		if resident != null:
+			decoded_by_id[str(resident.id)] = resident
+
+	for index in range(resident_data_list.size()):
+		var raw_resident = resident_data_list[index]
+		if not raw_resident is Dictionary:
+			continue
+		var resident_id := str(raw_resident.get("id", ""))
+		if not decoded_by_id.has(resident_id):
+			continue
+		var resident: CharacterState = decoded_by_id[resident_id]
+
+		if raw_resident.has("schedule"):
+			if resident.schedule.day_index != expected_day:
+				errors.append(
+					"resident[%d] schedule day does not match processed simulation day"
+					% index
+				)
+
+			if processed_sim_seconds >= FIXED_SIM_STEP_SECONDS:
+				var expected_block_id: StringName = &""
+				if resident.schedule.definition != null:
+					var day_seconds := fmod(
+						processed_sim_seconds,
+						DailyPlanningSystem.DAY_SECONDS
+					)
+					var hour := day_seconds / 3600.0
+					var expected_block: ScheduleBlock = resident.schedule.definition.active_block_at(
+						hour
+					)
+					if expected_block != null:
+						expected_block_id = expected_block.id
+				if resident.schedule.active_block_id != expected_block_id:
+					errors.append(
+						"resident[%d] active schedule block does not match processed simulation time"
+						% index
+					)
+
+		if (
+			processed_sim_seconds >= FIXED_SIM_STEP_SECONDS
+			and raw_resident.has("goals")
+			and resident.goals.day_index != expected_day
+		):
+			errors.append(
+				"resident[%d] goal day does not match processed simulation day"
+				% index
+			)
 
 func _validate_runtime_state(
 	runtime: Dictionary,
@@ -438,6 +530,11 @@ func step(real_delta: float) -> void:
 func _step_fixed(sim_delta: float) -> void:
 	_processed_sim_seconds += sim_delta
 	_pending_economy_seconds += sim_delta
+	daily_planning_system.advance(
+		self,
+		_processed_sim_seconds,
+		_rng
+	)
 
 	for character in _characters:
 		if character == null:
@@ -559,7 +656,18 @@ func _score_interaction(character: CharacterState, interaction: InteractionDefin
 		var deficit := 100.0 - clampf(need_state.value, 0.0, 100.0)
 		score += deficit * effect
 
-	return spending_decision_system.adjust_score(character, interaction, score)
+	var spending_score := spending_decision_system.adjust_score(
+		character,
+		interaction,
+		score
+	)
+	return decision_bias_system.adjust(
+		character,
+		interaction,
+		spending_score,
+		_processed_sim_seconds,
+		relationship_graph
+	)
 
 func _register_default_social_actions() -> void:
 	var chat := SocialActionDefinition.new()

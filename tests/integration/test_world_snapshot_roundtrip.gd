@@ -229,6 +229,16 @@ func _test_invalid_snapshot_does_not_mutate(
 	if codec_script.encode(world) != before:
 		failures.append("invalid runtime restore must not mutate destination world")
 
+	var invalid_schedule_day := valid_snapshot.duplicate(true)
+	invalid_schedule_day["residents"][0]["schedule"]["day_index"] = (
+		int(invalid_schedule_day["residents"][0]["schedule"]["day_index"]) + 1
+	)
+	errors = codec_script.restore(world, invalid_schedule_day)
+	if errors.is_empty():
+		failures.append("restored schedule day must match processed simulation day")
+	if codec_script.encode(world) != before:
+		failures.append("invalid schedule-day restore must not mutate destination world")
+
 	_dispose_world(target)
 
 func _build_world(

@@ -287,11 +287,28 @@ func _complete() -> void:
 		if _settle_cost(_candidate.interaction):
 			_apply_need_effects(_candidate.interaction.need_effects)
 			_apply_reward(_candidate.interaction)
+			_complete_matching_goals(_candidate.interaction)
 
 	_release_reservation()
 	_character.current_action_id = &"idle"
 	_character.movement.reset()
 	_clear()
+
+func _complete_matching_goals(interaction: InteractionDefinition) -> void:
+	if _character == null or _character.goals == null or interaction == null:
+		return
+	if interaction.action_tags.is_empty():
+		return
+
+	for goal in _character.goals.active_goals():
+		if goal == null or goal.definition == null:
+			continue
+		if goal.definition.target_resident_id != &"":
+			continue
+		for tag in interaction.action_tags:
+			if tag in goal.definition.preferred_action_tags:
+				goal.complete()
+				break
 
 func _settle_cost(interaction: InteractionDefinition) -> bool:
 	if interaction.money_cost <= 0.0:
