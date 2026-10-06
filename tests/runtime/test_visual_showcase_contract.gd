@@ -31,6 +31,19 @@ func run() -> Array[String]:
 		if not showcase.has_method(method_name):
 			failures.append("Visual showcase must expose %s()" % method_name)
 
+	if showcase.has_method("_make_schedule"):
+		for index in range(6):
+			var schedule: ScheduleDefinition = showcase._make_schedule(index)
+			if schedule == null:
+				failures.append("Showcase schedule %d must exist" % index)
+				continue
+			var schedule_errors := schedule.validate()
+			if not schedule_errors.is_empty():
+				failures.append(
+					"Showcase schedule %d must validate: %s"
+					% [index, " | ".join(schedule_errors)]
+				)
+
 	for node_path in [
 		"RuntimeObjects",
 		"VisualSimulationShell",
