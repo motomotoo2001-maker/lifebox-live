@@ -5,6 +5,7 @@ signal resident_requested(character_id: StringName)
 signal save_requested
 signal load_requested
 signal activity_requested(activity_id: StringName)
+signal social_requested(action_id: StringName)
 
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
@@ -12,6 +13,12 @@ signal activity_requested(activity_id: StringName)
 @onready var event_label: Label = $EventPanel/EventLabel
 @onready var save_button: Button = $EventPanel/SaveButton
 @onready var load_button: Button = $EventPanel/LoadButton
+@onready var social_target_label: Label = $SocialPanel/SocialTargetLabel
+@onready var social_buttons: Array[Button] = [
+	$SocialPanel/SocialStrip/ChatButton,
+	$SocialPanel/SocialStrip/ComplimentButton,
+	$SocialPanel/SocialStrip/ArgueButton,
+]
 @onready var activity_buttons: Array[Button] = [
 	$CommandPanel/CommandStrip/EatButton,
 	$CommandPanel/CommandStrip/SleepButton,
@@ -54,6 +61,11 @@ var _latest_event: String = "Simulation online"
 var _refresh_accumulator: float = 0.0
 var _simulation_running: bool = true
 var _camera_mode_text: String = "AUTO"
+var _social_action_ids: Array[StringName] = [
+	&"chat",
+	&"compliment",
+	&"argue",
+]
 var _activity_ids: Array[StringName] = [
 	&"eat",
 	&"sleep",
@@ -66,6 +78,7 @@ var _activity_ids: Array[StringName] = [
 func _ready() -> void:
 	_connect_resident_buttons()
 	_connect_activity_buttons()
+	_connect_social_buttons()
 	if not save_button.pressed.is_connected(_on_save_button_pressed):
 		save_button.pressed.connect(_on_save_button_pressed)
 	if not load_button.pressed.is_connected(_on_load_button_pressed):
@@ -137,6 +150,7 @@ func refresh() -> void:
 	event_label.text = _latest_event
 	_refresh_resident_buttons()
 	_refresh_activity_buttons()
+	_refresh_social_buttons()
 
 	var character: CharacterState = _world.get_character(_selected_resident_id)
 	if character == null:
@@ -163,6 +177,18 @@ func refresh() -> void:
 	comfort_label.text = "COMFORT %02d" % int(round(character.needs.comfort.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _connect_social_buttons() -> void:
+	for index in range(social_buttons.size()):
+		var button: Button = social_buttons[index]
+		if button == null or index >= _social_action_ids.size():
+			continue
+		button.pressed.connect(_on_social_button_pressed.bind(index))
+
+func _on_social_button_pressed(index: int) -> void:
+	if index < 0 or index >= _social_action_ids.size():
+		return
+	social_requested.emit(_social_action_ids[index])
 
 func _connect_activity_buttons() -> void:
 	for index in range(activity_buttons.size()):
@@ -227,6 +253,46 @@ func _refresh_resident_buttons() -> void:
 			character.display_name,
 			_action_text(character),
 		]
+
+func _refresh_social_buttons() -> void:
+	var target_name := _closest_resident_name()
+	var enabled := (
+		_world != null
+		and _selected_resident_id != &""
+		and not target_name.is_empty()
+	)
+	social_target_label.text = (
+		"SOCIAL WITH %s" % target_name
+		if enabled
+		else "SOCIAL WITH —"
+	)
+	for button in social_buttons:
+		if button != null:
+			button.disabled = not enabled
+
+func _closest_resident_name() -> String:
+	if _world == null or _selected_resident_id == &"":
+		return ""
+	var selected := _world.get_character(_selected_resident_id)
+	if selected == null:
+		return ""
+
+	var best_name := ""
+	var best_affinity := -INF
+	for other in _world.characters():
+		if other == null or other.id == selected.id:
+			continue
+		var relationship := _world.relationship_graph.get_relationship(
+			selected.id,
+			other.id
+		)
+		var affinity := 0.0
+		if relationship != null:
+			affinity = relationship.affinity
+		if best_name.is_empty() or affinity > best_affinity:
+			best_affinity = affinity
+			best_name = other.display_name
+	return best_name
 
 func _refresh_activity_buttons() -> void:
 	var enabled := (
@@ -349,7 +415,13 @@ func _clear_resident_panel() -> void:
 		bar.value = 0.0
 
 func _apply_styles() -> void:
-	for panel in [$TopPanel, $CommandPanel, $EventPanel, $ResidentPanel]:
+	for panel in [
+		$TopPanel,
+		$SocialPanel,
+		$CommandPanel,
+		$EventPanel,
+		$ResidentPanel,
+	]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.05, 0.08, 0.13, 0.9)
 		style.border_color = Color("3b4d65")
@@ -376,6 +448,22 @@ func _apply_styles() -> void:
 		action_style.set_border_width_all(1)
 		action_style.set_corner_radius_all(10)
 		action_button.add_theme_stylebox_override("normal", action_style)
+
+	for social_button in social_buttons:
+		social_button.add_theme_font_size_override("font_size", 10)
+		var social_style := StyleBoxFlat.new()
+		social_style.bg_color = Color("261e36")
+		social_style.border_color = Color("6f5a91")
+		social_style.set_border_width_all(1)
+		social_style.set_corner_radius_all(9)
+		social_button.add_theme_stylebox_override("normal", social_style)
+
+		var social_hover := StyleBoxFlat.new()
+		social_hover.bg_color = Color("3b2e52")
+		social_hover.border_color = Color("b89ae5")
+		social_hover.set_border_width_all(1)
+		social_hover.set_corner_radius_all(9)
+		social_button.add_theme_stylebox_override("hover", social_hover)
 
 	for activity_button in activity_buttons:
 		activity_button.add_theme_font_size_override("font_size", 10)

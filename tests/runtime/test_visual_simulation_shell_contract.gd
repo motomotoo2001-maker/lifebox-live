@@ -46,6 +46,7 @@ func run() -> Array[String]:
 		"select_resident",
 		"selected_resident_id",
 		"request_selected_activity",
+		"request_selected_social",
 		"set_simulation_paused",
 		"is_simulation_paused",
 		"set_camera_mode",

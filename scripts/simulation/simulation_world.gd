@@ -556,6 +556,57 @@ func request_interaction(
 	)
 	return executor.start(command, character)
 
+func request_social_interaction(
+	initiator_id: StringName,
+	target_id: StringName,
+	action_id: StringName,
+	interrupt_current: bool = true
+) -> bool:
+	if initiator_id == &"" or target_id == &"" or action_id == &"":
+		return false
+	if initiator_id == target_id:
+		return false
+
+	var initiator := get_character(initiator_id)
+	var target := get_character(target_id)
+	if initiator == null or target == null:
+		return false
+	if social_system.get_action(action_id) == null:
+		return false
+
+	var initiator_executor: ActionExecutor = _executors.get(initiator_id)
+	var target_executor: ActionExecutor = _executors.get(target_id)
+	var initiator_busy := (
+		(initiator_executor != null and initiator_executor.is_active())
+		or social_system.reservation_book.is_reserved(initiator_id)
+	)
+	var target_busy := (
+		(target_executor != null and target_executor.is_active())
+		or social_system.reservation_book.is_reserved(target_id)
+	)
+
+	if (initiator_busy or target_busy) and not interrupt_current:
+		return false
+
+	var sessions_to_cancel: Dictionary = {}
+	for resident_id in [initiator_id, target_id]:
+		var session := social_system.reservation_book.get_session_for(resident_id)
+		if session != null:
+			sessions_to_cancel[session.session_id] = true
+	for session_id in sessions_to_cancel.keys():
+		social_system.cancel_session(session_id, _characters)
+
+	if initiator_executor != null and initiator_executor.is_active():
+		initiator_executor.cancel()
+	if target_executor != null and target_executor.is_active():
+		target_executor.cancel()
+
+	return social_system.start_registered_action(
+		action_id,
+		initiator,
+		target
+	)
+
 func report_arrival(character_id: StringName, target_object_id: StringName) -> bool:
 	var executor: ActionExecutor = _executors.get(character_id)
 	if executor == null:

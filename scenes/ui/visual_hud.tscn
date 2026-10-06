@@ -85,6 +85,43 @@ layout_mode = 2
 toggle_mode = true
 text = "6 —"
 
+[node name="SocialPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 792.0
+offset_right = 700.0
+offset_bottom = 858.0
+
+[node name="SocialTargetLabel" type="Label" parent="SocialPanel"]
+offset_left = 20.0
+offset_top = 8.0
+offset_right = 230.0
+offset_bottom = 28.0
+text = "SOCIAL WITH —"
+modulate = Color(0.79, 0.72, 0.93, 1)
+
+[node name="SocialStrip" type="HBoxContainer" parent="SocialPanel"]
+offset_left = 250.0
+offset_top = 11.0
+offset_right = 660.0
+offset_bottom = 55.0
+theme_override_constants/separation = 8
+
+[node name="ChatButton" type="Button" parent="SocialPanel/SocialStrip"]
+custom_minimum_size = Vector2(125, 38)
+layout_mode = 2
+text = "CHAT"
+
+[node name="ComplimentButton" type="Button" parent="SocialPanel/SocialStrip"]
+custom_minimum_size = Vector2(125, 38)
+layout_mode = 2
+text = "COMPLIMENT"
+
+[node name="ArgueButton" type="Button" parent="SocialPanel/SocialStrip"]
+custom_minimum_size = Vector2(125, 38)
+layout_mode = 2
+text = "ARGUE"
+
 [node name="CommandPanel" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 20.0

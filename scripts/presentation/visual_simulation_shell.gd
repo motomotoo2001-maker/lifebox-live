@@ -33,6 +33,13 @@ func _ready() -> void:
 		hud.set_camera_mode_text(_camera_mode_display())
 	if (
 		hud != null
+		and not hud.social_requested.is_connected(
+			_on_hud_social_requested
+		)
+	):
+		hud.social_requested.connect(_on_hud_social_requested)
+	if (
+		hud != null
 		and not hud.activity_requested.is_connected(
 			_on_hud_activity_requested
 		)
@@ -348,6 +355,69 @@ func select_resident(
 		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
 	return true
 
+func request_selected_social(action_id: StringName) -> bool:
+	if _world == null or _selected_resident_id == &"":
+		return false
+	if action_id not in [&"chat", &"compliment", &"argue"]:
+		return false
+
+	var selected := _world.get_character(_selected_resident_id)
+	if selected == null:
+		return false
+	var target := _closest_social_target(selected)
+	if target == null:
+		return false
+
+	var accepted := _world.request_social_interaction(
+		selected.id,
+		target.id,
+		action_id,
+		true
+	)
+	if hud != null:
+		if accepted:
+			hud.set_latest_event(
+				"%s → %s → %s" % [
+					selected.display_name,
+					str(action_id).to_upper(),
+					target.display_name,
+				]
+			)
+		else:
+			hud.set_latest_event(
+				"%s cannot %s with %s" % [
+					selected.display_name,
+					str(action_id),
+					target.display_name,
+				]
+			)
+
+	if accepted:
+		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
+		sync_visuals()
+	return accepted
+
+func _closest_social_target(selected: CharacterState) -> CharacterState:
+	if _world == null or selected == null:
+		return null
+
+	var best: CharacterState = null
+	var best_affinity := -INF
+	for other in _world.characters():
+		if other == null or other.id == selected.id:
+			continue
+		var relationship := _world.relationship_graph.get_relationship(
+			selected.id,
+			other.id
+		)
+		var affinity := 0.0
+		if relationship != null:
+			affinity = relationship.affinity
+		if best == null or affinity > best_affinity:
+			best = other
+			best_affinity = affinity
+	return best
+
 func request_selected_activity(activity_id: StringName) -> bool:
 	if _world == null or _selected_resident_id == &"":
 		return false
@@ -427,6 +497,9 @@ func _on_hud_resident_requested(character_id: StringName) -> void:
 
 func _on_hud_activity_requested(activity_id: StringName) -> void:
 	request_selected_activity(activity_id)
+
+func _on_hud_social_requested(action_id: StringName) -> void:
+	request_selected_social(action_id)
 
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:
