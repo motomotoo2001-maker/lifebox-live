@@ -32,6 +32,7 @@ const TEST_PATHS: Array[String] = [
 	"res://tests/unit/test_live_input_primitives.gd",
 	"res://tests/unit/test_vote_session.gd",
 	"res://tests/integration/test_fate_engine.gd",
+	"res://tests/integration/test_live_interaction_pipeline.gd",
 	"res://tests/integration/test_daily_goal_planner.gd",
 	"res://tests/integration/test_schedule_goal_bias.gd",
 	"res://tests/integration/test_social_goal_target_bias.gd",
