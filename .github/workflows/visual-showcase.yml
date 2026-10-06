@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   screenshot:
@@ -64,3 +64,20 @@ jobs:
           path: artifacts/visual_showcase.png
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish current project screenshot
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/screenshots
+          cp artifacts/visual_showcase.png docs/screenshots/visual_showcase.png
+          git config user.name "lifebox-ci"
+          git config user.email "lifebox-ci@users.noreply.github.com"
+          git add docs/screenshots/visual_showcase.png
+          if git diff --cached --quiet; then
+            echo "Screenshot unchanged."
+            exit 0
+          fi
+          git commit -m "chore: update visual showcase screenshot"
+          git push origin HEAD:${GITHUB_REF_NAME}
