@@ -9,7 +9,8 @@ const RESIDENT_ACTOR_SCENE := preload(
 
 @onready var household: HouseholdBlockout = $HouseholdBlockout
 @onready var resident_actors: Node3D = $ResidentActors
-@onready var camera_rig: VerticalCameraRig = $VerticalCameraRig\n@onready var hud: VisualHUD = $HUDLayer/VisualHUD
+@onready var camera_rig: VerticalCameraRig = $VerticalCameraRig
+@onready var hud: VisualHUD = $HUDLayer/VisualHUD
 
 var _world: SimulationWorld = null
 var _actors: Dictionary = {}
@@ -39,18 +40,18 @@ func bind_world(world: SimulationWorld) -> bool:
 	_world = world
 	hud.bind_world(_world)
 
-	var residents := _world.characters()
+	var residents: Array[CharacterState] = _world.characters()
 	for index in range(residents.size()):
 		var character: CharacterState = residents[index]
 		if character == null or character.id == &"":
 			continue
 
-		var actor := RESIDENT_ACTOR_SCENE.instantiate() as ResidentActor3D
+		var actor: ResidentActor3D = RESIDENT_ACTOR_SCENE.instantiate() as ResidentActor3D
 		if actor == null:
 			return false
 
 		resident_actors.add_child(actor)
-		var spawn := household.get_resident_spawn(index + 1)
+		var spawn: Marker3D = household.get_resident_spawn(index + 1)
 		if spawn != null:
 			actor.global_position = spawn.global_position
 		else:
