@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/debug/visual_showcase_bootstrap.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/presentation/visual_simulation_shell.tscn" id="2_shell"]
+
+[sub_resource type="Environment" id="Environment_showcase"]
+background_mode = 1
+background_color = Color(0.035, 0.055, 0.086, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.78, 0.86, 1, 1)
+ambient_light_energy = 0.75
+
+[node name="VisualShowcase" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_showcase")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-58, -28, 0)
+light_energy = 1.35
+shadow_enabled = true
+
+[node name="FillLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-35, 148, 0)
+light_color = Color(0.62, 0.76, 1, 1)
+light_energy = 0.55
+
+[node name="RuntimeObjects" type="Node" parent="."]
+
+[node name="VisualSimulationShell" parent="." instance=ExtResource("2_shell")]
