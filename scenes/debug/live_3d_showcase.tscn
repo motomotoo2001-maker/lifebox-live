@@ -1,0 +1,45 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/live_3d_showcase.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/world/household_blockout.tscn" id="2_house"]
+
+[sub_resource type="Environment" id="Environment_showcase"]
+background_mode = 1
+background_color = Color(0.025, 0.035, 0.055, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.58, 0.66, 0.82, 1)
+ambient_light_energy = 0.65
+
+[node name="Live3DShowcase" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="HouseholdBlockout" parent="." instance=ExtResource("2_house")]
+
+[node name="Decor" type="Node3D" parent="."]
+
+[node name="Actors" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+current = true
+projection = 1
+size = 29.0
+near = 0.1
+far = 100.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.85, -0.6, -0.15)
+light_color = Color(0.94, 0.96, 1, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(-4, 8, 5)
+light_color = Color(0.55, 0.7, 1, 1)
+light_energy = 4.0
+omni_range = 25.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_showcase")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+layer = 5
