@@ -30,6 +30,7 @@ func run() -> Array[String]:
 		"TopPanel",
 		"TopPanel/DayTimeLabel",
 		"TopPanel/StatusLabel",
+		"TopPanel/ControlHintLabel",
 		"EventPanel",
 		"EventPanel/EventLabel",
 		"ResidentPanel",
@@ -37,6 +38,10 @@ func run() -> Array[String]:
 		"ResidentPanel/ScheduleLabel",
 		"ResidentPanel/GoalLabel",
 		"ResidentPanel/MoneyLabel",
+		"ResidentPanel/HungerLabel",
+		"ResidentPanel/EnergyLabel",
+		"ResidentPanel/SocialLabel",
+		"ResidentPanel/MoodLabel",
 		"ResidentPanel/HungerBar",
 		"ResidentPanel/EnergyBar",
 		"ResidentPanel/SocialBar",
@@ -48,6 +53,7 @@ func run() -> Array[String]:
 	for method_name in [
 		"bind_world",
 		"set_selected_resident",
+		"set_simulation_running",
 		"set_latest_event",
 		"refresh",
 	]:
