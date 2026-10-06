@@ -3,12 +3,12 @@
 [ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
-radius = 0.34
-height = 1.2
+radius = 0.38
+height = 1.32
 
 [sub_resource type="SphereMesh" id="SphereMesh_head"]
-radius = 0.38
-height = 0.76
+radius = 0.42
+height = 0.84
 
 [node name="ResidentActor3D" type="CharacterBody3D"]
 script = ExtResource("1_script")
@@ -21,19 +21,19 @@ avoidance_enabled = true
 [node name="VisualRoot" type="Node3D" parent="."]
 
 [node name="Body" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 0.72, 0)
+position = Vector3(0, 0.78, 0)
 mesh = SubResource("CapsuleMesh_body")
 cast_shadow = 1
 
 [node name="Head" type="MeshInstance3D" parent="VisualRoot"]
-position = Vector3(0, 1.55, 0)
+position = Vector3(0, 1.72, 0)
 mesh = SubResource("SphereMesh_head")
 cast_shadow = 1
 
 [node name="NameLabel" type="Label3D" parent="VisualRoot"]
-position = Vector3(0, 2.15, 0)
+position = Vector3(0, 2.42, 0)
 text = "RESIDENT"
-font_size = 26
-outline_size = 6
+font_size = 38
+outline_size = 9
 billboard = 1
 no_depth_test = true
