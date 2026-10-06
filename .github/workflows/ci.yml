@@ -47,8 +47,21 @@ jobs:
           fi
           exit "$status"
 
+  showcase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
 
       - name: Render live showcase
+        shell: bash
         run: |
           set -o pipefail
           xvfb-run -a godot --path . --audio-driver Dummy --rendering-method gl_compatibility -s res://tools/capture_live_showcase.gd 2>&1 | tee showcase-render.log
