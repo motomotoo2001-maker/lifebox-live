@@ -3,6 +3,7 @@ extends CharacterBody3D
 
 signal movement_arrived(character_id: StringName)
 signal movement_failed(character_id: StringName)
+signal resident_selected(character_id: StringName)
 
 @export var movement_speed: float = 2.5
 @export var resident_color: Color = Color("58a6ff")
@@ -22,6 +23,8 @@ signal movement_failed(character_id: StringName)
 @onready var eye_left: MeshInstance3D = $Visuals/EyeLeft
 @onready var eye_right: MeshInstance3D = $Visuals/EyeRight
 @onready var activity_badge: Label3D = $Visuals/ActivityBadge
+@onready var selection_marker: MeshInstance3D = $Visuals/SelectionMarker
+@onready var click_area: Area3D = $ClickArea
 
 var _character_id: StringName = &""
 var _pending_target: Vector3 = Vector3.ZERO
@@ -38,11 +41,17 @@ var _visual_time: float = 0.0
 var _visual_profile_index: int = 0
 var _presentation_state: StringName = STATE_IDLE
 var _badge_time_remaining: float = 0.0
+var _selected: bool = false
 
 func _ready() -> void:
 	navigation_agent.velocity_computed.connect(_on_velocity_computed)
+	if is_instance_valid(click_area) and not click_area.input_event.is_connected(
+		_on_click_area_input_event
+	):
+		click_area.input_event.connect(_on_click_area_input_event)
 	_apply_visual_style()
 	_refresh_name_label()
+	set_selected(_selected)
 
 func bind_character(character_id: StringName) -> void:
 	_character_id = character_id
@@ -74,6 +83,18 @@ func set_presentation_state(state: StringName) -> void:
 
 func presentation_state() -> StringName:
 	return _presentation_state
+
+func set_selected(value: bool) -> void:
+	_selected = value
+	if is_instance_valid(selection_marker):
+		selection_marker.visible = value
+	if is_instance_valid(name_label):
+		name_label.modulate = (
+			Color("fff3a6") if value else Color.WHITE
+		)
+
+func is_selected() -> bool:
+	return _selected
 
 func set_activity_badge(text: String, duration: float = 0.0) -> void:
 	if not is_instance_valid(activity_badge):
@@ -315,7 +336,18 @@ func _apply_visual_style() -> void:
 		shadow_mesh.material_override = shadow_material
 
 	if is_instance_valid(name_label):
-		name_label.modulate = Color.WHITE
+		name_label.modulate = Color("fff3a6") if _selected else Color.WHITE
+
+	if is_instance_valid(selection_marker):
+		var selection_material := _material(
+			resident_color.lightened(0.28),
+			0.7
+		)
+		selection_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		selection_material.albedo_color.a = 0.52
+		selection_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		selection_marker.material_override = selection_material
+		selection_marker.visible = _selected
 
 func _apply_visual_profile() -> void:
 	if not is_instance_valid(visuals):
@@ -351,6 +383,25 @@ func _apply_visual_profile() -> void:
 		leg_left.position.x = -stance_offsets[variant]
 	if is_instance_valid(leg_right):
 		leg_right.position.x = stance_offsets[variant]
+
+func _on_click_area_input_event(
+	_camera: Node,
+	event: InputEvent,
+	_event_position: Vector3,
+	_normal: Vector3,
+	_shape_idx: int
+) -> void:
+	if not event is InputEventMouseButton:
+		return
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+		return
+	if _character_id == &"":
+		return
+	resident_selected.emit(_character_id)
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
 
 func _refresh_name_label() -> void:
 	if is_instance_valid(name_label):
