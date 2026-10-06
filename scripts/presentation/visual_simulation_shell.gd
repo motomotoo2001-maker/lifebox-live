@@ -610,4 +610,5 @@ func _clear_actors() -> void:
 	if not is_instance_valid(resident_actors):
 		return
 	for child in resident_actors.get_children():
-		child.queue_free()
+		if is_instance_valid(child):
+			child.free()
