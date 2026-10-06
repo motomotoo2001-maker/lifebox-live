@@ -21,6 +21,7 @@ signal movement_failed(character_id: StringName)
 @onready var nose_mesh: MeshInstance3D = $Visuals/Nose
 @onready var eye_left: MeshInstance3D = $Visuals/EyeLeft
 @onready var eye_right: MeshInstance3D = $Visuals/EyeRight
+@onready var activity_badge: Label3D = $Visuals/ActivityBadge
 
 var _character_id: StringName = &""
 var _pending_target: Vector3 = Vector3.ZERO
@@ -36,6 +37,7 @@ var _display_name: String = "Resident"
 var _visual_time: float = 0.0
 var _visual_profile_index: int = 0
 var _presentation_state: StringName = STATE_IDLE
+var _badge_time_remaining: float = 0.0
 
 func _ready() -> void:
 	navigation_agent.velocity_computed.connect(_on_velocity_computed)
@@ -73,6 +75,22 @@ func set_presentation_state(state: StringName) -> void:
 func presentation_state() -> StringName:
 	return _presentation_state
 
+func set_activity_badge(text: String, duration: float = 0.0) -> void:
+	if not is_instance_valid(activity_badge):
+		return
+	activity_badge.text = text.strip_edges()
+	activity_badge.visible = not activity_badge.text.is_empty()
+	if is_nan(duration) or is_inf(duration) or duration < 0.0:
+		_badge_time_remaining = 0.0
+	else:
+		_badge_time_remaining = duration
+
+func clear_activity_badge() -> void:
+	_badge_time_remaining = 0.0
+	if is_instance_valid(activity_badge):
+		activity_badge.text = ""
+		activity_badge.visible = false
+
 func set_movement_target(target: Vector3, arrival_radius: float) -> void:
 	if not _is_finite_vector(target):
 		_fail_movement()
@@ -91,6 +109,7 @@ func stop_movement() -> void:
 
 func _physics_process(delta: float) -> void:
 	_visual_time += delta
+	_update_activity_badge(delta)
 	_animate_visuals()
 
 	if not _has_target:
@@ -124,6 +143,13 @@ func _physics_process(delta: float) -> void:
 		navigation_agent.velocity = desired_velocity
 	else:
 		_on_velocity_computed(desired_velocity)
+
+func _update_activity_badge(delta: float) -> void:
+	if _badge_time_remaining <= 0.0:
+		return
+	_badge_time_remaining = maxf(_badge_time_remaining - maxf(delta, 0.0), 0.0)
+	if _badge_time_remaining <= 0.0:
+		clear_activity_badge()
 
 func _animate_visuals() -> void:
 	if not is_instance_valid(visuals):
