@@ -33,13 +33,32 @@ func run() -> Array[String]:
 		if not navigation_agent is NavigationAgent3D:
 			failures.append("NavigationAgent3D child must have NavigationAgent3D type")
 
-	for method_name in ["bind_character", "set_movement_target", "stop_movement"]:
+	for method_name in [
+		"bind_character",
+		"get_character_id",
+		"has_movement_target",
+		"set_visual_profile",
+		"set_activity_label",
+		"set_movement_target",
+		"stop_movement",
+	]:
 		if not actor.has_method(method_name):
 			failures.append("ResidentActor3D must expose %s()" % method_name)
 
 	for signal_name in ["movement_arrived", "movement_failed"]:
 		if not actor.has_signal(signal_name):
 			failures.append("ResidentActor3D must expose %s signal" % signal_name)
+
+	for required_node in [
+		"VisualRoot",
+		"VisualRoot/Body",
+		"VisualRoot/Head",
+		"VisualRoot/Shadow",
+		"VisualRoot/NameLabel",
+		"CollisionShape3D",
+	]:
+		if not actor.has_node(required_node):
+			failures.append("ResidentActor3D missing visual node %s" % required_node)
 
 	if actor.get("movement_speed") == null or float(actor.get("movement_speed")) <= 0.0:
 		failures.append("ResidentActor3D movement_speed must be positive")
