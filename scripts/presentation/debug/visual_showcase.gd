@@ -431,7 +431,7 @@ func _resident_card(resident: CharacterState, index: int) -> PanelContainer:
 	box.add_child(header)
 
 	var goal_text := "No active goal"
-	var active_goals := resident.goals.active_goals()
+	var active_goals: Array = resident.goals.active_goals()
 	if not active_goals.is_empty():
 		var goal: GoalState = active_goals[0]
 		goal_text = "%s  %d%%" % [
