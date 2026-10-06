@@ -27,6 +27,7 @@ var _last_story: String = ""
 func _ready() -> void:
 	_build_simulation()
 	_build_ui()
+	set_meta("showcase_ready", true)
 	set_process(true)
 
 func _exit_tree() -> void:
@@ -307,7 +308,7 @@ func _refresh_ui() -> void:
 func _primary_goal_label(resident: CharacterState) -> String:
 	if resident.goals == null:
 		return "No goal"
-	var active := resident.goals.active_goals()
+	var active: Array[GoalState] = resident.goals.active_goals()
 	if active.is_empty():
 		return "Goals complete"
 	var goal: GoalState = active[0]
