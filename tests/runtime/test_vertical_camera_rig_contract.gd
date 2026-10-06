@@ -36,7 +36,7 @@ func run() -> Array[String]:
 		elif camera.size <= 0.0:
 			failures.append("VerticalCameraRig orthographic size must be positive")
 
-	if not "focus_translation_strength" in rig:
+	if rig.get("focus_translation_strength") == null:
 		failures.append("VerticalCameraRig must expose focus_translation_strength")
 
 	for method_name in [
