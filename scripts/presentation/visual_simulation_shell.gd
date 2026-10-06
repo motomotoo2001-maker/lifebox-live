@@ -62,6 +62,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	if key_event.keycode == KEY_ESCAPE:
+		_manual_focus_remaining = 0.0
+		if camera_director != null:
+			camera_director.force_establishing()
+		if hud != null:
+			hud.set_latest_event("Camera overview")
+		get_viewport().set_input_as_handled()
+		return
+
+	if key_event.unicode == 43 or key_event.keycode == KEY_EQUAL:
+		_shift_time_scale(1)
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.unicode == 45 or key_event.keycode == KEY_MINUS:
+		_shift_time_scale(-1)
+		get_viewport().set_input_as_handled()
+		return
+
 	var resident_index := -1
 	match key_event.keycode:
 		KEY_1:
@@ -175,7 +193,15 @@ func _presentation_target_for(
 		return Vector3.ZERO
 
 	var target := intent.target_position
-	if intent.target_object_id != &"sofa_main":
+	var target_id := intent.target_object_id
+
+	if target_id == &"fridge_main":
+		return target + Vector3(0.0, 0.0, -0.92)
+	if target_id == &"shower_main":
+		return target + Vector3(-0.72, 0.0, -0.56)
+	if str(target_id).begins_with("bed_"):
+		return target + Vector3(0.0, 0.0, 1.02)
+	if target_id != &"sofa_main":
 		return target
 
 	var sofa_slots: Array[Vector3] = [
@@ -189,6 +215,31 @@ func _presentation_target_for(
 	var suffix := str(character_id).get_slice("_", 1).to_int()
 	var slot_index := maxi(suffix - 1, 0) % sofa_slots.size()
 	return target + sofa_slots[slot_index]
+
+func _shift_time_scale(direction: int) -> void:
+	if _world == null or direction == 0:
+		return
+
+	var scales: Array[float] = [1.0, 5.0, 10.0, 20.0]
+	var current := _world.clock.get_time_scale()
+	var next_scale := current
+
+	if direction > 0:
+		for scale in scales:
+			if scale > current + 0.001:
+				next_scale = scale
+				break
+	else:
+		for index in range(scales.size() - 1, -1, -1):
+			var scale: float = scales[index]
+			if scale < current - 0.001:
+				next_scale = scale
+				break
+
+	_world.clock.set_time_scale(next_scale)
+	if hud != null:
+		hud.set_latest_event("Simulation speed %.0fx" % next_scale)
+		hud.refresh()
 
 func select_resident(
 	character_id: StringName,
