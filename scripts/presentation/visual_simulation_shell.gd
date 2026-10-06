@@ -10,11 +10,16 @@ const RESIDENT_ACTOR_SCENE := preload(
 @onready var household: HouseholdBlockout = $HouseholdBlockout
 @onready var resident_actors: Node3D = $ResidentActors
 @onready var camera_rig: VerticalCameraRig = $VerticalCameraRig
+@onready var camera_director: CameraDirector = $CameraDirector
 @onready var hud: VisualHUD = $HUDLayer/VisualHUD
 
 var _world: SimulationWorld = null
 var _actors: Dictionary = {}
 var _active_target_ids: Dictionary = {}
+
+func _ready() -> void:
+	if camera_director != null:
+		camera_director.bind_camera_rig(camera_rig)
 
 var _palette: Array[Color] = [
 	Color("58a6ff"),
@@ -31,6 +36,7 @@ func _process(delta: float) -> void:
 	if advance_simulation:
 		_world.step(delta)
 	sync_visuals()
+	_update_camera_director(delta)
 
 func bind_world(world: SimulationWorld) -> bool:
 	if world == null:
@@ -102,6 +108,44 @@ func sync_visuals() -> void:
 				actor.stop_movement()
 				_active_target_ids.erase(character.id)
 
+func _update_camera_director(delta: float) -> void:
+	if camera_director == null or _world == null:
+		return
+
+	for character in _world.characters():
+		if character == null:
+			continue
+		var actor := actor_for(character.id)
+		if actor == null:
+			continue
+
+		var interest := _presentation_interest(character)
+		camera_director.suggest_focus(
+			character.id,
+			actor.global_position + Vector3(0.0, 0.85, 0.0),
+			interest
+		)
+
+	camera_director.tick(delta)
+
+func _presentation_interest(character: CharacterState) -> float:
+	var score := 0.0
+
+	if character.current_action_id != &"idle":
+		score += 24.0
+	if character.movement.status == MovementState.STATUS_MOVING:
+		score += 34.0
+	if _world.social_system.reservation_book.is_reserved(character.id):
+		score += 28.0
+	if character.needs.hunger.value <= 20.0:
+		score += 18.0
+	if character.needs.energy.value <= 20.0:
+		score += 18.0
+	if character.goals != null and not character.goals.active_goals().is_empty():
+		score += 5.0
+
+	return score
+
 func actor_for(character_id: StringName) -> ResidentActor3D:
 	return _actors.get(character_id) as ResidentActor3D
 
@@ -117,6 +161,13 @@ func _on_actor_arrived(character_id: StringName) -> void:
 
 	_world.report_arrival(character_id, target_id)
 	hud.set_latest_event("%s arrived at %s" % [character_id, target_id])
+	var actor := actor_for(character_id)
+	if camera_director != null and actor != null:
+		camera_director.suggest_focus(
+			character_id,
+			actor.global_position + Vector3(0.0, 0.85, 0.0),
+			90.0
+		)
 	_active_target_ids.erase(character_id)
 
 func _on_actor_failed(character_id: StringName) -> void:
