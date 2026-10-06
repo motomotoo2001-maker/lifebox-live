@@ -9,6 +9,7 @@ var _capture_path: String = ""
 var _capture_after_seconds: float = 4.0
 var _elapsed_real_seconds: float = 0.0
 var _capture_started: bool = false
+var _validate_before_capture: bool = false
 
 func _ready() -> void:
 	_parse_user_args()
@@ -204,9 +205,23 @@ func _parse_user_args() -> void:
 			var value := argument.trim_prefix("--capture-after=")
 			if value.is_valid_float():
 				_capture_after_seconds = maxf(float(value), 0.25)
+		elif argument == "--validate-visual-state":
+			_validate_before_capture = true
 
 func _capture_frame() -> void:
 	await RenderingServer.frame_post_draw
+
+	if _validate_before_capture:
+		var visual_errors := shell.validate_visual_state()
+		if not visual_errors.is_empty():
+			for visual_error in visual_errors:
+				push_error("Visual soak validation failed: %s" % visual_error)
+			get_tree().quit(4)
+			return
+		print(
+			"VISUAL SOAK OK: %d actors, %d active movement bindings"
+			% [shell.actor_count(), shell.active_movement_count()]
+		)
 
 	var image := get_viewport().get_texture().get_image()
 	if image == null or image.is_empty():
