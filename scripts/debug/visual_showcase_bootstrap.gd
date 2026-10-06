@@ -5,6 +5,7 @@ const QUICK_SAVE_PATH := "user://lifebox_quicksave.dat"
 
 @onready var shell: VisualSimulationShell = $VisualSimulationShell
 @onready var runtime_objects: Node = $RuntimeObjects
+@onready var day_night_controller: DayNightController = $DayNightController
 
 var _world := SimulationWorld.new()
 var _capture_path: String = ""
@@ -16,6 +17,8 @@ var _validate_before_capture: bool = false
 func _ready() -> void:
 	_parse_user_args()
 	_build_world()
+	if day_night_controller != null:
+		day_night_controller.bind_world(_world)
 	shell.bind_world(_world)
 	shell.select_resident(&"resident_001")
 	_connect_persistence_ui()

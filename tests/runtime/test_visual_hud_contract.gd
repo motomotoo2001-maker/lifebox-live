@@ -63,6 +63,7 @@ func run() -> Array[String]:
 
 	for method_name in [
 		"bind_world",
+		"_day_phase_text",
 		"set_selected_resident",
 		"set_simulation_running",
 		"set_latest_event",

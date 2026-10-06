@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/debug/visual_showcase_bootstrap.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://scenes/presentation/visual_simulation_shell.tscn" id="2_shell"]
+[ext_resource type="Script" path="res://scripts/presentation/world/day_night_controller.gd" id="3_daynight"]
 
 [sub_resource type="Environment" id="Environment_showcase"]
 background_mode = 1
@@ -53,6 +54,9 @@ light_color = Color(0.66, 0.88, 1, 1)
 light_energy = 0.72
 omni_range = 4.0
 omni_attenuation = 1.55
+
+[node name="DayNightController" type="Node" parent="."]
+script = ExtResource("3_daynight")
 
 [node name="RuntimeObjects" type="Node" parent="."]
 

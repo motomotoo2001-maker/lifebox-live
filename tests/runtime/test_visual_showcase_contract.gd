@@ -36,6 +36,8 @@ func run() -> Array[String]:
 		"VisualSimulationShell",
 		"WorldEnvironment",
 		"KeyLight",
+		"FillLight",
+		"DayNightController",
 	]:
 		if not showcase.has_node(node_path):
 			failures.append("Visual showcase missing node %s" % node_path)

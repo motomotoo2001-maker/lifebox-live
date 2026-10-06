@@ -98,8 +98,9 @@ func refresh() -> void:
 		hour,
 		minute,
 	]
-	status_label.text = "AUTONOMOUS  •  %s  •  %.0fx  •  %d" % [
+	status_label.text = "AUTONOMOUS  •  %s  •  %s  •  %.0fx  •  %d" % [
 		"RUN" if _simulation_running else "PAUSED",
+		_day_phase_text(hour),
 		_world.clock.get_time_scale(),
 		_world.characters().size(),
 	]
@@ -212,6 +213,17 @@ func _action_text(character: CharacterState) -> String:
 			]
 
 	return value.replace("_", " ")
+
+func _day_phase_text(hour: int) -> String:
+	if hour < 6:
+		return "NIGHT"
+	if hour < 9:
+		return "DAWN"
+	if hour < 18:
+		return "DAY"
+	if hour < 21:
+		return "DUSK"
+	return "NIGHT"
 
 func _schedule_text(character: CharacterState) -> String:
 	if character.schedule == null:
