@@ -19,6 +19,7 @@ var world := SimulationWorld.new()
 var residents: Array[CharacterState] = []
 var smart_objects: Array[SmartObject] = []
 var resident_labels: Array[Dictionary] = []
+var resident_markers: Array[Control] = []
 var time_label: Label
 var story_label: Label
 var status_label: Label
@@ -235,6 +236,14 @@ func _build_ui() -> void:
 		var rp := _panel(world_panel, room_data[0], room_data[1], room_data[3], 12)
 		_label(rp, room_data[2], Vector2(10,8), Vector2(120,18), 11, Color("8296af"), true)
 
+	for index in range(residents.size()):
+		var marker := _resident_marker(
+			world_panel,
+			index,
+			residents[index].display_name
+		)
+		resident_markers.append(marker)
+
 	story_label = _label(world_panel, "", Vector2(20,368), Vector2(630,24), 12, Color("7ee787"), true)
 
 	var list := _panel(self, Vector2(24,586), Vector2(672,556), Color("111827"), 22)
@@ -271,10 +280,19 @@ func _refresh_ui() -> void:
 	time_label.text = "DAY %d   %02d:%02d" % [day, hour, minute]
 
 	var story_parts: Array[String] = []
+	var room_counts: Dictionary = {}
 	for index in range(residents.size()):
 		var resident := residents[index]
 		var labels: Dictionary = resident_labels[index]
 		var room := _room_for_action(resident.current_action_id)
+		var room_slot := int(room_counts.get(room, 0))
+		room_counts[room] = room_slot + 1
+		if index < resident_markers.size():
+			resident_markers[index].position = _room_marker_position(
+				room,
+				room_slot
+			)
+
 		var schedule_name := "—"
 		if resident.schedule != null and resident.schedule.active_block_id != &"":
 			schedule_name = str(resident.schedule.active_block_id).to_upper()
@@ -304,6 +322,78 @@ func _refresh_ui() -> void:
 		residents.size(),
 		world.clock.get_time_scale(),
 	]
+
+func _resident_marker(
+	parent: Control,
+	index: int,
+	resident_name: String
+) -> Control:
+	var root := Control.new()
+	root.size = Vector2(72, 52)
+	parent.add_child(root)
+
+	var dot := Panel.new()
+	dot.position = Vector2(20, 0)
+	dot.size = Vector2(34, 34)
+	var style := StyleBoxFlat.new()
+	var colors := [
+		Color("58a6ff"),
+		Color("a371f7"),
+		Color("f78166"),
+		Color("3fb950"),
+		Color("d29922"),
+		Color("db61a2"),
+	]
+	style.bg_color = colors[index % colors.size()]
+	style.corner_radius_top_left = 17
+	style.corner_radius_top_right = 17
+	style.corner_radius_bottom_left = 17
+	style.corner_radius_bottom_right = 17
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color("f0f6fc")
+	dot.add_theme_stylebox_override("panel", style)
+	root.add_child(dot)
+
+	var number := _label(
+		root,
+		str(index + 1),
+		Vector2(20, 5),
+		Vector2(34, 24),
+		14,
+		Color.WHITE,
+		true
+	)
+	number.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	var name_label := _label(
+		root,
+		resident_name,
+		Vector2(0, 35),
+		Vector2(72, 16),
+		9,
+		Color("dce8f8"),
+		true
+	)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return root
+
+func _room_marker_position(room: String, slot: int) -> Vector2:
+	var origins := {
+		"KITCHEN": Vector2(52, 104),
+		"LIVING": Vector2(262, 104),
+		"BEDROOM": Vector2(472, 104),
+		"BATH": Vector2(52, 264),
+		"WORK": Vector2(262, 264),
+		"HALL": Vector2(472, 264),
+	}
+	var base: Vector2 = origins.get(room, origins["HALL"])
+	return base + Vector2(
+		float(slot % 3) * 52.0,
+		float(slot / 3) * 48.0
+	)
 
 func _primary_goal_label(resident: CharacterState) -> String:
 	if resident.goals == null:
