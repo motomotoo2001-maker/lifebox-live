@@ -393,7 +393,7 @@ func request_selected_activity(activity_id: StringName) -> bool:
 			hud.set_latest_event(
 				"%s → %s" % [
 					character.display_name,
-					activity_id.to_upper(),
+					str(activity_id).to_upper(),
 				]
 			)
 		else:
