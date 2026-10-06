@@ -16,12 +16,21 @@ signal resident_selected(character_id: StringName)
 @onready var name_label: Label3D = $Visuals/NameLabel
 @onready var leg_left: MeshInstance3D = $Visuals/LegLeft
 @onready var leg_right: MeshInstance3D = $Visuals/LegRight
+@onready var shoe_left: MeshInstance3D = $Visuals/ShoeLeft
+@onready var shoe_right: MeshInstance3D = $Visuals/ShoeRight
 @onready var arm_left: MeshInstance3D = $Visuals/ArmLeft
 @onready var arm_right: MeshInstance3D = $Visuals/ArmRight
+@onready var hand_left: MeshInstance3D = $Visuals/HandLeft
+@onready var hand_right: MeshInstance3D = $Visuals/HandRight
+@onready var shirt_detail: MeshInstance3D = $Visuals/ShirtDetail
 @onready var hair_mesh: MeshInstance3D = $Visuals/Hair
+@onready var hair_back: MeshInstance3D = $Visuals/HairBack
+@onready var hair_bun: MeshInstance3D = $Visuals/HairBun
+@onready var cap_brim: MeshInstance3D = $Visuals/CapBrim
 @onready var nose_mesh: MeshInstance3D = $Visuals/Nose
 @onready var eye_left: MeshInstance3D = $Visuals/EyeLeft
 @onready var eye_right: MeshInstance3D = $Visuals/EyeRight
+@onready var mouth_mesh: MeshInstance3D = $Visuals/Mouth
 @onready var activity_badge: Label3D = $Visuals/ActivityBadge
 @onready var selection_marker: MeshInstance3D = $Visuals/SelectionMarker
 @onready var click_area: Area3D = $ClickArea
@@ -35,6 +44,11 @@ const STATE_IDLE: StringName = &"idle"
 const STATE_WALK: StringName = &"walk"
 const STATE_INTERACT: StringName = &"interact"
 const STATE_SOCIAL: StringName = &"social"
+
+const HAND_LEFT_BASE := Vector3(-0.39, 0.64, -0.02)
+const HAND_RIGHT_BASE := Vector3(0.39, 0.64, -0.02)
+const SHOE_LEFT_BASE := Vector3(-0.15, 0.10, -0.08)
+const SHOE_RIGHT_BASE := Vector3(0.15, 0.10, -0.08)
 
 var _display_name: String = "Resident"
 var _visual_time: float = 0.0
@@ -215,6 +229,14 @@ func _animate_visuals() -> void:
 		leg_left.rotation.x = 0.0
 	if is_instance_valid(leg_right):
 		leg_right.rotation.x = 0.0
+	if is_instance_valid(hand_left):
+		hand_left.position = HAND_LEFT_BASE
+	if is_instance_valid(hand_right):
+		hand_right.position = HAND_RIGHT_BASE
+	if is_instance_valid(shoe_left):
+		shoe_left.position = SHOE_LEFT_BASE
+	if is_instance_valid(shoe_right):
+		shoe_right.position = SHOE_RIGHT_BASE
 
 	match state:
 		STATE_WALK:
@@ -246,6 +268,14 @@ func _animate_walk_state() -> void:
 		leg_right.rotation.x = phase * 0.24
 	if is_instance_valid(head_mesh):
 		head_mesh.rotation.z = phase * 0.018
+	if is_instance_valid(hand_left):
+		hand_left.position.z += phase * 0.16
+	if is_instance_valid(hand_right):
+		hand_right.position.z -= phase * 0.16
+	if is_instance_valid(shoe_left):
+		shoe_left.position.z -= phase * 0.11
+	if is_instance_valid(shoe_right):
+		shoe_right.position.z += phase * 0.11
 
 func _animate_interact_state() -> void:
 	var phase := sin(_visual_time * 4.2)
@@ -257,6 +287,10 @@ func _animate_interact_state() -> void:
 		arm_right.rotation.x = -0.42 - phase * 0.08
 	if is_instance_valid(head_mesh):
 		head_mesh.rotation.x = 0.035 + phase * 0.015
+	if is_instance_valid(hand_left):
+		hand_left.position += Vector3(0.0, 0.22 + phase * 0.025, -0.18)
+	if is_instance_valid(hand_right):
+		hand_right.position += Vector3(0.0, 0.22 - phase * 0.025, -0.18)
 
 func _animate_social_state() -> void:
 	var phase := sin(_visual_time * 3.0)
@@ -268,6 +302,10 @@ func _animate_social_state() -> void:
 		arm_right.rotation.x = -0.12 - phase * 0.12
 	if is_instance_valid(head_mesh):
 		head_mesh.rotation.z = -phase * 0.055
+	if is_instance_valid(hand_left):
+		hand_left.position += Vector3(0.0, 0.12 + phase * 0.05, -0.06)
+	if is_instance_valid(hand_right):
+		hand_right.position += Vector3(0.0, 0.18 - phase * 0.04, -0.12)
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	if not _has_target:
@@ -311,23 +349,41 @@ func _apply_visual_style() -> void:
 				0.82
 			)
 
+	var skin_colors: Array[Color] = [
+		Color("efc19c"),
+		Color("dba77f"),
+		Color("b97c58"),
+		Color("f2c8a8"),
+		Color("c98f6b"),
+		Color("8f5d43"),
+	]
+	var skin_color: Color = skin_colors[
+		_visual_profile_index % skin_colors.size()
+	]
 	if is_instance_valid(head_mesh):
-		head_mesh.material_override = _material(Color("efc19c"), 0.72)
+		head_mesh.material_override = _material(skin_color, 0.72)
 	if is_instance_valid(nose_mesh):
-		nose_mesh.material_override = _material(Color("dfa982"), 0.78)
-	if is_instance_valid(hair_mesh):
-		var hair_colors: Array[Color] = [
-			Color("2b2630"),
-			Color("4b3328"),
-			Color("1d2430"),
-			Color("6b4a32"),
-			Color("342b3a"),
-			Color("302a24"),
-		]
-		hair_mesh.material_override = _material(
-			hair_colors[_visual_profile_index % hair_colors.size()],
-			0.86
-		)
+		nose_mesh.material_override = _material(skin_color.darkened(0.06), 0.78)
+	for hand in [hand_left, hand_right]:
+		if is_instance_valid(hand):
+			hand.material_override = _material(skin_color, 0.78)
+
+	var hair_colors: Array[Color] = [
+		Color("2b2630"),
+		Color("4b3328"),
+		Color("1d2430"),
+		Color("6b4a32"),
+		Color("342b3a"),
+		Color("302a24"),
+	]
+	var hair_color: Color = hair_colors[
+		_visual_profile_index % hair_colors.size()
+	]
+	for hair_part in [hair_mesh, hair_back, hair_bun]:
+		if is_instance_valid(hair_part):
+			hair_part.material_override = _material(hair_color, 0.86)
+	if is_instance_valid(cap_brim):
+		cap_brim.material_override = _material(hair_color.darkened(0.12), 0.82)
 
 	var trouser_colors: Array[Color] = [
 		Color("24364a"),
@@ -348,6 +404,21 @@ func _apply_visual_style() -> void:
 	for eye in [eye_left, eye_right]:
 		if is_instance_valid(eye):
 			eye.material_override = eye_material
+	if is_instance_valid(mouth_mesh):
+		mouth_mesh.material_override = _material(Color("7d443f"), 0.75)
+
+	if is_instance_valid(shirt_detail):
+		shirt_detail.material_override = _material(
+			resident_color.lightened(0.18),
+			0.76
+		)
+
+	var shoe_color := Color("1c2430").lightened(
+		float(_visual_profile_index % 3) * 0.05
+	)
+	for shoe in [shoe_left, shoe_right]:
+		if is_instance_valid(shoe):
+			shoe.material_override = _material(shoe_color, 0.92)
 
 	if is_instance_valid(shadow_mesh):
 		var shadow_material := _material(Color(0.02, 0.03, 0.05, 0.34), 1.0)
@@ -397,6 +468,39 @@ func _apply_visual_profile() -> void:
 	if is_instance_valid(hair_mesh):
 		hair_mesh.scale = hair_scales[variant]
 		hair_mesh.position.y = hair_heights[variant]
+
+	if is_instance_valid(hair_back):
+		hair_back.visible = variant in [1, 4]
+		hair_back.scale = (
+			Vector3(0.82, 1.26, 0.60)
+			if variant == 4
+			else Vector3(0.84, 1.05, 0.58)
+		)
+	if is_instance_valid(hair_bun):
+		hair_bun.visible = variant in [2, 4]
+		hair_bun.position = (
+			Vector3(0.18, 1.77, 0.22)
+			if variant == 2
+			else Vector3(-0.14, 1.80, 0.24)
+		)
+	if is_instance_valid(cap_brim):
+		cap_brim.visible = variant in [3, 5]
+		cap_brim.scale = (
+			Vector3(1.0, 1.0, 0.86)
+			if variant == 3
+			else Vector3(0.88, 1.0, 1.0)
+		)
+
+	if is_instance_valid(shirt_detail):
+		var detail_scales: Array[Vector3] = [
+			Vector3(1.0, 1.0, 1.0),
+			Vector3(0.8, 1.25, 1.0),
+			Vector3(1.15, 0.8, 1.0),
+			Vector3(0.92, 1.15, 1.0),
+			Vector3(1.1, 1.0, 1.0),
+			Vector3(0.75, 1.35, 1.0),
+		]
+		shirt_detail.scale = detail_scales[variant]
 
 	var stance_offsets: Array[float] = [0.15, 0.14, 0.16, 0.145, 0.155, 0.14]
 	if is_instance_valid(leg_left):
