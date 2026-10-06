@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
 
@@ -29,6 +29,10 @@ height = 0.02
 
 [sub_resource type="BoxMesh" id="BoxMesh_nose"]
 size = Vector3(0.05, 0.05, 0.06)
+
+[sub_resource type="SphereMesh" id="SphereMesh_eye"]
+radius = 0.035
+height = 0.07
 
 [node name="ResidentActor3D" type="CharacterBody3D"]
 script = ExtResource("1_script")
@@ -78,6 +82,14 @@ mesh = SubResource("SphereMesh_hair")
 [node name="Nose" type="MeshInstance3D" parent="Visuals"]
 position = Vector3(0, 1.54, -0.285)
 mesh = SubResource("BoxMesh_nose")
+
+[node name="EyeLeft" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(-0.105, 1.605, -0.255)
+mesh = SubResource("SphereMesh_eye")
+
+[node name="EyeRight" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(0.105, 1.605, -0.255)
+mesh = SubResource("SphereMesh_eye")
 
 [node name="NameLabel" type="Label3D" parent="Visuals"]
 position = Vector3(0, 2.08, 0)

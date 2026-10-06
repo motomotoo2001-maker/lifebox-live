@@ -37,6 +37,7 @@ func run() -> Array[String]:
 		"bind_character",
 		"set_display_name",
 		"set_visual_color",
+		"set_visual_profile",
 		"set_movement_target",
 		"stop_movement",
 	]:
@@ -61,6 +62,8 @@ func run() -> Array[String]:
 		"Visuals/Head",
 		"Visuals/Hair",
 		"Visuals/Nose",
+		"Visuals/EyeLeft",
+		"Visuals/EyeRight",
 		"Visuals/NameLabel",
 	]:
 		if not actor.has_node(node_path):
@@ -72,6 +75,11 @@ func run() -> Array[String]:
 		failures.append("ResidentActor3D Head must be MeshInstance3D")
 	if actor.has_node("Visuals/NameLabel") and not actor.get_node("Visuals/NameLabel") is Label3D:
 		failures.append("ResidentActor3D NameLabel must be Label3D")
+
+	if actor.has_method("set_visual_profile"):
+		actor.set_visual_profile(3)
+		if actor.get("_visual_profile_index") != 3:
+			failures.append("set_visual_profile() must store deterministic profile index")
 
 	actor.free()
 	return failures
