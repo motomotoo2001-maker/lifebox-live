@@ -21,15 +21,23 @@ signal movement_failed(character_id: StringName)
 @onready var nose_mesh: MeshInstance3D = $Visuals/Nose
 @onready var eye_left: MeshInstance3D = $Visuals/EyeLeft
 @onready var eye_right: MeshInstance3D = $Visuals/EyeRight
+@onready var activity_badge: Label3D = $Visuals/ActivityBadge
 
 var _character_id: StringName = &""
 var _pending_target: Vector3 = Vector3.ZERO
 var _arrival_radius: float = 0.5
 var _has_target: bool = false
 var _target_applied: bool = false
+const STATE_IDLE: StringName = &"idle"
+const STATE_WALK: StringName = &"walk"
+const STATE_INTERACT: StringName = &"interact"
+const STATE_SOCIAL: StringName = &"social"
+
 var _display_name: String = "Resident"
 var _visual_time: float = 0.0
 var _visual_profile_index: int = 0
+var _presentation_state: StringName = STATE_IDLE
+var _badge_time_remaining: float = 0.0
 
 func _ready() -> void:
 	navigation_agent.velocity_computed.connect(_on_velocity_computed)
@@ -57,6 +65,32 @@ func set_visual_profile(profile_index: int) -> void:
 	_apply_visual_style()
 	_apply_visual_profile()
 
+func set_presentation_state(state: StringName) -> void:
+	match state:
+		STATE_IDLE, STATE_WALK, STATE_INTERACT, STATE_SOCIAL:
+			_presentation_state = state
+		_:
+			_presentation_state = STATE_IDLE
+
+func presentation_state() -> StringName:
+	return _presentation_state
+
+func set_activity_badge(text: String, duration: float = 0.0) -> void:
+	if not is_instance_valid(activity_badge):
+		return
+	activity_badge.text = text.strip_edges()
+	activity_badge.visible = not activity_badge.text.is_empty()
+	if is_nan(duration) or is_inf(duration) or duration < 0.0:
+		_badge_time_remaining = 0.0
+	else:
+		_badge_time_remaining = duration
+
+func clear_activity_badge() -> void:
+	_badge_time_remaining = 0.0
+	if is_instance_valid(activity_badge):
+		activity_badge.text = ""
+		activity_badge.visible = false
+
 func set_movement_target(target: Vector3, arrival_radius: float) -> void:
 	if not _is_finite_vector(target):
 		_fail_movement()
@@ -75,6 +109,7 @@ func stop_movement() -> void:
 
 func _physics_process(delta: float) -> void:
 	_visual_time += delta
+	_update_activity_badge(delta)
 	_animate_visuals()
 
 	if not _has_target:
@@ -109,19 +144,89 @@ func _physics_process(delta: float) -> void:
 	else:
 		_on_velocity_computed(desired_velocity)
 
+func _update_activity_badge(delta: float) -> void:
+	if _badge_time_remaining <= 0.0:
+		return
+	_badge_time_remaining = maxf(_badge_time_remaining - maxf(delta, 0.0), 0.0)
+	if _badge_time_remaining <= 0.0:
+		clear_activity_badge()
+
 func _animate_visuals() -> void:
 	if not is_instance_valid(visuals):
 		return
 
-	var moving: bool = _has_target or velocity.length_squared() > 0.01
-	var frequency := 8.0 if moving else 2.0
-	var amplitude := 0.035 if moving else 0.012
-	visuals.position.y = sin(_visual_time * frequency) * amplitude
+	var state := _presentation_state
+	if _has_target or velocity.length_squared() > 0.01:
+		state = STATE_WALK
 
-	if is_instance_valid(arm_left) and is_instance_valid(arm_right):
-		var swing := sin(_visual_time * frequency) * 0.22 if moving else 0.0
-		arm_left.rotation.x = swing
-		arm_right.rotation.x = -swing
+	visuals.position.y = 0.0
+	visuals.rotation.x = 0.0
+	visuals.rotation.z = 0.0
+
+	if is_instance_valid(head_mesh):
+		head_mesh.rotation.x = 0.0
+		head_mesh.rotation.z = 0.0
+	if is_instance_valid(arm_left):
+		arm_left.rotation.x = 0.0
+	if is_instance_valid(arm_right):
+		arm_right.rotation.x = 0.0
+	if is_instance_valid(leg_left):
+		leg_left.rotation.x = 0.0
+	if is_instance_valid(leg_right):
+		leg_right.rotation.x = 0.0
+
+	match state:
+		STATE_WALK:
+			_animate_walk_state()
+		STATE_INTERACT:
+			_animate_interact_state()
+		STATE_SOCIAL:
+			_animate_social_state()
+		_:
+			_animate_idle_state()
+
+func _animate_idle_state() -> void:
+	var phase := sin(_visual_time * 2.0)
+	visuals.position.y = phase * 0.012
+	visuals.rotation.z = phase * 0.008
+	if is_instance_valid(head_mesh):
+		head_mesh.rotation.z = -phase * 0.025
+
+func _animate_walk_state() -> void:
+	var phase := sin(_visual_time * 8.0)
+	visuals.position.y = abs(phase) * 0.035
+	if is_instance_valid(arm_left):
+		arm_left.rotation.x = phase * 0.34
+	if is_instance_valid(arm_right):
+		arm_right.rotation.x = -phase * 0.34
+	if is_instance_valid(leg_left):
+		leg_left.rotation.x = -phase * 0.24
+	if is_instance_valid(leg_right):
+		leg_right.rotation.x = phase * 0.24
+	if is_instance_valid(head_mesh):
+		head_mesh.rotation.z = phase * 0.018
+
+func _animate_interact_state() -> void:
+	var phase := sin(_visual_time * 4.2)
+	visuals.position.y = phase * 0.014
+	visuals.rotation.x = -0.035 + phase * 0.012
+	if is_instance_valid(arm_left):
+		arm_left.rotation.x = -0.42 + phase * 0.08
+	if is_instance_valid(arm_right):
+		arm_right.rotation.x = -0.42 - phase * 0.08
+	if is_instance_valid(head_mesh):
+		head_mesh.rotation.x = 0.035 + phase * 0.015
+
+func _animate_social_state() -> void:
+	var phase := sin(_visual_time * 3.0)
+	visuals.position.y = abs(phase) * 0.01
+	visuals.rotation.z = phase * 0.035
+	if is_instance_valid(arm_left):
+		arm_left.rotation.x = -0.12 + phase * 0.2
+	if is_instance_valid(arm_right):
+		arm_right.rotation.x = -0.12 - phase * 0.12
+	if is_instance_valid(head_mesh):
+		head_mesh.rotation.z = -phase * 0.055
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	if not _has_target:
