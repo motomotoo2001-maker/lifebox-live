@@ -20,6 +20,8 @@ var story_label: Label
 var resident_hud_labels: Array[Label] = []
 
 func _ready() -> void:
+	house.rotation.y = deg_to_rad(90.0)
+	decor_root.rotation.y = deg_to_rad(90.0)
 	_configure_camera()
 	_build_visual_house()
 	_build_simulation()
@@ -41,9 +43,9 @@ func _physics_process(delta: float) -> void:
 
 func _configure_camera() -> void:
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 29.0
-	camera.position = Vector3(0.0, 18.0, 18.0)
-	camera.look_at(Vector3(0.0, 0.0, 0.4), Vector3.UP)
+	camera.size = 21.0
+	camera.position = Vector3(0.0, 17.5, 16.0)
+	camera.look_at(Vector3(0.0, 0.0, 0.2), Vector3.UP)
 
 func _build_visual_house() -> void:
 	var room_colors := [
@@ -62,12 +64,25 @@ func _build_visual_house() -> void:
 		Vector3(0.0, 0.03, -2.5),
 		Vector3(5.35, 0.03, -2.5),
 	]
+	var room_names := [
+		"KITCHEN",
+		"LIVING",
+		"BEDROOM",
+		"BATH",
+		"WORK",
+		"HALL",
+	]
 	for index in range(centers.size()):
 		_add_box(
 			decor_root,
 			centers[index],
 			Vector3(5.1, 0.06, 4.6),
 			room_colors[index]
+		)
+		_add_room_label(
+			decor_root,
+			centers[index] + Vector3(0.0, 0.12, -1.7),
+			room_names[index]
 		)
 
 	var wall_color := Color("8194ba")
@@ -93,6 +108,22 @@ func _build_visual_house() -> void:
 			Vector3(1.35, 0.46, 1.7),
 			Color("d7d9e6")
 		)
+
+func _add_room_label(
+	parent: Node3D,
+	position_value: Vector3,
+	text_value: String
+) -> Label3D:
+	var label := Label3D.new()
+	label.position = position_value
+	label.text = text_value
+	label.font_size = 44
+	label.outline_size = 10
+	label.modulate = Color("d7e7ff")
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	parent.add_child(label)
+	return label
 
 func _add_box(
 	parent: Node3D,
@@ -384,8 +415,8 @@ func _build_hud() -> void:
 
 	var bottom := _panel(
 		root,
-		Vector2(22, 936),
-		Vector2(676, 320),
+		Vector2(22, 984),
+		Vector2(676, 272),
 		Color(0.06, 0.09, 0.14, 0.94)
 	)
 	_label(bottom, "LIVE RESIDENTS", Vector2(18, 12), Vector2(220, 22), 15, Color("dce8f8"))
@@ -397,9 +428,9 @@ func _build_hud() -> void:
 		var label := _label(
 			bottom,
 			"",
-			Vector2(18 + column * 330, 44 + row * 86),
-			Vector2(315, 78),
-			12,
+			Vector2(18 + column * 330, 42 + row * 72),
+			Vector2(315, 66),
+			11,
 			Color("cbd8e8")
 		)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
