@@ -1,11 +1,57 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_body"]
+top_radius = 0.34
+bottom_radius = 0.34
+height = 1.05
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.31
+height = 0.62
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_shadow"]
+top_radius = 0.5
+bottom_radius = 0.5
+height = 0.04
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_body"]
+radius = 0.34
+height = 1.65
 
 [node name="ResidentActor3D" type="CharacterBody3D"]
 script = ExtResource("1_script")
 
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Shadow" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.03, 0)
+mesh = SubResource("CylinderMesh_shadow")
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.68, 0)
+mesh = SubResource("CylinderMesh_body")
+
+[node name="Head" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 1.52, 0)
+mesh = SubResource("SphereMesh_head")
+
+[node name="NameLabel" type="Label3D" parent="VisualRoot"]
+position = Vector3(0, 2.15, 0)
+billboard = 1
+no_depth_test = true
+text = "RESIDENT"
+font_size = 26
+pixel_size = 0.006
+outline_size = 8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.82, 0)
+shape = SubResource("CapsuleShape_body")
+
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 path_desired_distance = 0.25
 target_desired_distance = 0.5
+radius = 0.38
 avoidance_enabled = true
