@@ -90,6 +90,11 @@ func sync_visuals() -> void:
 			continue
 
 		actor.set_presentation_state(presentation_state_for(character))
+		var badge_text := activity_badge_for(character)
+		if badge_text.is_empty():
+			actor.clear_activity_badge()
+		else:
+			actor.set_activity_badge(badge_text)
 
 		if (
 			character.movement.status == MovementState.STATUS_MOVING
@@ -148,6 +153,36 @@ func _presentation_interest(character: CharacterState) -> float:
 		score += 5.0
 
 	return score
+
+func activity_badge_for(character: CharacterState) -> String:
+	if character == null:
+		return ""
+
+	if (
+		_world != null
+		and _world.social_system.reservation_book.is_reserved(character.id)
+	):
+		return "SOCIAL"
+
+	var action_text := str(character.current_action_id).to_lower()
+	if action_text.is_empty() or action_text == "idle":
+		return ""
+	if (
+		"eat" in action_text
+		or "meal" in action_text
+		or "coffee" in action_text
+		or "food" in action_text
+	):
+		return "MEAL"
+	if "work" in action_text:
+		return "WORK"
+	if (
+		"relax" in action_text
+		or "fun" in action_text
+		or "sofa" in action_text
+	):
+		return "FUN"
+	return "ACTION"
 
 func presentation_state_for(character: CharacterState) -> StringName:
 	if character == null:
