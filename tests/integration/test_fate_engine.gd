@@ -415,9 +415,9 @@ func _test_malformed_effect_is_atomic(
 		failures.append("structurally valid unaffordable Fate must register")
 		return
 
-	var before_money := residents[0].money
-	var before_mood := residents[0].needs.mood.value
-	var before_chaos := chaos.value
+	var before_money: float = residents[0].money
+	var before_mood: float = residents[0].needs.mood.value
+	var before_chaos: float = chaos.value
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
