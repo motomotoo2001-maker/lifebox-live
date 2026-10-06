@@ -30,6 +30,8 @@ func run() -> Array[String]:
 		"HouseholdBlockout",
 		"ResidentActors",
 		"VerticalCameraRig",
+		"HUDLayer",
+		"HUDLayer/VisualHUD",
 	]:
 		if not shell.has_node(node_path):
 			failures.append("VisualSimulationShell missing node %s" % node_path)
