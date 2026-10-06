@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
 
@@ -34,6 +34,16 @@ size = Vector3(0.05, 0.05, 0.06)
 radius = 0.035
 height = 0.07
 
+[sub_resource type="CylinderMesh" id="CylinderMesh_selection"]
+top_radius = 0.54
+bottom_radius = 0.54
+height = 0.025
+radial_segments = 32
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_click"]
+radius = 0.46
+height = 2.05
+
 [node name="ResidentActor3D" type="CharacterBody3D"]
 script = ExtResource("1_script")
 
@@ -42,10 +52,26 @@ path_desired_distance = 0.25
 target_desired_distance = 0.5
 avoidance_enabled = true
 
+[node name="ClickArea" type="Area3D" parent="."]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+monitorable = false
+input_ray_pickable = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ClickArea"]
+position = Vector3(0, 1.02, 0)
+shape = SubResource("CapsuleShape_click")
+
 [node name="Visuals" type="Node3D" parent="."]
 
+[node name="SelectionMarker" type="MeshInstance3D" parent="Visuals"]
+visible = false
+position = Vector3(0, 0.01, 0)
+mesh = SubResource("CylinderMesh_selection")
+
 [node name="Shadow" type="MeshInstance3D" parent="Visuals"]
-position = Vector3(0, 0.018, 0)
+position = Vector3(0, 0.025, 0)
 mesh = SubResource("CylinderMesh_shadow")
 
 [node name="LegLeft" type="MeshInstance3D" parent="Visuals"]
