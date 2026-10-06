@@ -3,11 +3,16 @@ extends Control
 
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
+@onready var control_hint_label: Label = $TopPanel/ControlHintLabel
 @onready var event_label: Label = $EventPanel/EventLabel
 @onready var name_label: Label = $ResidentPanel/NameLabel
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
 @onready var money_label: Label = $ResidentPanel/MoneyLabel
+@onready var hunger_label: Label = $ResidentPanel/HungerLabel
+@onready var energy_label: Label = $ResidentPanel/EnergyLabel
+@onready var social_label: Label = $ResidentPanel/SocialLabel
+@onready var mood_label: Label = $ResidentPanel/MoodLabel
 @onready var hunger_bar: ProgressBar = $ResidentPanel/HungerBar
 @onready var energy_bar: ProgressBar = $ResidentPanel/EnergyBar
 @onready var social_bar: ProgressBar = $ResidentPanel/SocialBar
@@ -17,6 +22,7 @@ var _world: SimulationWorld = null
 var _selected_resident_id: StringName = &""
 var _latest_event: String = "Simulation online"
 var _refresh_accumulator: float = 0.0
+var _simulation_running: bool = true
 
 func _ready() -> void:
 	_apply_styles()
@@ -39,6 +45,10 @@ func bind_world(world: SimulationWorld) -> void:
 
 func set_selected_resident(character_id: StringName) -> void:
 	_selected_resident_id = character_id
+	refresh()
+
+func set_simulation_running(value: bool) -> void:
+	_simulation_running = value
 	refresh()
 
 func set_latest_event(value: String) -> void:
@@ -67,7 +77,10 @@ func refresh() -> void:
 		hour,
 		minute,
 	]
-	status_label.text = "AUTONOMOUS  •  %d RESIDENTS" % _world.characters().size()
+	status_label.text = "AUTONOMOUS  •  %s  •  %d RESIDENTS" % [
+		"RUNNING" if _simulation_running else "PAUSED",
+		_world.characters().size(),
+	]
 	event_label.text = _latest_event
 
 	var character: CharacterState = _world.get_character(_selected_resident_id)
@@ -83,6 +96,10 @@ func refresh() -> void:
 	energy_bar.value = character.needs.energy.value
 	social_bar.value = character.needs.social.value
 	mood_bar.value = character.needs.mood.value
+	hunger_label.text = "HUNGER %02d" % int(round(character.needs.hunger.value))
+	energy_label.text = "ENERGY %02d" % int(round(character.needs.energy.value))
+	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
+	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
 
 func _schedule_text(character: CharacterState) -> String:
 	if character.schedule == null:
@@ -123,6 +140,10 @@ func _clear_resident_panel() -> void:
 	schedule_label.text = "Schedule: —"
 	goal_label.text = "Goal: —"
 	money_label.text = "$0"
+	hunger_label.text = "HUNGER --"
+	energy_label.text = "ENERGY --"
+	social_label.text = "SOCIAL --"
+	mood_label.text = "MOOD --"
 	for bar in [hunger_bar, energy_bar, social_bar, mood_bar]:
 		bar.value = 0.0
 
@@ -136,11 +157,34 @@ func _apply_styles() -> void:
 		panel.add_theme_stylebox_override("panel", style)
 
 	day_time_label.add_theme_font_size_override("font_size", 26)
-	status_label.add_theme_font_size_override("font_size", 13)
+	status_label.add_theme_font_size_override("font_size", 12)
+	control_hint_label.add_theme_font_size_override("font_size", 11)
 	name_label.add_theme_font_size_override("font_size", 24)
 	event_label.add_theme_font_size_override("font_size", 14)
 
-	for bar in [hunger_bar, energy_bar, social_bar, mood_bar]:
+	for label in [hunger_label, energy_label, social_label, mood_label]:
+		label.add_theme_font_size_override("font_size", 10)
+		label.modulate = Color("b7c2d0")
+
+	var progress_colors: Array[Color] = [
+		Color("ef8354"),
+		Color("69c779"),
+		Color("6da9f5"),
+		Color("e5c95c"),
+	]
+	var bars := [hunger_bar, energy_bar, social_bar, mood_bar]
+	for index in range(bars.size()):
+		var bar: ProgressBar = bars[index]
 		bar.min_value = 0.0
 		bar.max_value = 100.0
 		bar.show_percentage = false
+
+		var background := StyleBoxFlat.new()
+		background.bg_color = Color("182231")
+		background.set_corner_radius_all(7)
+		bar.add_theme_stylebox_override("background", background)
+
+		var fill := StyleBoxFlat.new()
+		fill.bg_color = progress_colors[index]
+		fill.set_corner_radius_all(7)
+		bar.add_theme_stylebox_override("fill", fill)
