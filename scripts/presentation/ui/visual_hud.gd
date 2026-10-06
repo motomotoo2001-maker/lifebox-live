@@ -110,6 +110,7 @@ func refresh() -> void:
 		event_label.text = _latest_event
 		_clear_resident_panel()
 		_refresh_command_buttons()
+		_refresh_social_controls()
 		return
 
 	var simulation_seconds: float = _world.clock.get_simulation_seconds()
