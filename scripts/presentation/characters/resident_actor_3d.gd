@@ -19,6 +19,8 @@ signal movement_failed(character_id: StringName)
 @onready var arm_right: MeshInstance3D = $Visuals/ArmRight
 @onready var hair_mesh: MeshInstance3D = $Visuals/Hair
 @onready var nose_mesh: MeshInstance3D = $Visuals/Nose
+@onready var eye_left: MeshInstance3D = $Visuals/EyeLeft
+@onready var eye_right: MeshInstance3D = $Visuals/EyeRight
 
 var _character_id: StringName = &""
 var _pending_target: Vector3 = Vector3.ZERO
@@ -27,6 +29,7 @@ var _has_target: bool = false
 var _target_applied: bool = false
 var _display_name: String = "Resident"
 var _visual_time: float = 0.0
+var _visual_profile_index: int = 0
 
 func _ready() -> void:
 	navigation_agent.velocity_computed.connect(_on_velocity_computed)
@@ -48,6 +51,11 @@ func set_display_name(value: String) -> void:
 func set_visual_color(value: Color) -> void:
 	resident_color = value
 	_apply_visual_style()
+
+func set_visual_profile(profile_index: int) -> void:
+	_visual_profile_index = maxi(profile_index, 0)
+	_apply_visual_style()
+	_apply_visual_profile()
 
 func set_movement_target(target: Vector3, arrival_radius: float) -> void:
 	if not _is_finite_vector(target):
@@ -162,7 +170,38 @@ func _apply_visual_style() -> void:
 	if is_instance_valid(nose_mesh):
 		nose_mesh.material_override = _material(Color("dfa982"), 0.78)
 	if is_instance_valid(hair_mesh):
-		hair_mesh.material_override = _material(Color("2b2630"), 0.86)
+		var hair_colors: Array[Color] = [
+			Color("2b2630"),
+			Color("4b3328"),
+			Color("1d2430"),
+			Color("6b4a32"),
+			Color("342b3a"),
+			Color("302a24"),
+		]
+		hair_mesh.material_override = _material(
+			hair_colors[_visual_profile_index % hair_colors.size()],
+			0.86
+		)
+
+	var trouser_colors: Array[Color] = [
+		Color("24364a"),
+		Color("403954"),
+		Color("4a332f"),
+		Color("233f35"),
+		Color("51411e"),
+		Color("462f46"),
+	]
+	var trouser_color: Color = trouser_colors[
+		_visual_profile_index % trouser_colors.size()
+	]
+	for mesh in [leg_left, leg_right]:
+		if is_instance_valid(mesh):
+			mesh.material_override = _material(trouser_color, 0.9)
+
+	var eye_material := _material(Color("151922"), 0.45)
+	for eye in [eye_left, eye_right]:
+		if is_instance_valid(eye):
+			eye.material_override = eye_material
 
 	if is_instance_valid(shadow_mesh):
 		var shadow_material := _material(Color(0.02, 0.03, 0.05, 0.34), 1.0)
@@ -172,6 +211,41 @@ func _apply_visual_style() -> void:
 
 	if is_instance_valid(name_label):
 		name_label.modulate = Color.WHITE
+
+func _apply_visual_profile() -> void:
+	if not is_instance_valid(visuals):
+		return
+
+	var variant := _visual_profile_index % 6
+	var body_scales: Array[Vector3] = [
+		Vector3(1.0, 1.0, 1.0),
+		Vector3(0.94, 1.04, 0.94),
+		Vector3(1.05, 0.97, 1.05),
+		Vector3(0.98, 1.06, 0.98),
+		Vector3(1.03, 1.0, 0.97),
+		Vector3(0.96, 0.99, 1.04),
+	]
+	var hair_scales: Array[Vector3] = [
+		Vector3(1.02, 0.55, 1.02),
+		Vector3(1.08, 0.42, 1.02),
+		Vector3(0.94, 0.68, 1.0),
+		Vector3(1.12, 0.5, 0.92),
+		Vector3(0.9, 0.72, 1.05),
+		Vector3(1.06, 0.6, 1.08),
+	]
+	var hair_heights: Array[float] = [1.68, 1.65, 1.72, 1.67, 1.74, 1.7]
+
+	if is_instance_valid(body_mesh):
+		body_mesh.scale = body_scales[variant]
+	if is_instance_valid(hair_mesh):
+		hair_mesh.scale = hair_scales[variant]
+		hair_mesh.position.y = hair_heights[variant]
+
+	var stance_offsets: Array[float] = [0.15, 0.14, 0.16, 0.145, 0.155, 0.14]
+	if is_instance_valid(leg_left):
+		leg_left.position.x = -stance_offsets[variant]
+	if is_instance_valid(leg_right):
+		leg_right.position.x = stance_offsets[variant]
 
 func _refresh_name_label() -> void:
 	if is_instance_valid(name_label):
