@@ -175,7 +175,7 @@ func _test_critical_need_override(
 	block.kind = &"free_time"
 	block.start_hour = 0.0
 	block.duration_hours = 24.0
-	block.preferred_action_tags = [&"relax"]
+	block.preferred_action_tags.append(&"relax")
 	schedule.blocks.append(block)
 	character.schedule.definition = schedule
 
