@@ -1,0 +1,45 @@
+name: Capture Current Gameplay Screenshot
+
+on:
+  push:
+    branches:
+      - dev/capture-screenshot-20261006
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Install virtual display
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth libgl1-mesa-dri
+
+      - name: Capture current visual showcase
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          mkdir -p artifacts
+          xvfb-run -a -s "-screen 0 720x1280x24" godot --path . res://scenes/debug/visual_showcase.tscn -- --capture="$GITHUB_WORKSPACE/artifacts/lifebox-current.png" --capture-after=5 --validate-visual-state
+          test -s artifacts/lifebox-current.png
+          file artifacts/lifebox-current.png
+
+      - name: Commit screenshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/lifebox-current.png
+          git commit -m "chore: capture current LIFEBOX LIVE screenshot"
+          git push
