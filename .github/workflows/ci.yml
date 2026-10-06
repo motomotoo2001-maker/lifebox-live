@@ -50,7 +50,11 @@ jobs:
 
       - name: Render live showcase
         run: |
-          xvfb-run -a godot --path . --rendering-method gl_compatibility -s res://tools/capture_live_showcase.gd
+          set -o pipefail
+          xvfb-run -a godot --path . --audio-driver Dummy --rendering-method gl_compatibility -s res://tools/capture_live_showcase.gd 2>&1 | tee showcase-render.log
+          status=${PIPESTATUS[0]}
+          test "$status" -eq 0
+          ! grep -E "SCRIPT ERROR:|ERROR:" showcase-render.log
           test -s lifebox_live_showcase.png
           file lifebox_live_showcase.png
 
