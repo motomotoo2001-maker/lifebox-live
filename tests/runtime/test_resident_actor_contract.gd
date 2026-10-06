@@ -40,6 +40,8 @@ func run() -> Array[String]:
 		"set_visual_profile",
 		"set_presentation_state",
 		"presentation_state",
+		"set_activity_badge",
+		"clear_activity_badge",
 		"set_movement_target",
 		"stop_movement",
 	]:
@@ -67,6 +69,7 @@ func run() -> Array[String]:
 		"Visuals/EyeLeft",
 		"Visuals/EyeRight",
 		"Visuals/NameLabel",
+		"Visuals/ActivityBadge",
 	]:
 		if not actor.has_node(node_path):
 			failures.append("ResidentActor3D missing visual node %s" % node_path)
