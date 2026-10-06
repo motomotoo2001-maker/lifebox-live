@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/debug/visual_showcase.tscn" id="1_showcase"]
+
+[node name="LifeboxLive" type="Node3D"]
+
+[node name="HouseholdSimulation" parent="." instance=ExtResource("1_showcase")]

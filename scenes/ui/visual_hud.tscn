@@ -17,7 +17,7 @@ layout_mode = 0
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 700.0
-offset_bottom = 118.0
+offset_bottom = 164.0
 
 [node name="DayTimeLabel" type="Label" parent="TopPanel"]
 offset_left = 22.0
@@ -36,11 +36,54 @@ horizontal_alignment = 2
 
 [node name="ControlHintLabel" type="Label" parent="TopPanel"]
 offset_left = 22.0
-offset_top = 58.0
+offset_top = 56.0
 offset_right = 648.0
-offset_bottom = 82.0
+offset_bottom = 78.0
 text = "CLICK / 1–6 SELECT  •  SPACE PAUSE  •  +/- SPEED  •  ESC OVERVIEW"
 modulate = Color(0.68, 0.74, 0.82, 1)
+
+[node name="ResidentStrip" type="HBoxContainer" parent="TopPanel"]
+offset_left = 20.0
+offset_top = 88.0
+offset_right = 660.0
+offset_bottom = 138.0
+theme_override_constants/separation = 6
+
+[node name="ResidentButton1" type="Button" parent="TopPanel/ResidentStrip"]
+custom_minimum_size = Vector2(101, 42)
+layout_mode = 2
+toggle_mode = true
+text = "1 —"
+
+[node name="ResidentButton2" type="Button" parent="TopPanel/ResidentStrip"]
+custom_minimum_size = Vector2(101, 42)
+layout_mode = 2
+toggle_mode = true
+text = "2 —"
+
+[node name="ResidentButton3" type="Button" parent="TopPanel/ResidentStrip"]
+custom_minimum_size = Vector2(101, 42)
+layout_mode = 2
+toggle_mode = true
+text = "3 —"
+
+[node name="ResidentButton4" type="Button" parent="TopPanel/ResidentStrip"]
+custom_minimum_size = Vector2(101, 42)
+layout_mode = 2
+toggle_mode = true
+text = "4 —"
+
+[node name="ResidentButton5" type="Button" parent="TopPanel/ResidentStrip"]
+custom_minimum_size = Vector2(101, 42)
+layout_mode = 2
+toggle_mode = true
+text = "5 —"
+
+[node name="ResidentButton6" type="Button" parent="TopPanel/ResidentStrip"]
+custom_minimum_size = Vector2(101, 42)
+layout_mode = 2
+toggle_mode = true
+text = "6 —"
 
 [node name="EventPanel" type="Panel" parent="."]
 layout_mode = 0

@@ -24,6 +24,13 @@ var _manual_focus_remaining: float = 0.0
 func _ready() -> void:
 	if camera_director != null:
 		camera_director.bind_camera_rig(camera_rig)
+	if (
+		hud != null
+		and not hud.resident_requested.is_connected(
+			_on_hud_resident_requested
+		)
+	):
+		hud.resident_requested.connect(_on_hud_resident_requested)
 
 var _palette: Array[Color] = [
 	Color("58a6ff"),
@@ -278,6 +285,9 @@ func is_simulation_paused() -> bool:
 	return not advance_simulation
 
 func _on_actor_selected(character_id: StringName) -> void:
+	select_resident(character_id)
+
+func _on_hud_resident_requested(character_id: StringName) -> void:
 	select_resident(character_id)
 
 func _update_camera_director(delta: float) -> void:

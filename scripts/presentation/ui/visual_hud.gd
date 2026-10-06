@@ -1,6 +1,8 @@
 class_name VisualHUD
 extends Control
 
+signal resident_requested(character_id: StringName)
+
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
 @onready var control_hint_label: Label = $TopPanel/ControlHintLabel
@@ -18,6 +20,14 @@ extends Control
 @onready var energy_bar: ProgressBar = $ResidentPanel/EnergyBar
 @onready var social_bar: ProgressBar = $ResidentPanel/SocialBar
 @onready var mood_bar: ProgressBar = $ResidentPanel/MoodBar
+@onready var resident_buttons: Array[Button] = [
+	$TopPanel/ResidentStrip/ResidentButton1,
+	$TopPanel/ResidentStrip/ResidentButton2,
+	$TopPanel/ResidentStrip/ResidentButton3,
+	$TopPanel/ResidentStrip/ResidentButton4,
+	$TopPanel/ResidentStrip/ResidentButton5,
+	$TopPanel/ResidentStrip/ResidentButton6,
+]
 
 var _world: SimulationWorld = null
 var _selected_resident_id: StringName = &""
@@ -26,6 +36,7 @@ var _refresh_accumulator: float = 0.0
 var _simulation_running: bool = true
 
 func _ready() -> void:
+	_connect_resident_buttons()
 	_apply_styles()
 	refresh()
 
@@ -84,6 +95,7 @@ func refresh() -> void:
 		_world.characters().size(),
 	]
 	event_label.text = _latest_event
+	_refresh_resident_buttons()
 
 	var character: CharacterState = _world.get_character(_selected_resident_id)
 	if character == null:
@@ -103,6 +115,52 @@ func refresh() -> void:
 	energy_label.text = "ENERGY %02d" % int(round(character.needs.energy.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _connect_resident_buttons() -> void:
+	for index in range(resident_buttons.size()):
+		var button: Button = resident_buttons[index]
+		if button == null:
+			continue
+		button.pressed.connect(_on_resident_button_pressed.bind(index))
+
+func _on_resident_button_pressed(index: int) -> void:
+	if _world == null:
+		return
+	var residents: Array[CharacterState] = _world.characters()
+	if index < 0 or index >= residents.size():
+		return
+	var character: CharacterState = residents[index]
+	if character == null or character.id == &"":
+		return
+	resident_requested.emit(character.id)
+
+func _refresh_resident_buttons() -> void:
+	if resident_buttons.is_empty():
+		return
+
+	var residents: Array[CharacterState] = []
+	if _world != null:
+		residents = _world.characters()
+
+	for index in range(resident_buttons.size()):
+		var button: Button = resident_buttons[index]
+		if button == null:
+			continue
+		if index >= residents.size() or residents[index] == null:
+			button.text = "%d —" % (index + 1)
+			button.disabled = true
+			button.button_pressed = false
+			button.tooltip_text = ""
+			continue
+
+		var character: CharacterState = residents[index]
+		button.disabled = false
+		button.text = "%d %s" % [index + 1, character.display_name]
+		button.button_pressed = character.id == _selected_resident_id
+		button.tooltip_text = "%s • %s" % [
+			character.display_name,
+			_action_text(character),
+		]
 
 func _action_text(character: CharacterState) -> String:
 	var value := str(character.current_action_id).strip_edges()
@@ -173,6 +231,29 @@ func _apply_styles() -> void:
 	action_label.add_theme_font_size_override("font_size", 13)
 	action_label.modulate = Color("d5dde8")
 	event_label.add_theme_font_size_override("font_size", 14)
+
+	for button in resident_buttons:
+		button.add_theme_font_size_override("font_size", 11)
+		var normal := StyleBoxFlat.new()
+		normal.bg_color = Color("121d2a")
+		normal.border_color = Color("33465c")
+		normal.set_border_width_all(1)
+		normal.set_corner_radius_all(9)
+		button.add_theme_stylebox_override("normal", normal)
+
+		var hover := StyleBoxFlat.new()
+		hover.bg_color = Color("1b2a3a")
+		hover.border_color = Color("607a98")
+		hover.set_border_width_all(1)
+		hover.set_corner_radius_all(9)
+		button.add_theme_stylebox_override("hover", hover)
+
+		var pressed := StyleBoxFlat.new()
+		pressed.bg_color = Color("604e20")
+		pressed.border_color = Color("ffd65a")
+		pressed.set_border_width_all(2)
+		pressed.set_corner_radius_all(9)
+		button.add_theme_stylebox_override("pressed", pressed)
 
 	for label in [hunger_label, energy_label, social_label, mood_label]:
 		label.add_theme_font_size_override("font_size", 10)
