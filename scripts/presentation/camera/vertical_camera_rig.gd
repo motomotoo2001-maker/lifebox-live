@@ -6,15 +6,18 @@ extends Node3D
 @export var establishing_ortho_size: float = 30.0
 @export var focus_ortho_size: float = 20.5
 @export var transition_speed: float = 4.5
+@export var focus_translation_strength: float = 0.55
 
 @onready var camera: Camera3D = $Camera3D
 
 var _desired_target: Vector3 = Vector3.ZERO
 var _current_target: Vector3 = Vector3.ZERO
+var _desired_position: Vector3 = Vector3.ZERO
 var _desired_size: float = 30.0
 
 func _ready() -> void:
 	global_position = establishing_position
+	_desired_position = establishing_position
 	_desired_target = establishing_target
 	_current_target = establishing_target
 	_desired_size = maxf(establishing_ortho_size, 1.0)
@@ -30,12 +33,13 @@ func _process(delta: float) -> void:
 
 	var speed := maxf(transition_speed, 0.01)
 	var weight := 1.0 - exp(-speed * delta)
+	global_position = global_position.lerp(_desired_position, weight)
 	_current_target = _current_target.lerp(_desired_target, weight)
 	camera.size = lerpf(camera.size, _desired_size, weight)
 	_apply_target()
 
 func set_establishing_view() -> void:
-	global_position = establishing_position
+	_desired_position = establishing_position
 	_desired_target = establishing_target
 	_desired_size = maxf(establishing_ortho_size, 1.0)
 
@@ -53,6 +57,13 @@ func focus_world_position(target: Vector3, requested_size: float = -1.0) -> void
 	):
 		view_size = requested_size
 
+	var planar_offset := Vector3(
+		target.x - establishing_target.x,
+		0.0,
+		target.z - establishing_target.z
+	)
+	var strength := clampf(focus_translation_strength, 0.0, 1.0)
+	_desired_position = establishing_position + planar_offset * strength
 	_desired_target = target
 	_desired_size = maxf(view_size, 1.0)
 

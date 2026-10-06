@@ -71,6 +71,7 @@ func run() -> Array[String]:
 		"bind_world",
 		"set_selected_resident",
 		"set_simulation_running",
+		"set_camera_mode_text",
 		"set_latest_event",
 		"refresh",
 	]:

@@ -47,12 +47,23 @@ func run() -> Array[String]:
 		"selected_resident_id",
 		"set_simulation_paused",
 		"is_simulation_paused",
+		"set_camera_mode",
+		"cycle_camera_mode",
 		"_on_hud_resident_requested",
 		"presentation_state_for",
 		"validate_visual_state",
 	]:
 		if not shell.has_method(method_name):
 			failures.append("VisualSimulationShell must expose %s()" % method_name)
+
+	if shell.has_method("set_camera_mode"):
+		if not shell.set_camera_mode(&"follow"):
+			failures.append("follow camera mode must be accepted")
+		if str(shell.camera_mode) != "follow":
+			failures.append("camera mode must persist follow")
+		if shell.set_camera_mode(&"invalid"):
+			failures.append("invalid camera mode must be rejected")
+		shell.set_camera_mode(&"auto")
 
 	if shell.has_method("set_simulation_paused") and shell.has_method("is_simulation_paused"):
 		shell.set_simulation_paused(true)

@@ -39,7 +39,7 @@ offset_left = 22.0
 offset_top = 56.0
 offset_right = 648.0
 offset_bottom = 78.0
-text = "CLICK / 1–6 SELECT  •  SPACE PAUSE  •  +/- SPEED  •  ESC OVERVIEW"
+text = "CLICK / 1–6 SELECT  •  SPACE PAUSE  •  +/- SPEED  •  C CAMERA  •  ESC OVERVIEW"
 modulate = Color(0.68, 0.74, 0.82, 1)
 
 [node name="ResidentStrip" type="HBoxContainer" parent="TopPanel"]

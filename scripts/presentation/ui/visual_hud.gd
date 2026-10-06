@@ -40,6 +40,7 @@ var _selected_resident_id: StringName = &""
 var _latest_event: String = "Simulation online"
 var _refresh_accumulator: float = 0.0
 var _simulation_running: bool = true
+var _camera_mode_text: String = "AUTO"
 
 func _ready() -> void:
 	_connect_resident_buttons()
@@ -69,6 +70,12 @@ func set_simulation_running(value: bool) -> void:
 	_simulation_running = value
 	refresh()
 
+func set_camera_mode_text(value: String) -> void:
+	_camera_mode_text = value.strip_edges().to_upper()
+	if _camera_mode_text.is_empty():
+		_camera_mode_text = "AUTO"
+	refresh()
+
 func set_latest_event(value: String) -> void:
 	_latest_event = value
 	if is_instance_valid(event_label):
@@ -95,8 +102,9 @@ func refresh() -> void:
 		hour,
 		minute,
 	]
-	status_label.text = "AUTONOMOUS  •  %s  •  %.0fx  •  %d" % [
+	status_label.text = "%s  •  CAM %s  •  %.0fx  •  %d" % [
 		"RUN" if _simulation_running else "PAUSED",
+		_camera_mode_text,
 		_world.clock.get_time_scale(),
 		_world.characters().size(),
 	]

@@ -1,6 +1,10 @@
 class_name VisualSimulationShell
 extends Node3D
 
+const CAMERA_MODE_AUTO: StringName = &"auto"
+const CAMERA_MODE_FOLLOW: StringName = &"follow"
+const CAMERA_MODE_OVERVIEW: StringName = &"overview"
+
 const RESIDENT_ACTOR_SCENE := preload(
 	"res://scenes/characters/resident_actor_3d.tscn"
 )
@@ -8,6 +12,7 @@ const RESIDENT_ACTOR_SCENE := preload(
 @export var advance_simulation: bool = true
 @export var manual_focus_seconds: float = 6.0
 @export var manual_focus_ortho_size: float = 16.5
+@export var camera_mode: StringName = CAMERA_MODE_AUTO
 
 @onready var household: HouseholdBlockout = $HouseholdBlockout
 @onready var resident_actors: Node3D = $ResidentActors
@@ -24,6 +29,8 @@ var _manual_focus_remaining: float = 0.0
 func _ready() -> void:
 	if camera_director != null:
 		camera_director.bind_camera_rig(camera_rig)
+	if hud != null:
+		hud.set_camera_mode_text(_camera_mode_display())
 	if (
 		hud != null
 		and not hud.resident_requested.is_connected(
@@ -70,11 +77,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if key_event.keycode == KEY_ESCAPE:
-		_manual_focus_remaining = 0.0
-		if camera_director != null:
-			camera_director.force_establishing()
+		set_camera_mode(CAMERA_MODE_OVERVIEW)
 		if hud != null:
 			hud.set_latest_event("Camera overview")
+		get_viewport().set_input_as_handled()
+		return
+
+	if key_event.keycode == KEY_C:
+		cycle_camera_mode()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -223,6 +233,43 @@ func _presentation_target_for(
 	var slot_index := maxi(suffix - 1, 0) % sofa_slots.size()
 	return target + sofa_slots[slot_index]
 
+func set_camera_mode(value: StringName) -> bool:
+	if value not in [
+		CAMERA_MODE_AUTO,
+		CAMERA_MODE_FOLLOW,
+		CAMERA_MODE_OVERVIEW,
+	]:
+		return false
+
+	camera_mode = value
+	_manual_focus_remaining = 0.0
+	if camera_director != null:
+		camera_director.force_establishing()
+	if hud != null:
+		hud.set_camera_mode_text(_camera_mode_display())
+	return true
+
+func cycle_camera_mode() -> StringName:
+	match camera_mode:
+		CAMERA_MODE_AUTO:
+			set_camera_mode(CAMERA_MODE_FOLLOW)
+		CAMERA_MODE_FOLLOW:
+			set_camera_mode(CAMERA_MODE_OVERVIEW)
+		_:
+			set_camera_mode(CAMERA_MODE_AUTO)
+	if hud != null:
+		hud.set_latest_event("Camera: %s" % _camera_mode_display())
+	return camera_mode
+
+func _camera_mode_display() -> String:
+	match camera_mode:
+		CAMERA_MODE_FOLLOW:
+			return "FOLLOW"
+		CAMERA_MODE_OVERVIEW:
+			return "OVERVIEW"
+		_:
+			return "AUTO"
+
 func _shift_time_scale(direction: int) -> void:
 	if _world == null or direction == 0:
 		return
@@ -292,6 +339,19 @@ func _on_hud_resident_requested(character_id: StringName) -> void:
 
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:
+		return
+
+	if camera_mode == CAMERA_MODE_OVERVIEW:
+		camera_director.force_establishing()
+		return
+
+	if camera_mode == CAMERA_MODE_FOLLOW:
+		var selected_actor := actor_for(_selected_resident_id)
+		if selected_actor != null and camera_rig != null:
+			camera_rig.focus_world_position(
+				selected_actor.global_position + Vector3(0.0, 0.85, 0.0),
+				manual_focus_ortho_size
+			)
 		return
 
 	if _manual_focus_remaining > 0.0:
