@@ -44,19 +44,19 @@ func _build_visual_blockout() -> void:
 
 	var room_colors: Array[Color] = [
 		Color("66594f"),
-		Color("4d6177"),
-		Color("655a75"),
-		Color("487078"),
+		Color("5f596f"),
+		Color("566679"),
+		Color("6b6653"),
 		Color("596878"),
-		Color("3e7259"),
+		Color("487078"),
 	]
 	var room_names := [
+		&"BedroomA",
+		&"BedroomB",
+		&"BedroomC",
 		&"Kitchen",
 		&"Living",
-		&"Bedroom",
 		&"Bath",
-		&"Hall",
-		&"Yard",
 	]
 	var x_positions := [-5.4, 0.0, 5.4]
 	var color_index := 0
@@ -182,7 +182,6 @@ func _build_furniture() -> void:
 	_build_bedroom_details()
 	_build_bathroom_details()
 	_build_hall_details()
-	_build_yard_details()
 
 
 func _build_kitchen_details() -> void:
@@ -334,55 +333,55 @@ func _build_living_details() -> void:
 	)
 
 func _build_bedroom_details() -> void:
-	var has_vendor_wardrobe := _add_vendor_mesh(
-		"cabinet_medium_decorated",
-		&"KayKitBedroomWardrobe",
-		Vector3(5.85, 0.0, -4.2),
-		PI,
-		Vector3(0.78, 0.95, 0.72)
-	)
-	if not has_vendor_wardrobe:
+	var bedroom_centers := [-5.4, 0.0, 5.4]
+
+	for room_index in range(bedroom_centers.size()):
+		var center_x: float = bedroom_centers[room_index]
+
+		_add_vendor_mesh(
+			"cabinet_medium_decorated",
+			StringName("KayKitBedroomWardrobe%02d" % (room_index + 1)),
+			Vector3(center_x + 1.72, 0.0, -4.42),
+			PI,
+			Vector3(0.55, 0.82, 0.55)
+		)
+
+		var nightstand_position := Vector3(center_x, 0.28, -3.10)
 		_make_box(
 			furniture,
-			&"BedroomWardrobe",
-			Vector3(5.85, 0.92, -4.2),
-			Vector3(1.6, 1.84, 0.58),
-			Color("77635a")
-		)
-	for index in range(2):
-		var nightstand_position := Vector3(
-			4.45 + float(index) * 1.25,
-			0.32,
-			-2.15
-		)
-		_make_box(
-			furniture,
-			StringName("BedroomNightstand%02d" % (index + 1)),
+			StringName("BedroomNightstand%02d" % (room_index + 1)),
 			nightstand_position,
-			Vector3(0.62, 0.58, 0.62),
+			Vector3(0.52, 0.52, 0.52),
 			Color("92745f")
 		)
 		_add_vendor_mesh(
 			"lamp_table",
-			StringName("KayKitBedroomLamp%02d" % (index + 1)),
-			nightstand_position + Vector3(0.0, 0.31, 0.0),
+			StringName("KayKitBedroomLamp%02d" % (room_index + 1)),
+			nightstand_position + Vector3(0.0, 0.28, 0.0),
 			0.0,
-			Vector3(0.34, 0.34, 0.34)
+			Vector3(0.30, 0.30, 0.30)
+		)
+		_add_vendor_mesh(
+			"pictureframe_large_A",
+			StringName("KayKitBedroomPicture%02d" % (room_index + 1)),
+			Vector3(center_x - 1.55, 1.45, -4.82),
+			0.0,
+			Vector3(0.66, 0.66, 0.66)
 		)
 
 	_add_vendor_mesh(
 		"shelf_A_small",
-		&"KayKitBedroomWallShelf",
-		Vector3(5.0, 1.48, -4.66),
+		&"KayKitBedroomBookshelf",
+		Vector3(1.65, 1.30, -4.68),
 		0.0,
-		Vector3(1.15, 1.15, 1.15)
+		Vector3(1.05, 1.05, 1.05)
 	)
 	_add_vendor_mesh(
 		"book_set",
-		&"KayKitBedroomBooks",
-		Vector3(5.0, 1.45, -4.43),
+		&"KayKitBedroomBookSet",
+		Vector3(1.65, 1.36, -4.42),
 		0.0,
-		Vector3(0.72, 0.72, 0.72)
+		Vector3(0.68, 0.68, 0.68)
 	)
 
 func _build_bathroom_details() -> void:
