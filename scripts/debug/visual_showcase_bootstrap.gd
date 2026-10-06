@@ -129,14 +129,14 @@ func _update_time_of_day_visuals() -> void:
 		Color("f3f0df"),
 		day_factor
 	)
-	environment.ambient_light_energy = lerpf(0.28, 0.72, day_factor)
+	environment.ambient_light_energy = lerpf(0.38, 0.72, day_factor)
 
 	key_light.light_color = Color("8096c9").lerp(
 		Color("fff0cf"),
 		day_factor
 	)
-	key_light.light_energy = lerpf(0.20, 1.20, day_factor)
-	fill_light.light_energy = lerpf(0.18, 0.38, day_factor)
+	key_light.light_energy = lerpf(0.32, 1.20, day_factor)
+	fill_light.light_energy = lerpf(0.24, 0.38, day_factor)
 
 	var warm_energy := lerpf(1.38, 0.46, day_factor)
 	kitchen_light.light_energy = warm_energy
