@@ -235,13 +235,22 @@ func _build_kitchen_details() -> void:
 		)
 
 func _build_living_details() -> void:
-	_make_box(
-		furniture,
-		&"LivingRug",
-		Vector3(0.0, 0.035, 2.8),
-		Vector3(3.7, 0.045, 2.25),
-		Color("7b6fa8")
+	var has_vendor_rug := _add_vendor_mesh(
+		"rug_rectangle_stripes_A",
+		&"KayKitLivingRug",
+		Vector3(0.0, 0.01, 2.8),
+		0.0,
+		Vector3(1.18, 0.55, 1.0)
 	)
+	if not has_vendor_rug:
+		_make_box(
+			furniture,
+			&"LivingRug",
+			Vector3(0.0, 0.035, 2.8),
+			Vector3(3.7, 0.045, 2.25),
+			Color("7b6fa8")
+		)
+
 	_make_box(
 		furniture,
 		&"LivingCoffeeTable",
@@ -262,6 +271,21 @@ func _build_living_details() -> void:
 		Vector3(0.0, 1.05, 1.05),
 		Vector3(1.9, 1.0, 0.1),
 		Color("17202c")
+	)
+
+	_add_vendor_mesh(
+		"armchair_pillows",
+		&"KayKitLivingArmchair",
+		Vector3(1.7, 0.0, 3.15),
+		-PI * 0.5,
+		Vector3(0.60, 0.60, 0.60)
+	)
+	_add_vendor_mesh(
+		"lamp_standing",
+		&"KayKitLivingLamp",
+		Vector3(1.85, 0.0, 4.15),
+		0.0,
+		Vector3(0.50, 0.50, 0.50)
 	)
 
 func _build_bedroom_details() -> void:
@@ -334,38 +358,43 @@ func _build_bathroom_details() -> void:
 	)
 
 func _build_hall_details() -> void:
-	_make_box(
-		furniture,
-		&"HallConsole",
-		Vector3(0.15, 0.42, -1.15),
-		Vector3(1.8, 0.72, 0.42),
-		Color("7f644e")
+	var has_vendor_console := _add_vendor_mesh(
+		"shelf_B_large_decorated",
+		&"KayKitHallShelf",
+		Vector3(0.15, 0.12, -1.15),
+		0.0,
+		Vector3(0.90, 0.90, 0.90)
 	)
-	_make_box(
-		furniture,
-		&"HallPlantPot",
-		Vector3(-1.55, 0.24, -1.25),
-		Vector3(0.5, 0.46, 0.5),
-		Color("8d5f48")
-	)
-	_make_box(
-		furniture,
-		&"HallPlantStem",
-		Vector3(-1.55, 0.82, -1.25),
-		Vector3(0.16, 0.72, 0.16),
-		Color("47765a")
-	)
-	for offset in [
-		Vector3(-0.2, 1.18, 0.0),
-		Vector3(0.2, 1.12, 0.06),
-		Vector3(0.0, 1.32, -0.08),
-	]:
+	if not has_vendor_console:
 		_make_box(
 			furniture,
-			StringName("HallLeaf_%s" % str(offset)),
-			Vector3(-1.55, 0.0, -1.25) + offset,
-			Vector3(0.42, 0.18, 0.28),
-			Color("5f956f")
+			&"HallConsole",
+			Vector3(0.15, 0.42, -1.15),
+			Vector3(1.8, 0.72, 0.42),
+			Color("7f644e")
+		)
+
+	var has_vendor_plant := _add_vendor_mesh(
+		"cactus_medium_A",
+		&"KayKitHallPlant",
+		Vector3(-1.55, 0.0, -1.25),
+		0.0,
+		Vector3(0.90, 0.90, 0.90)
+	)
+	if not has_vendor_plant:
+		_make_box(
+			furniture,
+			&"HallPlantPot",
+			Vector3(-1.55, 0.24, -1.25),
+			Vector3(0.5, 0.46, 0.5),
+			Color("8d5f48")
+		)
+		_make_box(
+			furniture,
+			&"HallPlantStem",
+			Vector3(-1.55, 0.82, -1.25),
+			Vector3(0.16, 0.72, 0.16),
+			Color("47765a")
 		)
 
 func _build_yard_details() -> void:
