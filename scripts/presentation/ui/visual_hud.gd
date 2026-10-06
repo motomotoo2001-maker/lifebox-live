@@ -11,13 +11,19 @@ signal resident_requested(character_id: StringName)
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
 @onready var action_label: Label = $ResidentPanel/ActionLabel
+@onready var social_summary_label: Label = $ResidentPanel/SocialSummaryLabel
+@onready var job_memory_label: Label = $ResidentPanel/JobMemoryLabel
 @onready var money_label: Label = $ResidentPanel/MoneyLabel
 @onready var hunger_label: Label = $ResidentPanel/HungerLabel
 @onready var energy_label: Label = $ResidentPanel/EnergyLabel
+@onready var hygiene_label: Label = $ResidentPanel/HygieneLabel
+@onready var comfort_label: Label = $ResidentPanel/ComfortLabel
 @onready var social_label: Label = $ResidentPanel/SocialLabel
 @onready var mood_label: Label = $ResidentPanel/MoodLabel
 @onready var hunger_bar: ProgressBar = $ResidentPanel/HungerBar
 @onready var energy_bar: ProgressBar = $ResidentPanel/EnergyBar
+@onready var hygiene_bar: ProgressBar = $ResidentPanel/HygieneBar
+@onready var comfort_bar: ProgressBar = $ResidentPanel/ComfortBar
 @onready var social_bar: ProgressBar = $ResidentPanel/SocialBar
 @onready var mood_bar: ProgressBar = $ResidentPanel/MoodBar
 @onready var resident_buttons: Array[Button] = [
@@ -107,12 +113,19 @@ func refresh() -> void:
 	schedule_label.text = _schedule_text(character)
 	goal_label.text = _goal_text(character)
 	action_label.text = "Action: %s" % _action_text(character)
+	social_summary_label.text = _social_summary_text(character)
+	job_memory_label.text = _job_memory_text(character)
+
 	hunger_bar.value = character.needs.hunger.value
 	energy_bar.value = character.needs.energy.value
+	hygiene_bar.value = character.needs.hygiene.value
+	comfort_bar.value = character.needs.comfort.value
 	social_bar.value = character.needs.social.value
 	mood_bar.value = character.needs.mood.value
 	hunger_label.text = "HUNGER %02d" % int(round(character.needs.hunger.value))
 	energy_label.text = "ENERGY %02d" % int(round(character.needs.energy.value))
+	hygiene_label.text = "HYGIENE %02d" % int(round(character.needs.hygiene.value))
+	comfort_label.text = "COMFORT %02d" % int(round(character.needs.comfort.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
 
@@ -162,6 +175,52 @@ func _refresh_resident_buttons() -> void:
 			_action_text(character),
 		]
 
+func _social_summary_text(character: CharacterState) -> String:
+	if _world == null or character == null:
+		return "Closest: —"
+
+	var best_name := ""
+	var best_affinity := -INF
+	var best_tension := 0.0
+
+	for other in _world.characters():
+		if other == null or other.id == character.id:
+			continue
+		var relationship := _world.relationship_graph.get_relationship(
+			character.id,
+			other.id
+		)
+		if relationship == null:
+			continue
+		if relationship.affinity > best_affinity:
+			best_affinity = relationship.affinity
+			best_tension = relationship.tension
+			best_name = other.display_name
+
+	if best_name.is_empty():
+		return "Closest: —"
+	return "Closest: %s  %+d  tension %d" % [
+		best_name,
+		int(round(best_affinity)),
+		int(round(best_tension)),
+	]
+
+func _job_memory_text(character: CharacterState) -> String:
+	if character == null:
+		return "Job: — • Memories 0"
+
+	var job_text := "Job: —"
+	if (
+		character.job != null
+		and character.job.definition != null
+	):
+		job_text = "Job: $%.0f/h" % character.job.definition.pay_per_sim_hour
+
+	var memory_count := 0
+	if character.memory != null:
+		memory_count = character.memory.size()
+	return "%s • Memories %d" % [job_text, memory_count]
+
 func _action_text(character: CharacterState) -> String:
 	var value := str(character.current_action_id).strip_edges()
 	if value.is_empty() or value == "idle":
@@ -207,12 +266,23 @@ func _clear_resident_panel() -> void:
 	schedule_label.text = "Schedule: —"
 	goal_label.text = "Goal: —"
 	action_label.text = "Action: —"
+	social_summary_label.text = "Closest: —"
+	job_memory_label.text = "Job: — • Memories 0"
 	money_label.text = "$0"
 	hunger_label.text = "HUNGER --"
 	energy_label.text = "ENERGY --"
+	hygiene_label.text = "HYGIENE --"
+	comfort_label.text = "COMFORT --"
 	social_label.text = "SOCIAL --"
 	mood_label.text = "MOOD --"
-	for bar in [hunger_bar, energy_bar, social_bar, mood_bar]:
+	for bar in [
+		hunger_bar,
+		energy_bar,
+		hygiene_bar,
+		comfort_bar,
+		social_bar,
+		mood_bar,
+	]:
 		bar.value = 0.0
 
 func _apply_styles() -> void:
@@ -230,6 +300,10 @@ func _apply_styles() -> void:
 	name_label.add_theme_font_size_override("font_size", 24)
 	action_label.add_theme_font_size_override("font_size", 13)
 	action_label.modulate = Color("d5dde8")
+	social_summary_label.add_theme_font_size_override("font_size", 12)
+	social_summary_label.modulate = Color("d7c7ff")
+	job_memory_label.add_theme_font_size_override("font_size", 12)
+	job_memory_label.modulate = Color("b7c2d0")
 	event_label.add_theme_font_size_override("font_size", 14)
 
 	for button in resident_buttons:
@@ -255,17 +329,33 @@ func _apply_styles() -> void:
 		pressed.set_corner_radius_all(9)
 		button.add_theme_stylebox_override("pressed", pressed)
 
-	for label in [hunger_label, energy_label, social_label, mood_label]:
+	for label in [
+		hunger_label,
+		energy_label,
+		hygiene_label,
+		comfort_label,
+		social_label,
+		mood_label,
+	]:
 		label.add_theme_font_size_override("font_size", 10)
 		label.modulate = Color("b7c2d0")
 
 	var progress_colors: Array[Color] = [
 		Color("ef8354"),
 		Color("69c779"),
+		Color("65cdd8"),
+		Color("b491e8"),
 		Color("6da9f5"),
 		Color("e5c95c"),
 	]
-	var bars := [hunger_bar, energy_bar, social_bar, mood_bar]
+	var bars := [
+		hunger_bar,
+		energy_bar,
+		hygiene_bar,
+		comfort_bar,
+		social_bar,
+		mood_bar,
+	]
 	for index in range(bars.size()):
 		var bar: ProgressBar = bars[index]
 		bar.min_value = 0.0

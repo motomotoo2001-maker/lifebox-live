@@ -88,9 +88,9 @@ text = "6 —"
 [node name="EventPanel" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 1004.0
+offset_top = 956.0
 offset_right = 700.0
-offset_bottom = 1078.0
+offset_bottom = 1028.0
 
 [node name="EventLabel" type="Label" parent="EventPanel"]
 offset_left = 20.0
@@ -102,7 +102,7 @@ text = "Simulation online"
 [node name="ResidentPanel" type="Panel" parent="."]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 1092.0
+offset_top = 1040.0
 offset_right = 700.0
 offset_bottom = 1260.0
 
@@ -123,81 +123,125 @@ horizontal_alignment = 2
 
 [node name="ScheduleLabel" type="Label" parent="ResidentPanel"]
 offset_left = 20.0
-offset_top = 54.0
+offset_top = 52.0
 offset_right = 310.0
-offset_bottom = 80.0
+offset_bottom = 76.0
 text = "Schedule: —"
 
 [node name="GoalLabel" type="Label" parent="ResidentPanel"]
 offset_left = 20.0
-offset_top = 84.0
+offset_top = 78.0
 offset_right = 310.0
-offset_bottom = 110.0
+offset_bottom = 102.0
 text = "Goal: —"
 
 [node name="ActionLabel" type="Label" parent="ResidentPanel"]
 offset_left = 20.0
-offset_top = 114.0
+offset_top = 104.0
 offset_right = 310.0
-offset_bottom = 142.0
+offset_bottom = 128.0
 text = "Action: —"
+
+[node name="SocialSummaryLabel" type="Label" parent="ResidentPanel"]
+offset_left = 20.0
+offset_top = 130.0
+offset_right = 310.0
+offset_bottom = 154.0
+text = "Closest: —"
+
+[node name="JobMemoryLabel" type="Label" parent="ResidentPanel"]
+offset_left = 20.0
+offset_top = 156.0
+offset_right = 310.0
+offset_bottom = 184.0
+text = "Job: — • Memories 0"
 
 [node name="HungerLabel" type="Label" parent="ResidentPanel"]
 offset_left = 318.0
-offset_top = 50.0
+offset_top = 48.0
 offset_right = 424.0
-offset_bottom = 72.0
+offset_bottom = 68.0
 text = "HUNGER --"
 horizontal_alignment = 2
 
 [node name="HungerBar" type="ProgressBar" parent="ResidentPanel"]
 offset_left = 432.0
-offset_top = 54.0
+offset_top = 52.0
 offset_right = 642.0
-offset_bottom = 68.0
+offset_bottom = 66.0
 value = 50.0
 
 [node name="EnergyLabel" type="Label" parent="ResidentPanel"]
 offset_left = 318.0
-offset_top = 74.0
+offset_top = 72.0
 offset_right = 424.0
-offset_bottom = 96.0
+offset_bottom = 92.0
 text = "ENERGY --"
 horizontal_alignment = 2
 
 [node name="EnergyBar" type="ProgressBar" parent="ResidentPanel"]
 offset_left = 432.0
-offset_top = 78.0
+offset_top = 76.0
 offset_right = 642.0
-offset_bottom = 92.0
+offset_bottom = 90.0
+value = 50.0
+
+[node name="HygieneLabel" type="Label" parent="ResidentPanel"]
+offset_left = 318.0
+offset_top = 96.0
+offset_right = 424.0
+offset_bottom = 116.0
+text = "HYGIENE --"
+horizontal_alignment = 2
+
+[node name="HygieneBar" type="ProgressBar" parent="ResidentPanel"]
+offset_left = 432.0
+offset_top = 100.0
+offset_right = 642.0
+offset_bottom = 114.0
+value = 50.0
+
+[node name="ComfortLabel" type="Label" parent="ResidentPanel"]
+offset_left = 318.0
+offset_top = 120.0
+offset_right = 424.0
+offset_bottom = 140.0
+text = "COMFORT --"
+horizontal_alignment = 2
+
+[node name="ComfortBar" type="ProgressBar" parent="ResidentPanel"]
+offset_left = 432.0
+offset_top = 124.0
+offset_right = 642.0
+offset_bottom = 138.0
 value = 50.0
 
 [node name="SocialLabel" type="Label" parent="ResidentPanel"]
 offset_left = 318.0
-offset_top = 98.0
+offset_top = 144.0
 offset_right = 424.0
-offset_bottom = 120.0
+offset_bottom = 164.0
 text = "SOCIAL --"
 horizontal_alignment = 2
 
 [node name="SocialBar" type="ProgressBar" parent="ResidentPanel"]
 offset_left = 432.0
-offset_top = 102.0
+offset_top = 148.0
 offset_right = 642.0
-offset_bottom = 116.0
+offset_bottom = 162.0
 value = 50.0
 
 [node name="MoodLabel" type="Label" parent="ResidentPanel"]
 offset_left = 318.0
-offset_top = 122.0
+offset_top = 168.0
 offset_right = 424.0
-offset_bottom = 144.0
+offset_bottom = 188.0
 text = "MOOD --"
 horizontal_alignment = 2
 
 [node name="MoodBar" type="ProgressBar" parent="ResidentPanel"]
 offset_left = 432.0
-offset_top = 126.0
+offset_top = 172.0
 offset_right = 642.0
-offset_bottom = 140.0
+offset_bottom = 186.0
 value = 50.0

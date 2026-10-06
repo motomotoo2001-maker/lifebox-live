@@ -3,6 +3,13 @@ extends Node3D
 
 @onready var shell: VisualSimulationShell = $VisualSimulationShell
 @onready var runtime_objects: Node = $RuntimeObjects
+@onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var key_light: DirectionalLight3D = $KeyLight
+@onready var fill_light: DirectionalLight3D = $FillLight
+@onready var kitchen_light: OmniLight3D = $KitchenWarmLight
+@onready var living_light: OmniLight3D = $LivingWarmLight
+@onready var bedroom_light: OmniLight3D = $BedroomWarmLight
+@onready var bathroom_light: OmniLight3D = $BathroomCoolLight
 
 var _world := SimulationWorld.new()
 var _capture_path: String = ""
@@ -19,6 +26,7 @@ func _ready() -> void:
 	shell.hud.set_latest_event("Autonomous household online")
 
 func _process(delta: float) -> void:
+	_update_time_of_day_visuals()
 	if _capture_path.is_empty() or _capture_started:
 		return
 
@@ -28,6 +36,47 @@ func _process(delta: float) -> void:
 
 	_capture_started = true
 	_capture_frame()
+
+func _update_time_of_day_visuals() -> void:
+	if _world == null:
+		return
+	if (
+		world_environment == null
+		or world_environment.environment == null
+		or key_light == null
+	):
+		return
+
+	var seconds := _world.clock.get_simulation_seconds()
+	var hour := fmod(seconds, 86400.0) / 3600.0
+	var day_factor := 0.0
+	if hour >= 6.0 and hour <= 18.0:
+		day_factor = sin(((hour - 6.0) / 12.0) * PI)
+	day_factor = clampf(day_factor, 0.0, 1.0)
+
+	var environment := world_environment.environment
+	environment.background_color = Color("07111f").lerp(
+		Color("87b8d6"),
+		day_factor
+	)
+	environment.ambient_light_color = Color("6f89b3").lerp(
+		Color("f3f0df"),
+		day_factor
+	)
+	environment.ambient_light_energy = lerpf(0.28, 0.72, day_factor)
+
+	key_light.light_color = Color("8096c9").lerp(
+		Color("fff0cf"),
+		day_factor
+	)
+	key_light.light_energy = lerpf(0.20, 1.20, day_factor)
+	fill_light.light_energy = lerpf(0.18, 0.38, day_factor)
+
+	var warm_energy := lerpf(1.38, 0.46, day_factor)
+	kitchen_light.light_energy = warm_energy
+	living_light.light_energy = warm_energy * 0.92
+	bedroom_light.light_energy = warm_energy * 0.78
+	bathroom_light.light_energy = lerpf(0.96, 0.48, day_factor)
 
 func _build_world() -> void:
 	_world.clock.set_time_scale(20.0)
