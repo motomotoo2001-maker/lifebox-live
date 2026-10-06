@@ -18,6 +18,11 @@ func _capture() -> void:
 	for index in range(180):
 		await process_frame
 
+	if not scene.has_meta("showcase_ready"):
+		push_error("Live showcase script did not finish building runtime UI")
+		quit(1)
+		return
+
 	await RenderingServer.frame_post_draw
 
 	var image := root.get_viewport().get_texture().get_image()
