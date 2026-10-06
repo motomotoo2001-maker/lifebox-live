@@ -8,9 +8,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: capture-current-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   capture:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,16 +28,24 @@ jobs:
           include-templates: false
 
       - name: Install virtual display
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb xauth libgl1-mesa-dri
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Scan project scripts
+        run: godot --headless --path . --editor --quit
 
       - name: Capture current visual showcase
-        env:
-          LIBGL_ALWAYS_SOFTWARE: "1"
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p artifacts
-          xvfb-run -a -s "-screen 0 720x1280x24" godot --path . res://scenes/debug/visual_showcase.tscn -- --capture="$GITHUB_WORKSPACE/artifacts/lifebox-current.png" --capture-after=5 --validate-visual-state
+          timeout --signal=TERM 90s xvfb-run -a godot \
+            --path . \
+            --rendering-method gl_compatibility \
+            res://scenes/debug/visual_showcase.tscn \
+            -- \
+            --capture="$PWD/artifacts/lifebox-current.png" \
+            --capture-after=4.0 \
+            --validate-visual-state
           test -s artifacts/lifebox-current.png
           file artifacts/lifebox-current.png
 
