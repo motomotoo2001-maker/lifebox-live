@@ -360,11 +360,11 @@ func _apply_visual_style() -> void:
 
 	if is_instance_valid(selection_marker):
 		var selection_material := _material(
-			resident_color.lightened(0.28),
+			Color("ffd65a"),
 			0.7
 		)
 		selection_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		selection_material.albedo_color.a = 0.52
+		selection_material.albedo_color.a = 0.46
 		selection_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		selection_marker.material_override = selection_material
 		selection_marker.visible = _selected
