@@ -37,6 +37,10 @@ func run() -> Array[String]:
 		"WorldEnvironment",
 		"KeyLight",
 		"FillLight",
+		"BedroomALight",
+		"BedroomBLight",
+		"BedroomCLight",
+		"HallWarmLight",
 		"DayNightController",
 	]:
 		if not showcase.has_node(node_path):

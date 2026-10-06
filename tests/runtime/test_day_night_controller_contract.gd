@@ -44,6 +44,8 @@ func run() -> Array[String]:
 		failures.append("day key light must be brighter than night")
 	if float(night.get("indoor_energy", 0.0)) <= float(noon.get("indoor_energy", 0.0)):
 		failures.append("indoor lights must be stronger at night")
+	if float(night.get("ambient_energy", 0.0)) < 0.30:
+		failures.append("night ambient must preserve resident readability")
 
 	controller.free()
 

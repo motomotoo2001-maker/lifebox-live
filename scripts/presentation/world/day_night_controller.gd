@@ -12,7 +12,10 @@ var _refresh_accumulator: float = 0.0
 @onready var indoor_lights: Array[OmniLight3D] = [
 	$"../KitchenWarmLight",
 	$"../LivingWarmLight",
-	$"../BedroomWarmLight",
+	$"../BedroomALight",
+	$"../BedroomBLight",
+	$"../BedroomCLight",
+	$"../HallWarmLight",
 	$"../BathroomCoolLight",
 ]
 
@@ -55,13 +58,13 @@ func sample_for_hour(hour: float) -> Dictionary:
 
 	var sample := {
 		"phase": phase,
-		"background": Color("08101d"),
-		"ambient_color": Color("617aa8"),
-		"ambient_energy": 0.24,
-		"key_color": Color("8ea9d6"),
-		"key_energy": 0.18,
-		"fill_energy": 0.10,
-		"indoor_energy": 1.30,
+		"background": Color("0b1729"),
+		"ambient_color": Color("7890ba"),
+		"ambient_energy": 0.34,
+		"key_color": Color("9bb6df"),
+		"key_energy": 0.28,
+		"fill_energy": 0.16,
+		"indoor_energy": 1.55,
 		"sun_pitch": -28.0,
 		"sun_yaw": -160.0,
 	}
@@ -87,11 +90,11 @@ func sample_for_hour(hour: float) -> Dictionary:
 		var t := clampf((normalized - 5.5) / 2.5, 0.0, 1.0)
 		sample["background"] = Color("10192b").lerp(Color("b88778"), t)
 		sample["ambient_color"] = Color("7185ad").lerp(Color("d7b3a5"), t)
-		sample["ambient_energy"] = lerpf(0.26, 0.68, t)
+		sample["ambient_energy"] = lerpf(0.34, 0.68, t)
 		sample["key_color"] = Color("94acd1").lerp(Color("ffd0a0"), t)
-		sample["key_energy"] = lerpf(0.20, 0.86, t)
-		sample["fill_energy"] = lerpf(0.11, 0.28, t)
-		sample["indoor_energy"] = lerpf(1.22, 0.35, t)
+		sample["key_energy"] = lerpf(0.28, 0.86, t)
+		sample["fill_energy"] = lerpf(0.16, 0.28, t)
+		sample["indoor_energy"] = lerpf(1.48, 0.35, t)
 		sample["sun_pitch"] = lerpf(-20.0, -42.0, t)
 		sample["sun_yaw"] = lerpf(-118.0, -78.0, t)
 		return sample
@@ -100,11 +103,11 @@ func sample_for_hour(hour: float) -> Dictionary:
 		var t := clampf((normalized - 18.0) / 3.0, 0.0, 1.0)
 		sample["background"] = Color("9a746f").lerp(Color("09111e"), t)
 		sample["ambient_color"] = Color("d6b1a0").lerp(Color("647aa3"), t)
-		sample["ambient_energy"] = lerpf(0.68, 0.24, t)
+		sample["ambient_energy"] = lerpf(0.68, 0.34, t)
 		sample["key_color"] = Color("ffc07f").lerp(Color("8ea9d6"), t)
-		sample["key_energy"] = lerpf(0.78, 0.18, t)
-		sample["fill_energy"] = lerpf(0.26, 0.10, t)
-		sample["indoor_energy"] = lerpf(0.40, 1.30, t)
+		sample["key_energy"] = lerpf(0.78, 0.28, t)
+		sample["fill_energy"] = lerpf(0.26, 0.16, t)
+		sample["indoor_energy"] = lerpf(0.40, 1.55, t)
 		sample["sun_pitch"] = lerpf(-35.0, -18.0, t)
 		sample["sun_yaw"] = lerpf(50.0, 135.0, t)
 		return sample

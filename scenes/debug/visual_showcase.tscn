@@ -41,12 +41,33 @@ light_energy = 1.0
 omni_range = 5.4
 omni_attenuation = 1.45
 
-[node name="BedroomWarmLight" type="OmniLight3D" parent="."]
-position = Vector3(4.9, 4.0, -2.6)
-light_color = Color(1, 0.68, 0.56, 1)
+[node name="BedroomALight" type="OmniLight3D" parent="."]
+position = Vector3(-5.4, 3.7, -2.7)
+light_color = Color(1, 0.70, 0.54, 1)
 light_energy = 0.82
-omni_range = 4.7
-omni_attenuation = 1.5
+omni_range = 4.8
+omni_attenuation = 1.45
+
+[node name="BedroomBLight" type="OmniLight3D" parent="."]
+position = Vector3(0.0, 3.7, -2.7)
+light_color = Color(1, 0.74, 0.58, 1)
+light_energy = 0.82
+omni_range = 4.8
+omni_attenuation = 1.45
+
+[node name="BedroomCLight" type="OmniLight3D" parent="."]
+position = Vector3(5.4, 3.7, -2.7)
+light_color = Color(1, 0.69, 0.55, 1)
+light_energy = 0.82
+omni_range = 4.8
+omni_attenuation = 1.45
+
+[node name="HallWarmLight" type="OmniLight3D" parent="."]
+position = Vector3(0.0, 3.3, 0.0)
+light_color = Color(1, 0.78, 0.60, 1)
+light_energy = 0.66
+omni_range = 6.8
+omni_attenuation = 1.55
 
 [node name="BathroomCoolLight" type="OmniLight3D" parent="."]
 position = Vector3(5.8, 3.8, 2.9)
