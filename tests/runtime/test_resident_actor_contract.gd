@@ -53,8 +53,14 @@ func run() -> Array[String]:
 	for node_path in [
 		"Visuals",
 		"Visuals/Shadow",
+		"Visuals/LegLeft",
+		"Visuals/LegRight",
 		"Visuals/Body",
+		"Visuals/ArmLeft",
+		"Visuals/ArmRight",
 		"Visuals/Head",
+		"Visuals/Hair",
+		"Visuals/Nose",
 		"Visuals/NameLabel",
 	]:
 		if not actor.has_node(node_path):
