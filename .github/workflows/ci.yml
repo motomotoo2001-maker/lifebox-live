@@ -60,6 +60,9 @@ jobs:
           use-dotnet: false
           include-templates: false
 
+      - name: Build Godot script cache
+        run: godot --headless --path . --editor --quit
+
       - name: Render live showcase
         shell: bash
         run: |
