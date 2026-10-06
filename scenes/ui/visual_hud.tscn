@@ -1,0 +1,113 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/ui/visual_hud.gd" id="1_script"]
+
+[node name="VisualHUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="TopPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 700.0
+offset_bottom = 118.0
+
+[node name="DayTimeLabel" type="Label" parent="TopPanel"]
+offset_left = 22.0
+offset_top = 12.0
+offset_right = 310.0
+offset_bottom = 50.0
+text = "DAY --  --:--"
+
+[node name="StatusLabel" type="Label" parent="TopPanel"]
+offset_left = 330.0
+offset_top = 18.0
+offset_right = 648.0
+offset_bottom = 46.0
+text = "AUTONOMOUS"
+horizontal_alignment = 2
+
+[node name="EventPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 1004.0
+offset_right = 700.0
+offset_bottom = 1078.0
+
+[node name="EventLabel" type="Label" parent="EventPanel"]
+offset_left = 20.0
+offset_top = 18.0
+offset_right = 656.0
+offset_bottom = 52.0
+text = "Simulation online"
+
+[node name="ResidentPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 1092.0
+offset_right = 700.0
+offset_bottom = 1260.0
+
+[node name="NameLabel" type="Label" parent="ResidentPanel"]
+offset_left = 20.0
+offset_top = 14.0
+offset_right = 230.0
+offset_bottom = 48.0
+text = "NO RESIDENT"
+
+[node name="MoneyLabel" type="Label" parent="ResidentPanel"]
+offset_left = 540.0
+offset_top = 16.0
+offset_right = 644.0
+offset_bottom = 44.0
+text = "$0"
+horizontal_alignment = 2
+
+[node name="ScheduleLabel" type="Label" parent="ResidentPanel"]
+offset_left = 20.0
+offset_top = 54.0
+offset_right = 310.0
+offset_bottom = 80.0
+text = "Schedule: —"
+
+[node name="GoalLabel" type="Label" parent="ResidentPanel"]
+offset_left = 20.0
+offset_top = 84.0
+offset_right = 330.0
+offset_bottom = 112.0
+text = "Goal: —"
+
+[node name="HungerBar" type="ProgressBar" parent="ResidentPanel"]
+offset_left = 356.0
+offset_top = 54.0
+offset_right = 642.0
+offset_bottom = 68.0
+value = 50.0
+
+[node name="EnergyBar" type="ProgressBar" parent="ResidentPanel"]
+offset_left = 356.0
+offset_top = 78.0
+offset_right = 642.0
+offset_bottom = 92.0
+value = 50.0
+
+[node name="SocialBar" type="ProgressBar" parent="ResidentPanel"]
+offset_left = 356.0
+offset_top = 102.0
+offset_right = 642.0
+offset_bottom = 116.0
+value = 50.0
+
+[node name="MoodBar" type="ProgressBar" parent="ResidentPanel"]
+offset_left = 356.0
+offset_top = 126.0
+offset_right = 642.0
+offset_bottom = 140.0
+value = 50.0
