@@ -17,6 +17,16 @@ Vendored models:
 - cactus_medium_A
 - shelf_B_large_decorated
 
+- book_set
+
+- lamp_table
+
+- pictureframe_large_A
+
+- pillow_A
+
+- shelf_A_small
+
 Shared texture:
 - furniturebits_texture.png
 
