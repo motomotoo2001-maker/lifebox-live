@@ -1,0 +1,83 @@
+name: Visual Showcase Screenshot
+
+on:
+  push:
+    branches:
+      - 'dev/plan-06-visual-debug-showcase'
+    paths:
+      - 'scenes/debug/**'
+      - 'scripts/presentation/debug/**'
+      - '.github/workflows/visual-showcase.yml'
+      - 'project.godot'
+  pull_request:
+    branches:
+      - 'dev/plan-05-daily-goals-schedules'
+    paths:
+      - 'scenes/debug/**'
+      - 'scripts/presentation/debug/**'
+      - '.github/workflows/visual-showcase.yml'
+      - 'project.godot'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Install virtual display
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1-mesa-dri
+
+      - name: Scan project scripts
+        run: godot --headless --path . --editor --quit
+
+      - name: Render 9x16 showcase
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          timeout --signal=TERM 90s xvfb-run -a -s "-screen 0 900x1400x24"             env LIBGL_ALWAYS_SOFTWARE=1 LIFEBOX_CAPTURE_PATH="$PWD/artifacts/visual_showcase.png"             godot --path . --rendering-method gl_compatibility res://scenes/debug/visual_showcase.tscn
+          test -s artifacts/visual_showcase.png
+          file artifacts/visual_showcase.png
+
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifebox-visual-showcase
+          path: artifacts/visual_showcase.png
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish current project screenshot
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/screenshots
+          cp artifacts/visual_showcase.png docs/screenshots/visual_showcase.png
+          git config user.name "lifebox-ci"
+          git config user.email "lifebox-ci@users.noreply.github.com"
+          git add docs/screenshots/visual_showcase.png
+          if git diff --cached --quiet; then
+            echo "Screenshot unchanged."
+            exit 0
+          fi
+          git commit -m "chore: update visual showcase screenshot"
+          git push origin HEAD:${GITHUB_REF_NAME}
