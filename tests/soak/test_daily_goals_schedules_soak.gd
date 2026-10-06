@@ -562,8 +562,8 @@ func _validate_critical_need_safety(
 	relax_probe.need_effects = {"comfort": 100.0, "mood": 100.0}
 	relax_probe.action_tags.append(&"relax")
 
-	var eat_base := (100.0 - resident.needs.hunger.value) * 20.0
-	var relax_base := (
+	var eat_base: float = (100.0 - resident.needs.hunger.value) * 20.0
+	var relax_base: float = (
 		(100.0 - resident.needs.comfort.value) * 100.0
 		+ (100.0 - resident.needs.mood.value) * 100.0
 	)
