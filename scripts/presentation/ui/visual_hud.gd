@@ -4,6 +4,7 @@ extends Control
 signal resident_requested(character_id: StringName)
 signal save_requested
 signal load_requested
+signal activity_requested(activity_id: StringName)
 
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
@@ -11,6 +12,14 @@ signal load_requested
 @onready var event_label: Label = $EventPanel/EventLabel
 @onready var save_button: Button = $EventPanel/SaveButton
 @onready var load_button: Button = $EventPanel/LoadButton
+@onready var activity_buttons: Array[Button] = [
+	$CommandPanel/CommandStrip/EatButton,
+	$CommandPanel/CommandStrip/SleepButton,
+	$CommandPanel/CommandStrip/ShowerButton,
+	$CommandPanel/CommandStrip/RelaxButton,
+	$CommandPanel/CommandStrip/TVButton,
+	$CommandPanel/CommandStrip/ReadButton,
+]
 @onready var name_label: Label = $ResidentPanel/NameLabel
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
@@ -45,9 +54,18 @@ var _latest_event: String = "Simulation online"
 var _refresh_accumulator: float = 0.0
 var _simulation_running: bool = true
 var _camera_mode_text: String = "AUTO"
+var _activity_ids: Array[StringName] = [
+	&"eat",
+	&"sleep",
+	&"shower",
+	&"relax",
+	&"tv",
+	&"read",
+]
 
 func _ready() -> void:
 	_connect_resident_buttons()
+	_connect_activity_buttons()
 	if not save_button.pressed.is_connected(_on_save_button_pressed):
 		save_button.pressed.connect(_on_save_button_pressed)
 	if not load_button.pressed.is_connected(_on_load_button_pressed):
@@ -118,6 +136,7 @@ func refresh() -> void:
 	]
 	event_label.text = _latest_event
 	_refresh_resident_buttons()
+	_refresh_activity_buttons()
 
 	var character: CharacterState = _world.get_character(_selected_resident_id)
 	if character == null:
@@ -144,6 +163,18 @@ func refresh() -> void:
 	comfort_label.text = "COMFORT %02d" % int(round(character.needs.comfort.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _connect_activity_buttons() -> void:
+	for index in range(activity_buttons.size()):
+		var button: Button = activity_buttons[index]
+		if button == null or index >= _activity_ids.size():
+			continue
+		button.pressed.connect(_on_activity_button_pressed.bind(index))
+
+func _on_activity_button_pressed(index: int) -> void:
+	if index < 0 or index >= _activity_ids.size():
+		return
+	activity_requested.emit(_activity_ids[index])
 
 func _on_save_button_pressed() -> void:
 	save_requested.emit()
@@ -196,6 +227,16 @@ func _refresh_resident_buttons() -> void:
 			character.display_name,
 			_action_text(character),
 		]
+
+func _refresh_activity_buttons() -> void:
+	var enabled := (
+		_world != null
+		and _selected_resident_id != &""
+		and _world.get_character(_selected_resident_id) != null
+	)
+	for button in activity_buttons:
+		if button != null:
+			button.disabled = not enabled
 
 func _social_summary_text(character: CharacterState) -> String:
 	if _world == null or character == null:
@@ -308,7 +349,7 @@ func _clear_resident_panel() -> void:
 		bar.value = 0.0
 
 func _apply_styles() -> void:
-	for panel in [$TopPanel, $EventPanel, $ResidentPanel]:
+	for panel in [$TopPanel, $CommandPanel, $EventPanel, $ResidentPanel]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.05, 0.08, 0.13, 0.9)
 		style.border_color = Color("3b4d65")
@@ -335,6 +376,22 @@ func _apply_styles() -> void:
 		action_style.set_border_width_all(1)
 		action_style.set_corner_radius_all(10)
 		action_button.add_theme_stylebox_override("normal", action_style)
+
+	for activity_button in activity_buttons:
+		activity_button.add_theme_font_size_override("font_size", 10)
+		var command_style := StyleBoxFlat.new()
+		command_style.bg_color = Color("15283a")
+		command_style.border_color = Color("41637e")
+		command_style.set_border_width_all(1)
+		command_style.set_corner_radius_all(9)
+		activity_button.add_theme_stylebox_override("normal", command_style)
+
+		var command_hover := StyleBoxFlat.new()
+		command_hover.bg_color = Color("24415a")
+		command_hover.border_color = Color("74a9cf")
+		command_hover.set_border_width_all(1)
+		command_hover.set_corner_radius_all(9)
+		activity_button.add_theme_stylebox_override("hover", command_hover)
 
 	for button in resident_buttons:
 		button.add_theme_font_size_override("font_size", 11)

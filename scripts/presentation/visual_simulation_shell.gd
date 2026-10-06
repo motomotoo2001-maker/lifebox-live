@@ -33,6 +33,13 @@ func _ready() -> void:
 		hud.set_camera_mode_text(_camera_mode_display())
 	if (
 		hud != null
+		and not hud.activity_requested.is_connected(
+			_on_hud_activity_requested
+		)
+	):
+		hud.activity_requested.connect(_on_hud_activity_requested)
+	if (
+		hud != null
 		and not hud.resident_requested.is_connected(
 			_on_hud_resident_requested
 		)
@@ -341,6 +348,66 @@ func select_resident(
 		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
 	return true
 
+func request_selected_activity(activity_id: StringName) -> bool:
+	if _world == null or _selected_resident_id == &"":
+		return false
+
+	var object_id: StringName = &""
+	var interaction_id: StringName = &""
+	match activity_id:
+		&"eat":
+			object_id = &"fridge_main"
+			interaction_id = &"eat"
+		&"sleep":
+			var suffix := str(_selected_resident_id).get_slice("_", 1).to_int()
+			var bed_index := maxi(suffix, 1)
+			object_id = StringName("bed_%02d" % bed_index)
+			interaction_id = StringName("sleep_%02d" % bed_index)
+		&"shower":
+			object_id = &"shower_main"
+			interaction_id = &"shower"
+		&"relax":
+			object_id = &"sofa_main"
+			interaction_id = &"relax"
+		&"tv":
+			object_id = &"tv_main"
+			interaction_id = &"watch_tv"
+		&"read":
+			object_id = &"bookshelf_main"
+			interaction_id = &"read"
+		_:
+			return false
+
+	var character := _world.get_character(_selected_resident_id)
+	if character == null:
+		return false
+
+	var accepted := _world.request_interaction(
+		_selected_resident_id,
+		object_id,
+		interaction_id,
+		true
+	)
+	if hud != null:
+		if accepted:
+			hud.set_latest_event(
+				"%s → %s" % [
+					character.display_name,
+					activity_id.to_upper(),
+				]
+			)
+		else:
+			hud.set_latest_event(
+				"%s cannot %s right now" % [
+					character.display_name,
+					str(activity_id),
+				]
+			)
+	if accepted:
+		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
+		sync_visuals()
+	return accepted
+
 func selected_resident_id() -> StringName:
 	return _selected_resident_id
 
@@ -357,6 +424,9 @@ func _on_actor_selected(character_id: StringName) -> void:
 
 func _on_hud_resident_requested(character_id: StringName) -> void:
 	select_resident(character_id)
+
+func _on_hud_activity_requested(activity_id: StringName) -> void:
+	request_selected_activity(activity_id)
 
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:

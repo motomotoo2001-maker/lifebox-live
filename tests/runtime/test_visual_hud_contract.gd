@@ -38,6 +38,15 @@ func run() -> Array[String]:
 		"TopPanel/ResidentStrip/ResidentButton4",
 		"TopPanel/ResidentStrip/ResidentButton5",
 		"TopPanel/ResidentStrip/ResidentButton6",
+		"CommandPanel",
+		"CommandPanel/CommandLabel",
+		"CommandPanel/CommandStrip",
+		"CommandPanel/CommandStrip/EatButton",
+		"CommandPanel/CommandStrip/SleepButton",
+		"CommandPanel/CommandStrip/ShowerButton",
+		"CommandPanel/CommandStrip/RelaxButton",
+		"CommandPanel/CommandStrip/TVButton",
+		"CommandPanel/CommandStrip/ReadButton",
 		"EventPanel",
 		"EventPanel/EventLabel",
 		"EventPanel/SaveButton",
@@ -72,6 +81,8 @@ func run() -> Array[String]:
 		failures.append("VisualHUD must expose save_requested signal")
 	if not hud.has_signal("load_requested"):
 		failures.append("VisualHUD must expose load_requested signal")
+	if not hud.has_signal("activity_requested"):
+		failures.append("VisualHUD must expose activity_requested signal")
 
 	for method_name in [
 		"bind_world",
