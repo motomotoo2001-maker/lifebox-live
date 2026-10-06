@@ -37,12 +37,12 @@ func _build_visual_blockout() -> void:
 		return
 
 	var room_colors: Array[Color] = [
-		Color("40566f"),
-		Color("405b73"),
-		Color("405f65"),
-		Color("51496b"),
-		Color("3d5872"),
-		Color("356456"),
+		Color("66594f"),
+		Color("4d6177"),
+		Color("655a75"),
+		Color("487078"),
+		Color("596878"),
+		Color("3e7259"),
 	]
 	var room_names := [
 		&"Kitchen",
