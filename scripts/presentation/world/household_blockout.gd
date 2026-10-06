@@ -3,6 +3,7 @@ extends Node3D
 
 const VENDOR_FURNITURE_ROOT := "res://assets/vendor/kaykit_furniture_bits/obj"
 const VENDOR_RESTAURANT_ROOT := "res://assets/vendor/kaykit_restaurant_bits/obj"
+const VENDOR_CITY_ROOT := "res://assets/vendor/kaykit_city_builder_bits/obj"
 
 @export var use_vendor_furniture: bool = true
 
@@ -473,33 +474,34 @@ func _build_yard_details() -> void:
 	_make_box(
 		furniture,
 		&"YardPlanter",
-		Vector3(5.35, 0.28, -3.85),
-		Vector3(2.3, 0.5, 0.72),
+		Vector3(5.35, 0.20, -3.85),
+		Vector3(2.45, 0.38, 0.82),
 		Color("80604a")
 	)
 	for index in range(4):
-		_make_box(
-			furniture,
-			StringName("YardShrub%02d" % (index + 1)),
-			Vector3(4.55 + float(index) * 0.52, 0.72, -3.85),
-			Vector3(0.38, 0.58 + float(index % 2) * 0.16, 0.38),
-			Color("4f8a62")
+		_add_city_mesh(
+			"bush",
+			StringName("KayKitYardBush%02d" % (index + 1)),
+			Vector3(4.55 + float(index) * 0.54, 0.36, -3.85),
+			float(index % 2) * 0.45,
+			Vector3(2.55, 2.55, 2.55)
 		)
 
-	_make_box(
-		furniture,
-		&"YardBenchSeat",
-		Vector3(5.25, 0.42, -2.15),
-		Vector3(2.2, 0.18, 0.62),
-		Color("9a744f")
+	var has_vendor_bench := _add_city_mesh(
+		"bench",
+		&"KayKitYardBench",
+		Vector3(5.25, 0.0, -2.15),
+		PI,
+		Vector3(5.1, 5.1, 5.1)
 	)
-	_make_box(
-		furniture,
-		&"YardBenchBack",
-		Vector3(5.25, 0.86, -1.9),
-		Vector3(2.2, 0.72, 0.16),
-		Color("8a6748")
-	)
+	if not has_vendor_bench:
+		_make_box(
+			furniture,
+			&"YardBenchSeat",
+			Vector3(5.25, 0.42, -2.15),
+			Vector3(2.2, 0.18, 0.62),
+			Color("9a744f")
+		)
 
 
 func _add_vendor_mesh(
@@ -527,6 +529,22 @@ func _add_restaurant_mesh(
 ) -> bool:
 	return _add_mesh_from_vendor_root(
 		VENDOR_RESTAURANT_ROOT,
+		asset_name,
+		node_name,
+		position_value,
+		rotation_y,
+		scale_value
+	)
+
+func _add_city_mesh(
+	asset_name: String,
+	node_name: StringName,
+	position_value: Vector3,
+	rotation_y: float = 0.0,
+	scale_value: Vector3 = Vector3.ONE
+) -> bool:
+	return _add_mesh_from_vendor_root(
+		VENDOR_CITY_ROOT,
 		asset_name,
 		node_name,
 		position_value,
