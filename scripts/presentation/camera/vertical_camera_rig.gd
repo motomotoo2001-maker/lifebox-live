@@ -6,6 +6,10 @@ extends Node3D
 @export var establishing_ortho_size: float = 30.0
 @export var focus_ortho_size: float = 20.5
 @export var transition_speed: float = 4.5
+@export var min_ortho_size: float = 11.0
+@export var max_ortho_size: float = 34.0
+@export var target_x_bounds: Vector2 = Vector2(-8.5, 8.5)
+@export var target_z_bounds: Vector2 = Vector2(-5.5, 5.5)
 
 @onready var camera: Camera3D = $Camera3D
 
@@ -39,6 +43,28 @@ func set_establishing_view() -> void:
 	_desired_target = establishing_target
 	_desired_size = maxf(establishing_ortho_size, 1.0)
 
+func pan_world(offset: Vector3) -> void:
+	if not _is_finite_vector(offset):
+		return
+	_desired_target = _clamp_target(
+		_desired_target + Vector3(offset.x, 0.0, offset.z)
+	)
+
+func adjust_zoom(delta_size: float) -> void:
+	if is_nan(delta_size) or is_inf(delta_size):
+		return
+	_desired_size = clampf(
+		_desired_size + delta_size,
+		maxf(min_ortho_size, 1.0),
+		maxf(max_ortho_size, maxf(min_ortho_size, 1.0))
+	)
+
+func desired_target() -> Vector3:
+	return _desired_target
+
+func desired_size() -> float:
+	return _desired_size
+
 func focus_world_position(target: Vector3, requested_size: float = -1.0) -> void:
 	if not is_instance_valid(camera):
 		return
@@ -53,11 +79,22 @@ func focus_world_position(target: Vector3, requested_size: float = -1.0) -> void
 	):
 		view_size = requested_size
 
-	_desired_target = target
-	_desired_size = maxf(view_size, 1.0)
+	_desired_target = _clamp_target(target)
+	_desired_size = clampf(
+		maxf(view_size, 1.0),
+		maxf(min_ortho_size, 1.0),
+		maxf(max_ortho_size, maxf(min_ortho_size, 1.0))
+	)
 
 func get_camera() -> Camera3D:
 	return camera
+
+func _clamp_target(value: Vector3) -> Vector3:
+	return Vector3(
+		clampf(value.x, target_x_bounds.x, target_x_bounds.y),
+		value.y,
+		clampf(value.z, target_z_bounds.x, target_z_bounds.y)
+	)
 
 func _apply_target() -> void:
 	var direction := _current_target - global_position

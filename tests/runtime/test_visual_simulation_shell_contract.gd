@@ -48,6 +48,8 @@ func run() -> Array[String]:
 		"selected_resident_id",
 		"set_simulation_paused",
 		"is_simulation_paused",
+		"is_manual_camera_active",
+		"_update_manual_camera_input",
 		"_on_hud_resident_requested",
 		"_on_hud_action_requested",
 		"request_selected_action",

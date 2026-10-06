@@ -8,6 +8,8 @@ const RESIDENT_ACTOR_SCENE := preload(
 @export var advance_simulation: bool = true
 @export var manual_focus_seconds: float = 6.0
 @export var manual_focus_ortho_size: float = 16.5
+@export var manual_camera_pan_speed: float = 7.5
+@export var manual_camera_zoom_step: float = 2.0
 
 @onready var household: HouseholdBlockout = $HouseholdBlockout
 @onready var resident_actors: Node3D = $ResidentActors
@@ -21,6 +23,7 @@ var _active_target_ids: Dictionary = {}
 var _social_session_ids: Dictionary = {}
 var _selected_resident_id: StringName = &""
 var _manual_focus_remaining: float = 0.0
+var _manual_camera_active: bool = false
 
 func _ready() -> void:
 	if camera_director != null:
@@ -64,12 +67,34 @@ func _process(delta: float) -> void:
 	if advance_simulation:
 		_world.step(delta)
 	sync_visuals()
+	_update_manual_camera_input(delta)
 	_update_camera_director(delta)
 	if hud != null:
 		hud.set_simulation_running(advance_simulation)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _world == null or not event is InputEventKey:
+	if _world == null:
+		return
+
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if not mouse_event.pressed:
+			return
+		if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_activate_manual_camera()
+			if camera_rig != null:
+				camera_rig.adjust_zoom(-manual_camera_zoom_step)
+			get_viewport().set_input_as_handled()
+			return
+		if mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_activate_manual_camera()
+			if camera_rig != null:
+				camera_rig.adjust_zoom(manual_camera_zoom_step)
+			get_viewport().set_input_as_handled()
+			return
+		return
+
+	if not event is InputEventKey:
 		return
 	var key_event := event as InputEventKey
 	if not key_event.pressed or key_event.echo:
@@ -88,6 +113,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if key_event.keycode == KEY_ESCAPE:
 		_manual_focus_remaining = 0.0
+		_manual_camera_active = false
 		if camera_director != null:
 			camera_director.force_establishing()
 		if hud != null:
@@ -305,6 +331,40 @@ func _presentation_target_for(
 	var slot_index := maxi(suffix - 1, 0) % sofa_slots.size()
 	return target + sofa_slots[slot_index]
 
+func _update_manual_camera_input(delta: float) -> void:
+	if camera_rig == null:
+		return
+	if is_nan(delta) or is_inf(delta) or delta <= 0.0:
+		return
+
+	var pan := Vector2.ZERO
+	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+		pan.x -= 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+		pan.x += 1.0
+	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+		pan.y -= 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+		pan.y += 1.0
+
+	if pan.length_squared() <= 0.0:
+		return
+
+	pan = pan.normalized()
+	_activate_manual_camera()
+	camera_rig.pan_world(
+		Vector3(pan.x, 0.0, pan.y)
+		* maxf(manual_camera_pan_speed, 0.0)
+		* delta
+	)
+
+func _activate_manual_camera() -> void:
+	_manual_camera_active = true
+	_manual_focus_remaining = 0.0
+
+func is_manual_camera_active() -> bool:
+	return _manual_camera_active
+
 func _shift_time_scale(direction: int) -> void:
 	if _world == null or direction == 0:
 		return
@@ -352,6 +412,7 @@ func select_resident(
 		hud.set_latest_event("Selected %s" % character.display_name)
 
 	if focus_camera:
+		_manual_camera_active = false
 		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
 	return true
 
@@ -406,6 +467,7 @@ func request_selected_action(action_id: StringName) -> bool:
 				]
 			)
 	if accepted:
+		_manual_camera_active = false
 		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
 	return accepted
 
@@ -456,6 +518,7 @@ func request_selected_social_action(
 			)
 
 	if accepted:
+		_manual_camera_active = false
 		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
 	return accepted
 
@@ -513,6 +576,9 @@ func _command_target_for(
 
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:
+		return
+
+	if _manual_camera_active:
 		return
 
 	if _manual_focus_remaining > 0.0:
@@ -780,6 +846,7 @@ func _clear_actors() -> void:
 	_actors.clear()
 	_selected_resident_id = &""
 	_manual_focus_remaining = 0.0
+	_manual_camera_active = false
 
 	if not is_instance_valid(resident_actors):
 		return

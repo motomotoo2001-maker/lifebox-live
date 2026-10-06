@@ -39,10 +39,33 @@ func run() -> Array[String]:
 	for method_name in [
 		"set_establishing_view",
 		"focus_world_position",
+		"pan_world",
+		"adjust_zoom",
+		"desired_target",
+		"desired_size",
 		"get_camera",
 	]:
 		if not rig.has_method(method_name):
 			failures.append("VerticalCameraRig must expose %s()" % method_name)
+
+	var before_target: Vector3 = rig.desired_target()
+	rig.pan_world(Vector3(2.0, 0.0, -1.0))
+	var after_target: Vector3 = rig.desired_target()
+	if after_target.is_equal_approx(before_target):
+		failures.append("pan_world() must change desired camera target")
+
+	var before_size: float = rig.desired_size()
+	rig.adjust_zoom(-2.0)
+	if rig.desired_size() >= before_size:
+		failures.append("negative adjust_zoom() must zoom in")
+
+	rig.pan_world(Vector3(999.0, 0.0, 999.0))
+	var clamped: Vector3 = rig.desired_target()
+	if (
+		clamped.x > rig.target_x_bounds.y + 0.001
+		or clamped.z > rig.target_z_bounds.y + 0.001
+	):
+		failures.append("manual pan target must stay inside authored bounds")
 
 	rig.free()
 	return failures
