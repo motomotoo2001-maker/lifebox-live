@@ -16,6 +16,7 @@ var job_system := JobSystem.new()
 var household_expense_system := HouseholdExpenseSystem.new()
 var relationship_graph := RelationshipGraph.new()
 var social_system := SocialSystem.new()
+var live_interaction_system := LiveInteractionSystem.new()
 
 var _characters: Array[CharacterState] = []
 var _smart_objects: Array[SmartObject] = []
@@ -505,6 +506,9 @@ func _is_finite_non_negative_number(value) -> bool:
 	var number := float(value)
 	return not is_nan(number) and not is_inf(number) and number >= 0.0
 
+func enqueue_live_event(event: LiveEvent) -> StringName:
+	return live_interaction_system.enqueue_event(event)
+
 func report_arrival(character_id: StringName, target_object_id: StringName) -> bool:
 	var executor: ActionExecutor = _executors.get(character_id)
 	if executor == null:
@@ -530,6 +534,10 @@ func step(real_delta: float) -> void:
 func _step_fixed(sim_delta: float) -> void:
 	_processed_sim_seconds += sim_delta
 	_pending_economy_seconds += sim_delta
+	live_interaction_system.process_step(
+		self,
+		_processed_sim_seconds
+	)
 	daily_planning_system.advance(
 		self,
 		_processed_sim_seconds,
