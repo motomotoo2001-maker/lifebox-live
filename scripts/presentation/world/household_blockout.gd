@@ -1,6 +1,10 @@
 class_name HouseholdBlockout
 extends Node3D
 
+const VENDOR_FURNITURE_ROOT := "res://assets/vendor/kaykit_furniture_bits/obj"
+
+@export var use_vendor_furniture: bool = true
+
 @onready var floor_mesh: MeshInstance3D = $Floor
 @onready var room_pads: Node3D = $Visuals/RoomPads
 @onready var walls: Node3D = $Visuals/Walls
@@ -136,7 +140,15 @@ func _build_furniture() -> void:
 
 	var sofa := get_destination(&"Sofa")
 	if sofa != null:
-		_build_sofa(sofa.position)
+		var has_vendor_sofa := _add_vendor_mesh(
+			"couch_pillows",
+			&"KayKitCouch",
+			sofa.position,
+			PI,
+			Vector3(0.78, 0.78, 0.78)
+		)
+		if not has_vendor_sofa:
+			_build_sofa(sofa.position)
 
 	var shower := get_destination(&"Shower")
 	if shower != null:
@@ -145,7 +157,15 @@ func _build_furniture() -> void:
 	for index in range(1, 7):
 		var bed := get_destination(StringName("Bed%02d" % index))
 		if bed != null:
-			_build_bed(index, bed.position)
+			var has_vendor_bed := _add_vendor_mesh(
+				"bed_single_B",
+				StringName("KayKitBed%02d" % index),
+				bed.position,
+				0.0,
+				Vector3(0.90, 0.80, 0.55)
+			)
+			if not has_vendor_bed:
+				_build_bed(index, bed.position)
 
 	_build_kitchen_details()
 	_build_living_details()
@@ -181,25 +201,37 @@ func _build_kitchen_details() -> void:
 			Color("6f5547")
 		)
 
-	_make_box(
-		furniture,
-		&"KitchenTableTop",
-		Vector3(-4.6, 0.66, 2.72),
-		Vector3(1.7, 0.12, 1.05),
-		Color("b98a62")
+	var table_position := Vector3(-4.6, 0.0, 2.72)
+	var has_vendor_table := _add_vendor_mesh(
+		"table_medium_long",
+		&"KayKitKitchenTable",
+		table_position,
+		0.0,
+		Vector3(0.55, 0.68, 0.55)
 	)
-	for offset in [
-		Vector3(-0.7, 0.32, -0.38),
-		Vector3(0.7, 0.32, -0.38),
-		Vector3(-0.7, 0.32, 0.38),
-		Vector3(0.7, 0.32, 0.38),
-	]:
+	if not has_vendor_table:
 		_make_box(
 			furniture,
-			StringName("KitchenTableLeg_%s" % str(offset)),
-			Vector3(-4.6, 0.32, 2.72) + offset,
-			Vector3(0.1, 0.58, 0.1),
-			Color("76533d")
+			&"KitchenTableTop",
+			Vector3(-4.6, 0.66, 2.72),
+			Vector3(1.7, 0.12, 1.05),
+			Color("b98a62")
+		)
+
+	var chair_specs := [
+		[Vector3(-5.35, 0.0, 2.72), -PI * 0.5],
+		[Vector3(-3.85, 0.0, 2.72), PI * 0.5],
+		[Vector3(-4.6, 0.0, 2.05), 0.0],
+		[Vector3(-4.6, 0.0, 3.39), PI],
+	]
+	for chair_index in range(chair_specs.size()):
+		var spec: Array = chair_specs[chair_index]
+		_add_vendor_mesh(
+			"chair_A",
+			StringName("KayKitKitchenChair%02d" % (chair_index + 1)),
+			spec[0],
+			float(spec[1]),
+			Vector3(0.62, 0.62, 0.62)
 		)
 
 func _build_living_details() -> void:
@@ -233,13 +265,21 @@ func _build_living_details() -> void:
 	)
 
 func _build_bedroom_details() -> void:
-	_make_box(
-		furniture,
-		&"BedroomWardrobe",
-		Vector3(5.85, 0.92, -4.2),
-		Vector3(1.6, 1.84, 0.58),
-		Color("77635a")
+	var has_vendor_wardrobe := _add_vendor_mesh(
+		"cabinet_medium_decorated",
+		&"KayKitBedroomWardrobe",
+		Vector3(5.85, 0.0, -4.2),
+		PI,
+		Vector3(0.78, 0.95, 0.72)
 	)
+	if not has_vendor_wardrobe:
+		_make_box(
+			furniture,
+			&"BedroomWardrobe",
+			Vector3(5.85, 0.92, -4.2),
+			Vector3(1.6, 1.84, 0.58),
+			Color("77635a")
+		)
 	for index in range(2):
 		_make_box(
 			furniture,
@@ -359,6 +399,34 @@ func _build_yard_details() -> void:
 		Vector3(2.2, 0.72, 0.16),
 		Color("8a6748")
 	)
+
+
+func _add_vendor_mesh(
+	asset_name: String,
+	node_name: StringName,
+	position_value: Vector3,
+	rotation_y: float = 0.0,
+	scale_value: Vector3 = Vector3.ONE
+) -> bool:
+	if not use_vendor_furniture or not is_instance_valid(furniture):
+		return false
+
+	var path := "%s/%s.obj" % [VENDOR_FURNITURE_ROOT, asset_name]
+	if not ResourceLoader.exists(path):
+		return false
+
+	var mesh := load(path) as Mesh
+	if mesh == null:
+		return false
+
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	instance.position = position_value
+	instance.rotation.y = rotation_y
+	instance.scale = scale_value
+	instance.mesh = mesh
+	furniture.add_child(instance)
+	return true
 
 func _build_fridge(position_value: Vector3) -> void:
 	_make_box(
