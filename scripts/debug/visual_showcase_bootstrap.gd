@@ -1,6 +1,8 @@
 class_name VisualShowcaseBootstrap
 extends Node3D
 
+const QUICK_SAVE_PATH := "user://lifebox_quicksave.dat"
+
 @onready var shell: VisualSimulationShell = $VisualSimulationShell
 @onready var runtime_objects: Node = $RuntimeObjects
 
@@ -16,7 +18,85 @@ func _ready() -> void:
 	_build_world()
 	shell.bind_world(_world)
 	shell.select_resident(&"resident_001")
+	_connect_persistence_ui()
+	_refresh_save_availability()
 	shell.hud.set_latest_event("Autonomous household online")
+
+func quick_save() -> bool:
+	if _world == null:
+		return false
+
+	var payload := WorldSnapshotCodec.encode(_world)
+	var envelope := SaveSchema.create_envelope(payload)
+	if not SaveService.save_envelope(QUICK_SAVE_PATH, envelope):
+		if shell != null and shell.hud != null:
+			shell.hud.set_latest_event("Save failed")
+		return false
+
+	_refresh_save_availability()
+	if shell != null and shell.hud != null:
+		shell.hud.set_latest_event("Game saved")
+	return true
+
+func quick_load() -> bool:
+	if _world == null:
+		return false
+
+	var envelope := SaveService.load_envelope(QUICK_SAVE_PATH)
+	if envelope.is_empty() or not envelope.get("payload", null) is Dictionary:
+		if shell != null and shell.hud != null:
+			shell.hud.set_latest_event("No valid save found")
+		_refresh_save_availability()
+		return false
+
+	var selected_id := shell.selected_resident_id() if shell != null else &""
+	var errors := WorldSnapshotCodec.restore(_world, envelope["payload"])
+	if not errors.is_empty():
+		if shell != null and shell.hud != null:
+			shell.hud.set_latest_event("Load failed")
+		return false
+
+	if shell == null or not shell.bind_world(_world):
+		return false
+
+	if selected_id != &"" and _world.get_character(selected_id) != null:
+		shell.select_resident(selected_id, false)
+
+	_refresh_save_availability()
+	shell.hud.set_latest_event("Game loaded")
+	return true
+
+func has_quicksave() -> bool:
+	return (
+		FileAccess.file_exists(QUICK_SAVE_PATH)
+		or FileAccess.file_exists(QUICK_SAVE_PATH + SaveService.BACKUP_SUFFIX)
+	)
+
+func _connect_persistence_ui() -> void:
+	if shell == null or shell.hud == null:
+		return
+	if not shell.hud.save_requested.is_connected(quick_save):
+		shell.hud.save_requested.connect(quick_save)
+	if not shell.hud.load_requested.is_connected(quick_load):
+		shell.hud.load_requested.connect(quick_load)
+
+func _refresh_save_availability() -> void:
+	if shell != null and shell.hud != null:
+		shell.hud.set_save_available(has_quicksave())
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo or not key_event.ctrl_pressed:
+		return
+
+	if key_event.keycode == KEY_S:
+		quick_save()
+		get_viewport().set_input_as_handled()
+	elif key_event.keycode == KEY_L:
+		quick_load()
+		get_viewport().set_input_as_handled()
 
 func _process(delta: float) -> void:
 	if _capture_path.is_empty() or _capture_started:

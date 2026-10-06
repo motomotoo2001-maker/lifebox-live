@@ -2,11 +2,15 @@ class_name VisualHUD
 extends Control
 
 signal resident_requested(character_id: StringName)
+signal save_requested
+signal load_requested
 
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
 @onready var control_hint_label: Label = $TopPanel/ControlHintLabel
 @onready var event_label: Label = $EventPanel/EventLabel
+@onready var save_button: Button = $EventPanel/SaveButton
+@onready var load_button: Button = $EventPanel/LoadButton
 @onready var name_label: Label = $ResidentPanel/NameLabel
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
@@ -37,6 +41,7 @@ var _simulation_running: bool = true
 
 func _ready() -> void:
 	_connect_resident_buttons()
+	_connect_persistence_buttons()
 	_apply_styles()
 	refresh()
 
@@ -67,6 +72,10 @@ func set_latest_event(value: String) -> void:
 	_latest_event = value
 	if is_instance_valid(event_label):
 		event_label.text = value
+
+func set_save_available(value: bool) -> void:
+	if is_instance_valid(load_button):
+		load_button.disabled = not value
 
 func refresh() -> void:
 	if not is_instance_valid(day_time_label):
@@ -115,6 +124,22 @@ func refresh() -> void:
 	energy_label.text = "ENERGY %02d" % int(round(character.needs.energy.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _connect_persistence_buttons() -> void:
+	if is_instance_valid(save_button) and not save_button.pressed.is_connected(
+		_on_save_pressed
+	):
+		save_button.pressed.connect(_on_save_pressed)
+	if is_instance_valid(load_button) and not load_button.pressed.is_connected(
+		_on_load_pressed
+	):
+		load_button.pressed.connect(_on_load_pressed)
+
+func _on_save_pressed() -> void:
+	save_requested.emit()
+
+func _on_load_pressed() -> void:
+	load_requested.emit()
 
 func _connect_resident_buttons() -> void:
 	for index in range(resident_buttons.size()):
@@ -231,6 +256,15 @@ func _apply_styles() -> void:
 	action_label.add_theme_font_size_override("font_size", 13)
 	action_label.modulate = Color("d5dde8")
 	event_label.add_theme_font_size_override("font_size", 14)
+
+	for persistence_button in [save_button, load_button]:
+		persistence_button.add_theme_font_size_override("font_size", 11)
+		var action_style := StyleBoxFlat.new()
+		action_style.bg_color = Color("152234")
+		action_style.border_color = Color("49627f")
+		action_style.set_border_width_all(1)
+		action_style.set_corner_radius_all(10)
+		persistence_button.add_theme_stylebox_override("normal", action_style)
 
 	for button in resident_buttons:
 		button.add_theme_font_size_override("font_size", 11)
