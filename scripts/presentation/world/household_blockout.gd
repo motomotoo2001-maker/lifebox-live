@@ -317,6 +317,20 @@ func _build_living_details() -> void:
 		0.0,
 		Vector3(0.50, 0.50, 0.50)
 	)
+	_add_vendor_mesh(
+		"pillow_A",
+		&"KayKitLivingLoosePillow",
+		Vector3(0.62, 0.72, 3.45),
+		0.18,
+		Vector3(0.85, 0.85, 0.85)
+	)
+	_add_vendor_mesh(
+		"pictureframe_large_A",
+		&"KayKitLivingPicture",
+		Vector3(1.45, 1.48, 4.82),
+		0.0,
+		Vector3(0.78, 0.78, 0.78)
+	)
 
 func _build_bedroom_details() -> void:
 	var has_vendor_wardrobe := _add_vendor_mesh(
@@ -335,20 +349,40 @@ func _build_bedroom_details() -> void:
 			Color("77635a")
 		)
 	for index in range(2):
+		var nightstand_position := Vector3(
+			4.45 + float(index) * 1.25,
+			0.32,
+			-2.15
+		)
 		_make_box(
 			furniture,
 			StringName("BedroomNightstand%02d" % (index + 1)),
-			Vector3(4.45 + float(index) * 1.25, 0.32, -2.15),
+			nightstand_position,
 			Vector3(0.62, 0.58, 0.62),
 			Color("92745f")
 		)
-		_make_box(
-			furniture,
-			StringName("BedroomLamp%02d" % (index + 1)),
-			Vector3(4.45 + float(index) * 1.25, 0.82, -2.15),
-			Vector3(0.25, 0.42, 0.25),
-			Color("e8c985")
+		_add_vendor_mesh(
+			"lamp_table",
+			StringName("KayKitBedroomLamp%02d" % (index + 1)),
+			nightstand_position + Vector3(0.0, 0.31, 0.0),
+			0.0,
+			Vector3(0.34, 0.34, 0.34)
 		)
+
+	_add_vendor_mesh(
+		"shelf_A_small",
+		&"KayKitBedroomWallShelf",
+		Vector3(5.0, 1.48, -4.66),
+		0.0,
+		Vector3(1.15, 1.15, 1.15)
+	)
+	_add_vendor_mesh(
+		"book_set",
+		&"KayKitBedroomBooks",
+		Vector3(5.0, 1.45, -4.43),
+		0.0,
+		Vector3(0.72, 0.72, 0.72)
+	)
 
 func _build_bathroom_details() -> void:
 	_make_box(
@@ -426,6 +460,14 @@ func _build_hall_details() -> void:
 			Vector3(0.16, 0.72, 0.16),
 			Color("47765a")
 		)
+
+	_add_vendor_mesh(
+		"book_set",
+		&"KayKitHallBooks",
+		Vector3(0.15, 0.90, -1.08),
+		0.0,
+		Vector3(0.62, 0.62, 0.62)
+	)
 
 func _build_yard_details() -> void:
 	_make_box(
