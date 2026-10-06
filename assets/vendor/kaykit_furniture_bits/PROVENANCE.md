@@ -11,5 +11,13 @@ Vendored models:
 - table_medium_long
 - chair_A
 - cabinet_medium_decorated
+- armchair_pillows
+- lamp_standing
+- rug_rectangle_stripes_A
+- cactus_medium_A
+- shelf_B_large_decorated
 
-This subset is used only by the presentation layer of LIFEBOX LIVE.
+Shared texture:
+- furniturebits_texture.png
+
+Purpose: presentation-only interior art pass for LIFEBOX LIVE. Simulation logic and authority are unchanged.
