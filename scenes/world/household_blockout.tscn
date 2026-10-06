@@ -23,22 +23,22 @@ mesh = SubResource("BoxMesh_floor")
 [node name="Spawns" type="Node3D" parent="."]
 
 [node name="ResidentSpawn01" type="Marker3D" parent="Spawns"]
-position = Vector3(-6, 0, -3)
+position = Vector3(-6.35, 0, -1.45)
 
 [node name="ResidentSpawn02" type="Marker3D" parent="Spawns"]
-position = Vector3(-3.5, 0, -3)
+position = Vector3(-4.45, 0, -1.45)
 
 [node name="ResidentSpawn03" type="Marker3D" parent="Spawns"]
-position = Vector3(-1, 0, -3)
+position = Vector3(-0.95, 0, -1.45)
 
 [node name="ResidentSpawn04" type="Marker3D" parent="Spawns"]
-position = Vector3(1.5, 0, -3)
+position = Vector3(0.95, 0, -1.45)
 
 [node name="ResidentSpawn05" type="Marker3D" parent="Spawns"]
-position = Vector3(4, 0, -3)
+position = Vector3(4.45, 0, -1.45)
 
 [node name="ResidentSpawn06" type="Marker3D" parent="Spawns"]
-position = Vector3(6.5, 0, -3)
+position = Vector3(6.35, 0, -1.45)
 
 [node name="Destinations" type="Node3D" parent="."]
 
@@ -46,22 +46,22 @@ position = Vector3(6.5, 0, -3)
 position = Vector3(-6.5, 0, 3.5)
 
 [node name="Bed01" type="Marker3D" parent="Destinations"]
-position = Vector3(-6, 0, 1)
+position = Vector3(-6.35, 0, -3.15)
 
 [node name="Bed02" type="Marker3D" parent="Destinations"]
-position = Vector3(-3.75, 0, 1)
+position = Vector3(-4.45, 0, -3.15)
 
 [node name="Bed03" type="Marker3D" parent="Destinations"]
-position = Vector3(-1.5, 0, 1)
+position = Vector3(-0.95, 0, -3.15)
 
 [node name="Bed04" type="Marker3D" parent="Destinations"]
-position = Vector3(0.75, 0, 1)
+position = Vector3(0.95, 0, -3.15)
 
 [node name="Bed05" type="Marker3D" parent="Destinations"]
-position = Vector3(3, 0, 1)
+position = Vector3(4.45, 0, -3.15)
 
 [node name="Bed06" type="Marker3D" parent="Destinations"]
-position = Vector3(5.25, 0, 1)
+position = Vector3(6.35, 0, -3.15)
 
 [node name="Shower" type="Marker3D" parent="Destinations"]
 position = Vector3(6.5, 0, 3.5)
