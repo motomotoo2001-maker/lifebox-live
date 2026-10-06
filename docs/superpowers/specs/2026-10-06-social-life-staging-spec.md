@@ -1,39 +1,32 @@
-# LIFEBOX LIVE — Social Life & Conversation Staging Specification
+# LIFEBOX LIVE — Social Conversation Staging Specification
 
 ## Goal
 
-Make social behavior occur naturally in the normal six-resident household and make active conversations visually understandable.
+Make simulation-authoritative social sessions visually understandable without changing the established action-priority rules.
 
-## Simulation scheduling
+## Simulation contract
 
-- Needs update first.
-- SocialSystem then receives one deterministic scheduling window.
-- Residents reserved into a social session are skipped by SmartObject action selection.
-- Remaining residents continue normal utility/action selection.
-- Social sessions remain simulation-authoritative; presentation does not create or complete them.
-
-This fixes the previous ordering where idle residents commonly committed to furniture interactions before SocialSystem could reserve them.
+- Existing SmartObject action priority is preserved.
+- SocialSystem continues to reserve only residents that are idle and not already moving or executing another action.
+- Active SmartObject actions cannot be displaced by presentation logic.
+- Relationships, memories and social outcomes remain owned by SocialSystem.
 
 ## Presentation staging
 
-- Active social partners receive presentation-only navigation targets.
-- Both residents move toward a shared midpoint and stop roughly face-to-face.
-- These targets are tracked separately from authoritative SmartObject movement.
-- Arrival from staging never calls SimulationWorld.report_arrival because it has no authoritative target ownership.
-- When the session ends, presentation-only movement is cleared.
+- When an authoritative SocialSession exists, its two resident actors receive presentation-only navigation targets.
+- Partners move toward a deterministic shared midpoint and stop roughly face-to-face.
+- Social staging ownership is tracked separately from authoritative SmartObject movement ownership.
+- A staging arrival never calls SimulationWorld.report_arrival because there is no SmartObject movement intent to acknowledge.
+- Ending the SocialSession clears any remaining presentation-only movement.
 
 ## HUD
 
-The selected resident action line includes the social partner, for example:
-- chat with Leo
-- compliment with Mira
-- argue with Ivan
+The selected resident action line identifies the partner for an active social session, e.g. `chat with Leo`.
 
 ## Definition of Done
 
-- SocialSystem runs before SmartObject selection each fixed simulation step.
-- Existing social reservations still block SmartObject execution.
-- Active social partners visibly converge.
-- Social staging cannot mutate needs, relationships, RNG, or movement intent.
-- Visual validation detects stale social presentation ownership.
-- Regression/soak suites remain green.
+- existing SmartObject-over-social priority tests remain unchanged and green;
+- active social partners can visually converge;
+- social staging does not mutate simulation needs, actions, reservations, relationships or RNG;
+- stale presentation-session ownership is detected;
+- regression and soak suites pass.
