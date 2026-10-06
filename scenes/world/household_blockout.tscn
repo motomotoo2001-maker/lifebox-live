@@ -69,6 +69,15 @@ position = Vector3(6.5, 0, 3.5)
 [node name="Sofa" type="Marker3D" parent="Destinations"]
 position = Vector3(0, 0, 3.5)
 
+[node name="TV" type="Marker3D" parent="Destinations"]
+position = Vector3(0, 0, 2.05)
+
+[node name="BathroomSink" type="Marker3D" parent="Destinations"]
+position = Vector3(5.25, 0, 3.55)
+
+[node name="Bookshelf" type="Marker3D" parent="Destinations"]
+position = Vector3(1.65, 0, -3.78)
+
 
 [node name="Visuals" type="Node3D" parent="."]
 

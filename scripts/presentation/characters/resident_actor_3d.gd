@@ -137,6 +137,8 @@ func _activity_badge_color(text: String) -> Color:
 			return Color("77baff")
 		"FUN":
 			return Color("7fe0a1")
+		"CARE":
+			return Color("73d7e8")
 		_:
 			return Color("ffe070")
 

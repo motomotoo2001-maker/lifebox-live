@@ -23,6 +23,14 @@ func run() -> Array[String]:
 		failures.append("Visual showcase scene must instantiate")
 		return failures
 
+	for method_name in [
+		"_build_world",
+		"_register_household_objects",
+		"_register_smart_object",
+	]:
+		if not showcase.has_method(method_name):
+			failures.append("Visual showcase must expose %s()" % method_name)
+
 	for node_path in [
 		"RuntimeObjects",
 		"VisualSimulationShell",

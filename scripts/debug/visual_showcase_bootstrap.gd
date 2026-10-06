@@ -159,6 +159,30 @@ func _register_household_objects() -> void:
 		{"hygiene": 72.0, "comfort": 8.0},
 		[&"hygiene"]
 	)
+	_register_smart_object(
+		&"tv_main",
+		&"TV",
+		&"watch_tv",
+		32.0,
+		{"mood": 32.0, "comfort": 10.0},
+		[&"relax", &"fun"]
+	)
+	_register_smart_object(
+		&"bathroom_sink_main",
+		&"BathroomSink",
+		&"wash_up",
+		12.0,
+		{"hygiene": 28.0, "comfort": 4.0},
+		[&"hygiene"]
+	)
+	_register_smart_object(
+		&"bookshelf_main",
+		&"Bookshelf",
+		&"read",
+		35.0,
+		{"mood": 20.0, "comfort": 10.0},
+		[&"relax", &"fun"]
+	)
 
 	for index in range(1, 7):
 		_register_smart_object(

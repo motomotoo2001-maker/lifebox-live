@@ -90,7 +90,14 @@ func run() -> Array[String]:
 	if not root.has_node("Destinations"):
 		failures.append("Household blockout must contain Destinations")
 	else:
-		for name in ["Fridge", "Shower", "Sofa"]:
+		for name in [
+			"Fridge",
+			"Shower",
+			"Sofa",
+			"TV",
+			"BathroomSink",
+			"Bookshelf",
+		]:
 			var path := "Destinations/%s" % name
 			if not root.has_node(path):
 				failures.append("Missing household destination %s" % path)

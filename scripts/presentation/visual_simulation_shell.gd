@@ -354,9 +354,18 @@ func activity_badge_for(character: CharacterState) -> String:
 	if "work" in action_text:
 		return "WORK"
 	if (
+		"shower" in action_text
+		or "wash" in action_text
+		or "hygiene" in action_text
+	):
+		return "CARE"
+	if (
 		"relax" in action_text
 		or "fun" in action_text
 		or "sofa" in action_text
+		or "watch" in action_text
+		or "tv" in action_text
+		or "read" in action_text
 	):
 		return "FUN"
 	return "ACTION"
