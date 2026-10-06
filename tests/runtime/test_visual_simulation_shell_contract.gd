@@ -30,6 +30,7 @@ func run() -> Array[String]:
 		"HouseholdBlockout",
 		"ResidentActors",
 		"VerticalCameraRig",
+		"CameraDirector",
 		"HUDLayer",
 		"HUDLayer/VisualHUD",
 	]:
@@ -41,6 +42,8 @@ func run() -> Array[String]:
 		"sync_visuals",
 		"actor_for",
 		"actor_count",
+		"active_movement_count",
+		"validate_visual_state",
 	]:
 		if not shell.has_method(method_name):
 			failures.append("VisualSimulationShell must expose %s()" % method_name)
