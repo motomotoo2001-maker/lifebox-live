@@ -59,6 +59,16 @@ func run() -> Array[String]:
 		smart_object_script,
 		snapshot_script
 	)
+	_test_player_action_replay(
+		failures,
+		log_script,
+		player_script,
+		world_script,
+		character_script,
+		interaction_script,
+		smart_object_script,
+		snapshot_script
+	)
 
 	return failures
 
@@ -103,7 +113,7 @@ func _test_log_contract(
 		failures.append("ReplayEvent payload must be preserved")
 
 	events.clear()
-	if log.events().size() != 2:
+	if log.events().size() != 3:
 		failures.append("ReplayLog.events() must not expose mutable internal storage")
 
 	var original_payload := {"real_delta": 2.0}
@@ -205,6 +215,75 @@ func _test_replay_matches_control(
 		var replay_final: Dictionary = snapshot_script.encode(replay_world)
 		if replay_final != expected_final:
 			failures.append("replayed final snapshot must exactly equal control final snapshot")
+
+	_dispose_world(control)
+	_dispose_world(replay_target)
+
+func _test_player_action_replay(
+	failures: Array[String],
+	log_script,
+	player_script,
+	world_script,
+	character_script,
+	interaction_script,
+	smart_object_script,
+	snapshot_script
+) -> void:
+	var control := _build_world(
+		world_script,
+		character_script,
+		interaction_script,
+		smart_object_script,
+		true
+	)
+	var world = control["world"]
+	var resident = control["resident"]
+	var initial_snapshot: Dictionary = snapshot_script.encode(world)
+
+	var log = log_script.new()
+	if not log.append(
+		&"player_action",
+		{
+			"character_id": str(resident.id),
+			"target_object_id": "chair_b",
+			"interaction_id": "relax",
+		}
+	):
+		failures.append("player_action replay setup must append")
+		_dispose_world(control)
+		return
+
+	if not world.request_smart_object_action(
+		resident.id,
+		&"chair_b",
+		&"relax"
+	):
+		failures.append("player_action control request must succeed")
+		_dispose_world(control)
+		return
+
+	var expected: Dictionary = snapshot_script.encode(world)
+	var replay_target := _build_world(
+		world_script,
+		character_script,
+		interaction_script,
+		smart_object_script,
+		false
+	)
+	var replay_errors: Array[String] = player_script.replay(
+		replay_target["world"],
+		initial_snapshot,
+		log.events()
+	)
+	if not replay_errors.is_empty():
+		failures.append(
+			"player_action replay must succeed: %s"
+			% " | ".join(replay_errors)
+		)
+	elif snapshot_script.encode(replay_target["world"]) != expected:
+		failures.append(
+			"player_action replay snapshot must equal direct-control snapshot"
+		)
 
 	_dispose_world(control)
 	_dispose_world(replay_target)
