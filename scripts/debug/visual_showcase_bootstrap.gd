@@ -19,6 +19,7 @@ var _capture_after_seconds: float = 4.0
 var _elapsed_real_seconds: float = 0.0
 var _capture_started: bool = false
 var _validate_before_capture: bool = false
+var _validate_save_load_before_capture: bool = false
 
 func _ready() -> void:
 	_parse_user_args()
@@ -337,9 +338,26 @@ func _parse_user_args() -> void:
 				_capture_after_seconds = maxf(float(value), 0.25)
 		elif argument == "--validate-visual-state":
 			_validate_before_capture = true
+		elif argument == "--validate-save-load":
+			_validate_save_load_before_capture = true
 
 func _capture_frame() -> void:
 	await RenderingServer.frame_post_draw
+
+	if _validate_save_load_before_capture:
+		var before_save := WorldSnapshotCodec.encode(_world)
+		if before_save.is_empty() or not save_game() or not load_game():
+			push_error("Quicksave validation failed")
+			get_tree().quit(5)
+			return
+		var after_load := WorldSnapshotCodec.encode(_world)
+		if after_load != before_save:
+			push_error("Quicksave restore changed authoritative world state")
+			get_tree().quit(6)
+			return
+		print("QUICKSAVE RESTORE OK")
+		await get_tree().process_frame
+		await RenderingServer.frame_post_draw
 
 	if _validate_before_capture:
 		var visual_errors := shell.validate_visual_state()
