@@ -26,6 +26,7 @@ func _ready() -> void:
 	_spawn_actors()
 	_build_hud()
 	set_meta("showcase_ready", true)
+	set_meta("showcase_ready", true)
 
 func _exit_tree() -> void:
 	for object in smart_objects:
