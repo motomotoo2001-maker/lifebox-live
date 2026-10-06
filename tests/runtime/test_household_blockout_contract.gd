@@ -59,6 +59,12 @@ func run() -> Array[String]:
 		"_build_sofa",
 		"_build_shower",
 		"_build_bed",
+		"_build_kitchen_details",
+		"_build_living_details",
+		"_build_bedroom_details",
+		"_build_bathroom_details",
+		"_build_hall_details",
+		"_build_yard_details",
 	]:
 		if not root.has_method(method_name):
 			failures.append("Household blockout must expose %s()" % method_name)
