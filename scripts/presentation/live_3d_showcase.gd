@@ -342,15 +342,15 @@ func _on_actor_arrived(character_id: StringName) -> void:
 	var resident: CharacterState = world.get_character(character_id)
 	if resident == null or resident.movement.intent == null:
 		return
-	var target_id := resident.movement.intent.target_object_id
+	var target_id: StringName = resident.movement.intent.target_object_id
 	world.report_arrival(character_id, target_id)
 	actor_targets.erase(character_id)
 
 func _on_actor_failed(character_id: StringName) -> void:
-	var resident := world.get_character(character_id)
+	var resident: CharacterState = world.get_character(character_id)
 	if resident == null or resident.movement.intent == null:
 		return
-	var target_id := resident.movement.intent.target_object_id
+	var target_id: StringName = resident.movement.intent.target_object_id
 	world.report_movement_failure(character_id, target_id)
 	actor_targets.erase(character_id)
 
