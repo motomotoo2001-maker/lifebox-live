@@ -325,12 +325,13 @@ func _build_resident_visuals() -> void:
 			resident.display_name.to_upper(),
 			str(resident.schedule.active_block_id).to_upper(),
 		]
-		name_label.font_size = 28
-		name_label.outline_size = 10
+		name_label.font_size = 30
+		name_label.pixel_size = 0.006
+		name_label.outline_size = 8
 		name_label.modulate = RESIDENT_COLORS[index].lightened(0.12)
 		name_label.outline_modulate = Color(0.02, 0.025, 0.04, 0.95)
 		name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		name_label.fixed_size = true
+		name_label.fixed_size = false
 		name_label.no_depth_test = true
 		root.add_child(name_label)
 
@@ -489,12 +490,13 @@ func _add_room_label(
 	var label := Label3D.new()
 	label.position = position
 	label.text = text_value
-	label.font_size = 26
-	label.outline_size = 8
+	label.font_size = 24
+	label.pixel_size = 0.007
+	label.outline_size = 6
 	label.modulate = color
 	label.outline_modulate = Color(0.02, 0.025, 0.04, 0.9)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.fixed_size = true
+	label.fixed_size = false
 	label.no_depth_test = false
 	add_child(label)
 
