@@ -69,6 +69,7 @@ func bind_world(world: SimulationWorld) -> bool:
 
 		actor.bind_character(character.id)
 		actor.set_display_name(character.display_name)
+		actor.set_visual_profile(index)
 		actor.set_visual_color(_palette[index % _palette.size()])
 		actor.movement_arrived.connect(_on_actor_arrived)
 		actor.movement_failed.connect(_on_actor_failed)
