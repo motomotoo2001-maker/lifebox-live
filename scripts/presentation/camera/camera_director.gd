@@ -6,7 +6,7 @@ extends Node
 @export var switch_margin: float = 12.0
 @export var min_focus_interest: float = 15.0
 @export var return_to_establishing_after_seconds: float = 4.0
-@export var focus_ortho_size: float = 18.0
+@export var focus_ortho_size: float = 20.5
 
 var _camera_rig: VerticalCameraRig = null
 var _current_focus_id: StringName = &""
