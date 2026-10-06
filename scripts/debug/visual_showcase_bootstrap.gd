@@ -38,8 +38,9 @@ func save_game() -> bool:
 		shell.hud.set_latest_event("Save failed: empty world snapshot")
 		return false
 
-	var envelope := SaveSchema.create_envelope(snapshot)
+	var envelope := SaveSchema.create_envelope({"world": snapshot})
 	if not SaveService.save_envelope(QUICKSAVE_PATH, envelope):
+		print("QUICKSAVE SAVE FAILED: %s" % QUICKSAVE_PATH)
 		shell.hud.set_latest_event("Save failed")
 		return false
 
@@ -52,12 +53,19 @@ func load_game() -> bool:
 		shell.hud.set_latest_event("No quicksave found")
 		return false
 	if not envelope.has("payload") or not envelope["payload"] is Dictionary:
+		print("QUICKSAVE LOAD FAILED: envelope payload missing")
 		shell.hud.set_latest_event("Load failed: invalid save")
+		return false
+	var payload: Dictionary = envelope["payload"]
+	if not payload.has("world") or not payload["world"] is Dictionary:
+		print("QUICKSAVE LOAD FAILED: world payload missing")
+		shell.hud.set_latest_event("Load failed: invalid world")
 		return false
 
 	var selected_id := shell.selected_resident_id()
-	var errors := WorldSnapshotCodec.restore(_world, envelope["payload"])
+	var errors := WorldSnapshotCodec.restore(_world, payload["world"])
 	if not errors.is_empty():
+		print("QUICKSAVE RESTORE ERRORS: %s" % " | ".join(errors))
 		shell.hud.set_latest_event("Load failed: %s" % errors[0])
 		return false
 
