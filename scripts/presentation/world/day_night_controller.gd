@@ -67,7 +67,7 @@ func sample_for_hour(hour: float) -> Dictionary:
 	}
 
 	if phase == &"day":
-		var daylight := 1.0 - abs(normalized - 13.0) / 5.0
+		var daylight: float = 1.0 - absf(normalized - 13.0) / 5.0
 		daylight = clampf(daylight, 0.35, 1.0)
 		sample["background"] = Color("7fa6cb").lerp(
 			Color("a9c9e4"),
