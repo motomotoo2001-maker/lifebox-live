@@ -40,6 +40,8 @@ func run() -> Array[String]:
 		"set_visual_profile",
 		"set_presentation_state",
 		"presentation_state",
+		"set_selected",
+		"is_selected",
 		"set_activity_badge",
 		"clear_activity_badge",
 		"set_movement_target",
@@ -48,7 +50,7 @@ func run() -> Array[String]:
 		if not actor.has_method(method_name):
 			failures.append("ResidentActor3D must expose %s()" % method_name)
 
-	for signal_name in ["movement_arrived", "movement_failed"]:
+	for signal_name in ["movement_arrived", "movement_failed", "resident_selected"]:
 		if not actor.has_signal(signal_name):
 			failures.append("ResidentActor3D must expose %s signal" % signal_name)
 
@@ -56,7 +58,10 @@ func run() -> Array[String]:
 		failures.append("ResidentActor3D movement_speed must be positive")
 
 	for node_path in [
+		"ClickArea",
+		"ClickArea/CollisionShape3D",
 		"Visuals",
+		"Visuals/SelectionMarker",
 		"Visuals/Shadow",
 		"Visuals/LegLeft",
 		"Visuals/LegRight",
@@ -80,6 +85,17 @@ func run() -> Array[String]:
 		failures.append("ResidentActor3D Head must be MeshInstance3D")
 	if actor.has_node("Visuals/NameLabel") and not actor.get_node("Visuals/NameLabel") is Label3D:
 		failures.append("ResidentActor3D NameLabel must be Label3D")
+
+	if actor.has_method("set_selected") and actor.has_method("is_selected"):
+		actor.set_selected(true)
+		if not actor.is_selected():
+			failures.append("set_selected(true) must persist selection state")
+		if actor.has_node("Visuals/SelectionMarker"):
+			if not actor.get_node("Visuals/SelectionMarker").visible:
+				failures.append("selected actor must show SelectionMarker")
+		actor.set_selected(false)
+		if actor.is_selected():
+			failures.append("set_selected(false) must clear selection state")
 
 	if actor.has_method("set_visual_profile"):
 		actor.set_visual_profile(3)
