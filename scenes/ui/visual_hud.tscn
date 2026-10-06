@@ -39,7 +39,7 @@ offset_left = 22.0
 offset_top = 58.0
 offset_right = 648.0
 offset_bottom = 82.0
-text = "CLICK RESIDENT  •  1–6 SELECT  •  SPACE PAUSE"
+text = "CLICK / 1–6 SELECT  •  SPACE PAUSE  •  +/- SPEED  •  ESC OVERVIEW"
 modulate = Color(0.68, 0.74, 0.82, 1)
 
 [node name="EventPanel" type="Panel" parent="."]
@@ -88,9 +88,16 @@ text = "Schedule: —"
 [node name="GoalLabel" type="Label" parent="ResidentPanel"]
 offset_left = 20.0
 offset_top = 84.0
-offset_right = 330.0
-offset_bottom = 112.0
+offset_right = 310.0
+offset_bottom = 110.0
 text = "Goal: —"
+
+[node name="ActionLabel" type="Label" parent="ResidentPanel"]
+offset_left = 20.0
+offset_top = 114.0
+offset_right = 310.0
+offset_bottom = 142.0
+text = "Action: —"
 
 [node name="HungerLabel" type="Label" parent="ResidentPanel"]
 offset_left = 318.0
