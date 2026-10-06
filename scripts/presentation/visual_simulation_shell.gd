@@ -167,6 +167,10 @@ func sync_visuals() -> void:
 	if _world == null:
 		return
 
+	var tv_active := false
+	var hygiene_active := false
+	var reading_active := false
+
 	for character in _world.characters():
 		if character == null:
 			continue
@@ -176,6 +180,16 @@ func sync_visuals() -> void:
 
 		actor.set_presentation_state(presentation_state_for(character))
 		actor.set_selected(character.id == _selected_resident_id)
+
+		var action_text := str(character.current_action_id).to_lower()
+		tv_active = tv_active or "watch_tv" in action_text or action_text == "tv"
+		hygiene_active = (
+			hygiene_active
+			or "shower" in action_text
+			or "wash" in action_text
+		)
+		reading_active = reading_active or "read" in action_text
+
 		var badge_text := activity_badge_for(character)
 		if badge_text.is_empty():
 			actor.clear_activity_badge()
@@ -201,6 +215,13 @@ func sync_visuals() -> void:
 			if _active_target_ids.has(character.id):
 				actor.stop_movement()
 				_active_target_ids.erase(character.id)
+
+	if household != null:
+		household.set_activity_visuals(
+			tv_active,
+			hygiene_active,
+			reading_active
+		)
 
 func _presentation_target_for(
 	character_id: StringName,

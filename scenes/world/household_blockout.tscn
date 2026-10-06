@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/world/household_blockout.gd" id="1_script"]
 
@@ -9,6 +9,17 @@ agent_radius = 0.35
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(16, 0.2, 10)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tv_glow"]
+shading_mode = 0
+albedo_color = Color(0.18, 0.62, 1, 1)
+emission_enabled = true
+emission = Color(0.12, 0.55, 1, 1)
+emission_energy_multiplier = 2.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_tv_glow"]
+material = SubResource("StandardMaterial3D_tv_glow")
+size = Vector3(1.72, 0.8, 0.025)
 
 [node name="HouseholdBlockout" type="Node3D"]
 script = ExtResource("1_script")

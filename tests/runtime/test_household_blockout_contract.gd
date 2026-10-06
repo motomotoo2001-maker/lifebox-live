@@ -47,6 +47,11 @@ func run() -> Array[String]:
 		"Visuals/RoomPads",
 		"Visuals/Walls",
 		"Visuals/Furniture",
+		"Visuals/ActivityFX",
+		"Visuals/ActivityFX/TVScreenGlow",
+		"Visuals/ActivityFX/TVGlow",
+		"Visuals/ActivityFX/BathroomActivityGlow",
+		"Visuals/ActivityFX/ReadingGlow",
 	]:
 		if not root.has_node(visual_path):
 			failures.append("Household blockout missing visual container %s" % visual_path)
@@ -54,6 +59,7 @@ func run() -> Array[String]:
 	for method_name in [
 		"get_resident_spawn",
 		"get_destination",
+		"set_activity_visuals",
 		"_build_walls",
 		"_build_fridge",
 		"_build_sofa",

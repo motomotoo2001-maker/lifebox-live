@@ -11,10 +11,28 @@ const VENDOR_CITY_ROOT := "res://assets/vendor/kaykit_city_builder_bits/obj"
 @onready var room_pads: Node3D = $Visuals/RoomPads
 @onready var walls: Node3D = $Visuals/Walls
 @onready var furniture: Node3D = $Visuals/Furniture
+@onready var tv_screen_glow: MeshInstance3D = $Visuals/ActivityFX/TVScreenGlow
+@onready var tv_glow: OmniLight3D = $Visuals/ActivityFX/TVGlow
+@onready var bathroom_activity_glow: OmniLight3D = $Visuals/ActivityFX/BathroomActivityGlow
+@onready var reading_glow: OmniLight3D = $Visuals/ActivityFX/ReadingGlow
 
 func _ready() -> void:
 	_apply_floor_style()
 	_build_visual_blockout()
+
+func set_activity_visuals(
+	tv_active: bool,
+	hygiene_active: bool,
+	reading_active: bool
+) -> void:
+	if is_instance_valid(tv_screen_glow):
+		tv_screen_glow.visible = tv_active
+	if is_instance_valid(tv_glow):
+		tv_glow.light_energy = 1.35 if tv_active else 0.0
+	if is_instance_valid(bathroom_activity_glow):
+		bathroom_activity_glow.light_energy = 1.05 if hygiene_active else 0.0
+	if is_instance_valid(reading_glow):
+		reading_glow.light_energy = 0.95 if reading_active else 0.0
 
 func get_resident_spawn(index: int) -> Marker3D:
 	if index < 1 or index > 6:
