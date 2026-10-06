@@ -2,11 +2,15 @@ class_name VisualHUD
 extends Control
 
 signal resident_requested(character_id: StringName)
+signal save_requested
+signal load_requested
 
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
 @onready var control_hint_label: Label = $TopPanel/ControlHintLabel
 @onready var event_label: Label = $EventPanel/EventLabel
+@onready var save_button: Button = $EventPanel/SaveButton
+@onready var load_button: Button = $EventPanel/LoadButton
 @onready var name_label: Label = $ResidentPanel/NameLabel
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
@@ -44,6 +48,10 @@ var _camera_mode_text: String = "AUTO"
 
 func _ready() -> void:
 	_connect_resident_buttons()
+	if not save_button.pressed.is_connected(_on_save_button_pressed):
+		save_button.pressed.connect(_on_save_button_pressed)
+	if not load_button.pressed.is_connected(_on_load_button_pressed):
+		load_button.pressed.connect(_on_load_button_pressed)
 	_apply_styles()
 	refresh()
 
@@ -136,6 +144,12 @@ func refresh() -> void:
 	comfort_label.text = "COMFORT %02d" % int(round(character.needs.comfort.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _on_save_button_pressed() -> void:
+	save_requested.emit()
+
+func _on_load_button_pressed() -> void:
+	load_requested.emit()
 
 func _connect_resident_buttons() -> void:
 	for index in range(resident_buttons.size()):
@@ -313,6 +327,14 @@ func _apply_styles() -> void:
 	job_memory_label.add_theme_font_size_override("font_size", 12)
 	job_memory_label.modulate = Color("b7c2d0")
 	event_label.add_theme_font_size_override("font_size", 14)
+	for action_button in [save_button, load_button]:
+		action_button.add_theme_font_size_override("font_size", 10)
+		var action_style := StyleBoxFlat.new()
+		action_style.bg_color = Color("172536")
+		action_style.border_color = Color("50677f")
+		action_style.set_border_width_all(1)
+		action_style.set_corner_radius_all(10)
+		action_button.add_theme_stylebox_override("normal", action_style)
 
 	for button in resident_buttons:
 		button.add_theme_font_size_override("font_size", 11)

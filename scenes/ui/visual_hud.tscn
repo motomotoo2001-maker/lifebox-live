@@ -95,9 +95,23 @@ offset_bottom = 1028.0
 [node name="EventLabel" type="Label" parent="EventPanel"]
 offset_left = 20.0
 offset_top = 18.0
-offset_right = 656.0
+offset_right = 500.0
 offset_bottom = 52.0
 text = "Simulation online"
+
+[node name="SaveButton" type="Button" parent="EventPanel"]
+offset_left = 510.0
+offset_top = 12.0
+offset_right = 574.0
+offset_bottom = 58.0
+text = "SAVE"
+
+[node name="LoadButton" type="Button" parent="EventPanel"]
+offset_left = 582.0
+offset_top = 12.0
+offset_right = 656.0
+offset_bottom = 58.0
+text = "LOAD"
 
 [node name="ResidentPanel" type="Panel" parent="."]
 layout_mode = 0

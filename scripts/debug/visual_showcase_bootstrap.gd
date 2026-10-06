@@ -1,6 +1,8 @@
 class_name VisualShowcaseBootstrap
 extends Node3D
 
+const QUICKSAVE_PATH := "user://lifebox_quicksave.save"
+
 @onready var shell: VisualSimulationShell = $VisualSimulationShell
 @onready var runtime_objects: Node = $RuntimeObjects
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
@@ -23,7 +25,62 @@ func _ready() -> void:
 	_build_world()
 	shell.bind_world(_world)
 	shell.select_resident(&"resident_001")
+	if not shell.hud.save_requested.is_connected(save_game):
+		shell.hud.save_requested.connect(save_game)
+	if not shell.hud.load_requested.is_connected(load_game):
+		shell.hud.load_requested.connect(load_game)
 	shell.hud.set_latest_event("Autonomous household online")
+
+func save_game() -> bool:
+	var snapshot := WorldSnapshotCodec.encode(_world)
+	if snapshot.is_empty():
+		shell.hud.set_latest_event("Save failed: empty world snapshot")
+		return false
+
+	var envelope := SaveSchema.create_envelope(snapshot)
+	if not SaveService.save_envelope(QUICKSAVE_PATH, envelope):
+		shell.hud.set_latest_event("Save failed")
+		return false
+
+	shell.hud.set_latest_event("Game saved")
+	return true
+
+func load_game() -> bool:
+	var envelope := SaveService.load_envelope(QUICKSAVE_PATH)
+	if envelope.is_empty():
+		shell.hud.set_latest_event("No quicksave found")
+		return false
+	if not envelope.has("payload") or not envelope["payload"] is Dictionary:
+		shell.hud.set_latest_event("Load failed: invalid save")
+		return false
+
+	var selected_id := shell.selected_resident_id()
+	var errors := WorldSnapshotCodec.restore(_world, envelope["payload"])
+	if not errors.is_empty():
+		shell.hud.set_latest_event("Load failed: %s" % errors[0])
+		return false
+
+	if not shell.bind_world(_world):
+		shell.hud.set_latest_event("Load failed: visual rebind")
+		return false
+	if selected_id != &"" and _world.get_character(selected_id) != null:
+		shell.select_resident(selected_id, false)
+
+	shell.hud.set_latest_event("Game loaded")
+	return true
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo or not key_event.ctrl_pressed:
+		return
+	if key_event.keycode == KEY_S:
+		save_game()
+		get_viewport().set_input_as_handled()
+	elif key_event.keycode == KEY_L:
+		load_game()
+		get_viewport().set_input_as_handled()
 
 func _process(delta: float) -> void:
 	_update_time_of_day_visuals()
