@@ -152,6 +152,63 @@ func actor_for(character_id: StringName) -> ResidentActor3D:
 func actor_count() -> int:
 	return _actors.size()
 
+func active_movement_count() -> int:
+	return _active_target_ids.size()
+
+func validate_visual_state() -> Array[String]:
+	var errors: Array[String] = []
+	if _world == null:
+		errors.append("visual shell has no bound world")
+		return errors
+
+	var residents: Array[CharacterState] = _world.characters()
+	if _actors.size() != residents.size():
+		errors.append(
+			"actor count %d does not match resident count %d"
+			% [_actors.size(), residents.size()]
+		)
+
+	var resident_ids: Dictionary = {}
+	for character in residents:
+		if character == null or character.id == &"":
+			errors.append("visual shell contains invalid resident")
+			continue
+		resident_ids[character.id] = true
+
+		var actor := actor_for(character.id)
+		if actor == null or not is_instance_valid(actor):
+			errors.append("missing actor for resident %s" % character.id)
+			continue
+
+		var has_visual_target := _active_target_ids.has(character.id)
+		var is_authoritatively_moving := (
+			character.movement.status == MovementState.STATUS_MOVING
+			and character.movement.intent != null
+		)
+
+		if has_visual_target and not is_authoritatively_moving:
+			errors.append(
+				"stale visual movement ownership for %s"
+				% character.id
+			)
+		elif has_visual_target and is_authoritatively_moving:
+			var visual_target: StringName = _active_target_ids[character.id]
+			if visual_target != character.movement.intent.target_object_id:
+				errors.append(
+					"visual movement target mismatch for %s"
+					% character.id
+				)
+
+	for actor_id in _actors.keys():
+		if not resident_ids.has(actor_id):
+			errors.append("orphan visual actor %s" % actor_id)
+
+	for moving_id in _active_target_ids.keys():
+		if not resident_ids.has(moving_id):
+			errors.append("orphan visual movement owner %s" % moving_id)
+
+	return errors
+
 func _on_actor_arrived(character_id: StringName) -> void:
 	if _world == null:
 		return
