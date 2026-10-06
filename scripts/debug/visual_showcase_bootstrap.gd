@@ -219,7 +219,7 @@ func _make_schedule(index: int) -> ScheduleDefinition:
 		&"work",
 		&"work",
 		8.0 + float(index % 3),
-		7.0,
+		6.0,
 		[&"work"]
 	)
 	_append_schedule_block(
