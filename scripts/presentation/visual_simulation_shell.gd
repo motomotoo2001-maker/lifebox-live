@@ -181,7 +181,7 @@ func validate_visual_state() -> Array[String]:
 			continue
 
 		var has_visual_target := _active_target_ids.has(character.id)
-		var is_authoritatively_moving := (
+		var is_authoritatively_moving: bool = (
 			character.movement.status == MovementState.STATUS_MOVING
 			and character.movement.intent != null
 		)
