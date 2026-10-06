@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
 
@@ -44,6 +44,19 @@ radial_segments = 32
 radius = 0.46
 height = 2.05
 
+[sub_resource type="SphereMesh" id="SphereMesh_hand"]
+radius = 0.105
+height = 0.21
+
+[sub_resource type="BoxMesh" id="BoxMesh_shoe"]
+size = Vector3(0.24, 0.16, 0.38)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shirt_detail"]
+size = Vector3(0.24, 0.20, 0.035)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cap_brim"]
+size = Vector3(0.34, 0.055, 0.22)
+
 [node name="ResidentActor3D" type="CharacterBody3D"]
 script = ExtResource("1_script")
 
@@ -82,9 +95,21 @@ mesh = SubResource("CapsuleMesh_leg")
 position = Vector3(0.15, 0.34, 0)
 mesh = SubResource("CapsuleMesh_leg")
 
+[node name="ShoeLeft" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(-0.15, 0.10, -0.08)
+mesh = SubResource("BoxMesh_shoe")
+
+[node name="ShoeRight" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(0.15, 0.10, -0.08)
+mesh = SubResource("BoxMesh_shoe")
+
 [node name="Body" type="MeshInstance3D" parent="Visuals"]
 position = Vector3(0, 0.88, 0)
 mesh = SubResource("CapsuleMesh_body")
+
+[node name="ShirtDetail" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(0, 0.94, -0.285)
+mesh = SubResource("BoxMesh_shirt_detail")
 
 [node name="ArmLeft" type="MeshInstance3D" parent="Visuals"]
 position = Vector3(-0.39, 0.94, 0)
@@ -96,6 +121,14 @@ position = Vector3(0.39, 0.94, 0)
 rotation = Vector3(0, 0, 0.12)
 mesh = SubResource("CapsuleMesh_arm")
 
+[node name="HandLeft" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(-0.39, 0.64, -0.02)
+mesh = SubResource("SphereMesh_hand")
+
+[node name="HandRight" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(0.39, 0.64, -0.02)
+mesh = SubResource("SphereMesh_hand")
+
 [node name="Head" type="MeshInstance3D" parent="Visuals"]
 position = Vector3(0, 1.55, 0)
 mesh = SubResource("SphereMesh_head")
@@ -104,6 +137,23 @@ mesh = SubResource("SphereMesh_head")
 position = Vector3(0, 1.68, 0)
 scale = Vector3(1.02, 0.55, 1.02)
 mesh = SubResource("SphereMesh_hair")
+
+[node name="HairBack" type="MeshInstance3D" parent="Visuals"]
+visible = false
+position = Vector3(0, 1.48, 0.18)
+scale = Vector3(0.86, 1.16, 0.62)
+mesh = SubResource("SphereMesh_hair")
+
+[node name="HairBun" type="MeshInstance3D" parent="Visuals"]
+visible = false
+position = Vector3(0, 1.78, 0.24)
+scale = Vector3(0.43, 0.43, 0.43)
+mesh = SubResource("SphereMesh_hair")
+
+[node name="CapBrim" type="MeshInstance3D" parent="Visuals"]
+visible = false
+position = Vector3(0, 1.72, -0.31)
+mesh = SubResource("BoxMesh_cap_brim")
 
 [node name="Nose" type="MeshInstance3D" parent="Visuals"]
 position = Vector3(0, 1.54, -0.285)
@@ -116,6 +166,11 @@ mesh = SubResource("SphereMesh_eye")
 [node name="EyeRight" type="MeshInstance3D" parent="Visuals"]
 position = Vector3(0.105, 1.605, -0.255)
 mesh = SubResource("SphereMesh_eye")
+
+[node name="Mouth" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(0, 1.43, -0.278)
+scale = Vector3(2.2, 0.45, 0.55)
+mesh = SubResource("BoxMesh_nose")
 
 [node name="NameLabel" type="Label3D" parent="Visuals"]
 position = Vector3(0, 2.08, 0)
