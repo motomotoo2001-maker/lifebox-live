@@ -472,7 +472,7 @@ func _make_box(
 	size: Vector3,
 	position: Vector3,
 	color: Color,
-	parent: Node = self
+	parent: Node = null
 ) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
 	mesh.size = size
@@ -481,7 +481,8 @@ func _make_box(
 	instance.mesh = mesh
 	instance.position = position
 	instance.material_override = _material(color)
-	parent.add_child(instance)
+	var target_parent: Node = parent if parent != null else self
+	target_parent.add_child(instance)
 	return instance
 
 func _make_cylinder(
@@ -490,7 +491,7 @@ func _make_cylinder(
 	height: float,
 	position: Vector3,
 	color: Color,
-	parent: Node = self
+	parent: Node = null
 ) -> MeshInstance3D:
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = radius
@@ -501,7 +502,8 @@ func _make_cylinder(
 	instance.mesh = mesh
 	instance.position = position
 	instance.material_override = _material(color)
-	parent.add_child(instance)
+	var target_parent: Node = parent if parent != null else self
+	target_parent.add_child(instance)
 	return instance
 
 func _make_sphere(
@@ -509,7 +511,7 @@ func _make_sphere(
 	radius: float,
 	position: Vector3,
 	color: Color,
-	parent: Node = self
+	parent: Node = null
 ) -> MeshInstance3D:
 	var mesh := SphereMesh.new()
 	mesh.radius = radius
@@ -519,7 +521,8 @@ func _make_sphere(
 	instance.mesh = mesh
 	instance.position = position
 	instance.material_override = _material(color)
-	parent.add_child(instance)
+	var target_parent: Node = parent if parent != null else self
+	target_parent.add_child(instance)
 	return instance
 
 func _material(color: Color) -> StandardMaterial3D:
