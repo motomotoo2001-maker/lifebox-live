@@ -8,6 +8,7 @@ extends Control
 @onready var name_label: Label = $ResidentPanel/NameLabel
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
+@onready var action_label: Label = $ResidentPanel/ActionLabel
 @onready var money_label: Label = $ResidentPanel/MoneyLabel
 @onready var hunger_label: Label = $ResidentPanel/HungerLabel
 @onready var energy_label: Label = $ResidentPanel/EnergyLabel
@@ -77,8 +78,9 @@ func refresh() -> void:
 		hour,
 		minute,
 	]
-	status_label.text = "AUTONOMOUS  •  %s  •  %d RESIDENTS" % [
-		"RUNNING" if _simulation_running else "PAUSED",
+	status_label.text = "AUTONOMOUS  •  %s  •  %.0fx  •  %d" % [
+		"RUN" if _simulation_running else "PAUSED",
+		_world.clock.get_time_scale(),
 		_world.characters().size(),
 	]
 	event_label.text = _latest_event
@@ -92,6 +94,7 @@ func refresh() -> void:
 	money_label.text = "$%.0f" % character.money
 	schedule_label.text = _schedule_text(character)
 	goal_label.text = _goal_text(character)
+	action_label.text = "Action: %s" % _action_text(character)
 	hunger_bar.value = character.needs.hunger.value
 	energy_bar.value = character.needs.energy.value
 	social_bar.value = character.needs.social.value
@@ -100,6 +103,12 @@ func refresh() -> void:
 	energy_label.text = "ENERGY %02d" % int(round(character.needs.energy.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _action_text(character: CharacterState) -> String:
+	var value := str(character.current_action_id).strip_edges()
+	if value.is_empty() or value == "idle":
+		return "idle"
+	return value.replace("_", " ")
 
 func _schedule_text(character: CharacterState) -> String:
 	if character.schedule == null:
@@ -139,6 +148,7 @@ func _clear_resident_panel() -> void:
 	name_label.text = "NO RESIDENT"
 	schedule_label.text = "Schedule: —"
 	goal_label.text = "Goal: —"
+	action_label.text = "Action: —"
 	money_label.text = "$0"
 	hunger_label.text = "HUNGER --"
 	energy_label.text = "ENERGY --"
@@ -160,6 +170,8 @@ func _apply_styles() -> void:
 	status_label.add_theme_font_size_override("font_size", 12)
 	control_hint_label.add_theme_font_size_override("font_size", 11)
 	name_label.add_theme_font_size_override("font_size", 24)
+	action_label.add_theme_font_size_override("font_size", 13)
+	action_label.modulate = Color("d5dde8")
 	event_label.add_theme_font_size_override("font_size", 14)
 
 	for label in [hunger_label, energy_label, social_label, mood_label]:
