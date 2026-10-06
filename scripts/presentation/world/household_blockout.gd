@@ -7,14 +7,131 @@ const VENDOR_CITY_ROOT := "res://assets/vendor/kaykit_city_builder_bits/obj"
 
 @export var use_vendor_furniture: bool = true
 
+@onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
 @onready var floor_mesh: MeshInstance3D = $Floor
 @onready var room_pads: Node3D = $Visuals/RoomPads
 @onready var walls: Node3D = $Visuals/Walls
 @onready var furniture: Node3D = $Visuals/Furniture
 
 func _ready() -> void:
+	_configure_authored_navigation()
 	_apply_floor_style()
 	_build_visual_blockout()
+
+func _configure_authored_navigation() -> void:
+	if not is_instance_valid(navigation_region):
+		return
+	navigation_region.navigation_mesh = _build_navigation_mesh_resource()
+
+func _build_navigation_mesh_resource() -> NavigationMesh:
+	var nav_mesh := NavigationMesh.new()
+	nav_mesh.agent_radius = 0.35
+
+	var x_coordinates: Array[float] = [
+		-7.8,
+		-6.0,
+		-4.8,
+		-2.8,
+		-2.6,
+		-0.6,
+		0.6,
+		2.6,
+		2.8,
+		4.8,
+		6.0,
+		7.8,
+	]
+	var z_coordinates: Array[float] = [
+		-4.8,
+		-0.8,
+		-0.6,
+		0.6,
+		0.8,
+		4.8,
+	]
+
+	var vertices := PackedVector3Array()
+	for z_value in z_coordinates:
+		for x_value in x_coordinates:
+			vertices.append(Vector3(x_value, 0.0, z_value))
+	nav_mesh.set_vertices(vertices)
+	nav_mesh.clear_polygons()
+
+	var width := x_coordinates.size()
+	for z_index in range(z_coordinates.size() - 1):
+		for x_index in range(x_coordinates.size() - 1):
+			var x0: float = x_coordinates[x_index]
+			var x1: float = x_coordinates[x_index + 1]
+			var z0: float = z_coordinates[z_index]
+			var z1: float = z_coordinates[z_index + 1]
+			if not _navigation_cell_enabled(x0, x1, z0, z1):
+				continue
+
+			var bottom_left := z_index * width + x_index
+			var bottom_right := bottom_left + 1
+			var top_left := (z_index + 1) * width + x_index
+			var top_right := top_left + 1
+			nav_mesh.add_polygon(
+				PackedInt32Array([
+					bottom_left,
+					bottom_right,
+					top_right,
+				])
+			)
+			nav_mesh.add_polygon(
+				PackedInt32Array([
+					bottom_left,
+					top_right,
+					top_left,
+				])
+			)
+
+	return nav_mesh
+
+func _navigation_cell_enabled(
+	x0: float,
+	x1: float,
+	z0: float,
+	z1: float
+) -> bool:
+	var in_back_rooms := z1 <= -0.8 + 0.0001
+	var in_front_rooms := z0 >= 0.8 - 0.0001
+	if in_back_rooms or in_front_rooms:
+		if _is_vertical_wall_strip(x0, x1):
+			return false
+		return true
+
+	var in_hall := (
+		z0 >= -0.6 - 0.0001
+		and z1 <= 0.6 + 0.0001
+	)
+	if in_hall:
+		return true
+
+	var in_door_band := (
+		is_equal_approx(z0, -0.8)
+		and is_equal_approx(z1, -0.6)
+	) or (
+		is_equal_approx(z0, 0.6)
+		and is_equal_approx(z1, 0.8)
+	)
+	if not in_door_band:
+		return false
+
+	return _is_doorway_span(x0, x1)
+
+func _is_vertical_wall_strip(x0: float, x1: float) -> bool:
+	return (
+		(is_equal_approx(x0, -2.8) and is_equal_approx(x1, -2.6))
+		or (is_equal_approx(x0, 2.6) and is_equal_approx(x1, 2.8))
+	)
+
+func _is_doorway_span(x0: float, x1: float) -> bool:
+	return (
+		(x0 >= -6.0 - 0.0001 and x1 <= -4.8 + 0.0001)
+		or (x0 >= -0.6 - 0.0001 and x1 <= 0.6 + 0.0001)
+		or (x0 >= 4.8 - 0.0001 and x1 <= 6.0 + 0.0001)
+	)
 
 func get_resident_spawn(index: int) -> Marker3D:
 	if index < 1 or index > 6:

@@ -37,6 +37,22 @@ func run() -> Array[String]:
 		elif region.navigation_mesh.vertices.size() < 4:
 			failures.append("NavigationMesh must contain navigable vertices")
 
+	if root.has_method("_build_navigation_mesh_resource"):
+		var authored_mesh: NavigationMesh = root._build_navigation_mesh_resource()
+		if authored_mesh == null:
+			failures.append("authored room navigation mesh must be created")
+		else:
+			if authored_mesh.vertices.size() < 40:
+				failures.append("authored room navigation mesh needs room/hall vertices")
+			if authored_mesh.get_polygon_count() < 30:
+				failures.append("authored room navigation mesh needs multiple room/hall polygons")
+			if root._navigation_cell_enabled(-2.8, -2.6, -4.8, -0.8):
+				failures.append("vertical room wall strip must not be navigable")
+			if not root._navigation_cell_enabled(-6.0, -4.8, -0.8, -0.6):
+				failures.append("left doorway connector must be navigable")
+			if root._navigation_cell_enabled(-4.8, -2.8, -0.8, -0.6):
+				failures.append("solid hall wall segment must not be navigable")
+
 	if not root.has_node("Floor"):
 		failures.append("Household blockout must contain Floor")
 	elif not root.get_node("Floor") is MeshInstance3D:
@@ -54,6 +70,9 @@ func run() -> Array[String]:
 	for method_name in [
 		"get_resident_spawn",
 		"get_destination",
+		"_configure_authored_navigation",
+		"_build_navigation_mesh_resource",
+		"_navigation_cell_enabled",
 		"_build_walls",
 		"_build_fridge",
 		"_build_sofa",
