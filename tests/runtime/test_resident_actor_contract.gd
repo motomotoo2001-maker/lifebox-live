@@ -38,6 +38,8 @@ func run() -> Array[String]:
 		"set_display_name",
 		"set_visual_color",
 		"set_visual_profile",
+		"set_presentation_state",
+		"presentation_state",
 		"set_movement_target",
 		"stop_movement",
 	]:
@@ -80,6 +82,15 @@ func run() -> Array[String]:
 		actor.set_visual_profile(3)
 		if actor.get("_visual_profile_index") != 3:
 			failures.append("set_visual_profile() must store deterministic profile index")
+
+	if actor.has_method("set_presentation_state") and actor.has_method("presentation_state"):
+		for state_name in [&"idle", &"walk", &"interact", &"social"]:
+			actor.set_presentation_state(state_name)
+			if actor.presentation_state() != state_name:
+				failures.append("presentation state must accept %s" % state_name)
+		actor.set_presentation_state(&"invalid")
+		if actor.presentation_state() != &"idle":
+			failures.append("invalid presentation state must fall back to idle")
 
 	actor.free()
 	return failures
