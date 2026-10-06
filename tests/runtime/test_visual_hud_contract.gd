@@ -38,6 +38,15 @@ func run() -> Array[String]:
 		"TopPanel/ResidentStrip/ResidentButton4",
 		"TopPanel/ResidentStrip/ResidentButton5",
 		"TopPanel/ResidentStrip/ResidentButton6",
+		"CommandPanel",
+		"CommandPanel/TitleLabel",
+		"CommandPanel/ActionStrip",
+		"CommandPanel/ActionStrip/EatButton",
+		"CommandPanel/ActionStrip/ShowerButton",
+		"CommandPanel/ActionStrip/SleepButton",
+		"CommandPanel/ActionStrip/TVButton",
+		"CommandPanel/ActionStrip/ReadButton",
+		"CommandPanel/ActionStrip/RelaxButton",
 		"EventPanel",
 		"EventPanel/EventLabel",
 		"ResidentPanel",
@@ -58,8 +67,14 @@ func run() -> Array[String]:
 		if not hud.has_node(node_path):
 			failures.append("VisualHUD missing node %s" % node_path)
 
-	if not hud.has_signal("resident_requested"):
-		failures.append("VisualHUD must expose resident_requested signal")
+	for signal_name in [
+		"resident_requested",
+		"action_requested",
+		"save_requested",
+		"load_requested",
+	]:
+		if not hud.has_signal(signal_name):
+			failures.append("VisualHUD must expose %s signal" % signal_name)
 
 	for method_name in [
 		"bind_world",

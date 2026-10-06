@@ -32,6 +32,13 @@ func _ready() -> void:
 		)
 	):
 		hud.resident_requested.connect(_on_hud_resident_requested)
+	if (
+		hud != null
+		and not hud.action_requested.is_connected(
+			_on_hud_action_requested
+		)
+	):
+		hud.action_requested.connect(_on_hud_action_requested)
 
 var _palette: Array[Color] = [
 	Color("58a6ff"),
@@ -355,6 +362,92 @@ func _on_actor_selected(character_id: StringName) -> void:
 
 func _on_hud_resident_requested(character_id: StringName) -> void:
 	select_resident(character_id)
+
+func request_selected_action(action_id: StringName) -> bool:
+	if _world == null or _selected_resident_id == &"":
+		return false
+
+	var command := _command_target_for(_selected_resident_id, action_id)
+	if command.is_empty():
+		return false
+
+	var accepted := _world.request_smart_object_action(
+		_selected_resident_id,
+		command["target_object_id"],
+		command["interaction_id"]
+	)
+	if hud != null:
+		var character := _world.get_character(_selected_resident_id)
+		var display_name := (
+			character.display_name if character != null
+			else str(_selected_resident_id)
+		)
+		if accepted:
+			hud.set_latest_event(
+				"%s → %s" % [
+					display_name,
+					command["display_name"],
+				]
+			)
+		else:
+			hud.set_latest_event(
+				"%s cannot %s right now" % [
+					display_name,
+					command["display_name"],
+				]
+			)
+	if accepted:
+		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
+	return accepted
+
+func _on_hud_action_requested(action_id: StringName) -> void:
+	request_selected_action(action_id)
+
+func _command_target_for(
+	character_id: StringName,
+	action_id: StringName
+) -> Dictionary:
+	match action_id:
+		&"eat":
+			return {
+				"target_object_id": &"fridge_main",
+				"interaction_id": &"eat",
+				"display_name": "eat",
+			}
+		&"shower":
+			return {
+				"target_object_id": &"shower_main",
+				"interaction_id": &"shower",
+				"display_name": "shower",
+			}
+		&"watch_tv":
+			return {
+				"target_object_id": &"tv_main",
+				"interaction_id": &"watch_tv",
+				"display_name": "watch TV",
+			}
+		&"read":
+			return {
+				"target_object_id": &"bookshelf_main",
+				"interaction_id": &"read",
+				"display_name": "read",
+			}
+		&"relax":
+			return {
+				"target_object_id": &"sofa_main",
+				"interaction_id": &"relax",
+				"display_name": "relax",
+			}
+		&"sleep":
+			var suffix := str(character_id).get_slice("_", 1).to_int()
+			if suffix <= 0:
+				return {}
+			return {
+				"target_object_id": StringName("bed_%02d" % suffix),
+				"interaction_id": StringName("sleep_%02d" % suffix),
+				"display_name": "sleep",
+			}
+	return {}
 
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:

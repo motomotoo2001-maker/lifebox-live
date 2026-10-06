@@ -505,6 +505,55 @@ func _is_finite_non_negative_number(value) -> bool:
 	var number := float(value)
 	return not is_nan(number) and not is_inf(number) and number >= 0.0
 
+func request_smart_object_action(
+	character_id: StringName,
+	target_object_id: StringName,
+	interaction_id: StringName
+) -> bool:
+	if character_id == &"" or target_object_id == &"" or interaction_id == &"":
+		return false
+
+	var character := get_character(character_id)
+	if character == null:
+		return false
+	if social_system.reservation_book.is_reserved(character_id):
+		return false
+
+	var object := get_smart_object(target_object_id)
+	if object == null or not is_instance_valid(object):
+		return false
+	if not object.is_available_for(character_id):
+		return false
+
+	var interaction: InteractionDefinition = null
+	for candidate_interaction in object.list_interactions(character):
+		if (
+			candidate_interaction != null
+			and candidate_interaction.id == interaction_id
+		):
+			interaction = candidate_interaction
+			break
+	if interaction == null:
+		return false
+	if not _is_money_eligible(character, interaction):
+		return false
+
+	var executor: ActionExecutor = _executors.get(character_id)
+	if executor == null:
+		executor = ActionExecutor.new(economy_system)
+		_executors[character_id] = executor
+
+	if executor.is_active():
+		executor.cancel()
+
+	var candidate := ActionCandidate.new(
+		interaction.id,
+		INF,
+		object,
+		interaction
+	)
+	return executor.start(candidate, character)
+
 func report_arrival(character_id: StringName, target_object_id: StringName) -> bool:
 	var executor: ActionExecutor = _executors.get(character_id)
 	if executor == null:

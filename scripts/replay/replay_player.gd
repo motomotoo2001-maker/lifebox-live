@@ -46,6 +46,17 @@ static func replay(
 						% event.sequence
 					)
 					return errors
+			&"player_action":
+				if not world.request_smart_object_action(
+					StringName(event.payload["character_id"]),
+					StringName(event.payload["target_object_id"]),
+					StringName(event.payload["interaction_id"])
+				):
+					errors.append(
+						"replay player_action rejected at sequence %d"
+						% event.sequence
+					)
+					return errors
 
 	return errors
 

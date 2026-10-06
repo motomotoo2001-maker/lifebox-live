@@ -40,6 +40,14 @@ static func validate_input(
 					errors.append("%s %s must be a string" % [kind, key])
 				elif payload[key].is_empty():
 					errors.append("%s %s must be non-empty" % [kind, key])
+		&"player_action":
+			for key in ["character_id", "target_object_id", "interaction_id"]:
+				if not payload.has(key):
+					errors.append("%s %s is required" % [kind, key])
+				elif not payload[key] is String:
+					errors.append("%s %s must be a string" % [kind, key])
+				elif payload[key].is_empty():
+					errors.append("%s %s must be non-empty" % [kind, key])
 		_:
 			errors.append("unknown replay event kind: %s" % kind)
 

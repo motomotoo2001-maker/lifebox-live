@@ -49,6 +49,9 @@ func run() -> Array[String]:
 		"set_simulation_paused",
 		"is_simulation_paused",
 		"_on_hud_resident_requested",
+		"_on_hud_action_requested",
+		"request_selected_action",
+		"_command_target_for",
 		"presentation_state_for",
 		"_social_target_for",
 		"validate_visual_state",
@@ -63,6 +66,22 @@ func run() -> Array[String]:
 		shell.set_simulation_paused(false)
 		if shell.is_simulation_paused():
 			failures.append("set_simulation_paused(false) must resume visual advance")
+
+	if shell.has_method("_command_target_for"):
+		var sleep_command: Dictionary = shell._command_target_for(
+			&"resident_003",
+			&"sleep"
+		)
+		if sleep_command.get("target_object_id", &"") != &"bed_03":
+			failures.append("sleep command must map resident_003 to bed_03")
+		if sleep_command.get("interaction_id", &"") != &"sleep_03":
+			failures.append("sleep command must map resident_003 to sleep_03")
+		var tv_command: Dictionary = shell._command_target_for(
+			&"resident_001",
+			&"watch_tv"
+		)
+		if tv_command.get("target_object_id", &"") != &"tv_main":
+			failures.append("watch_tv command must target tv_main")
 
 	if shell.has_method("_presentation_target_for"):
 		var fridge_intent := MovementIntent.new(

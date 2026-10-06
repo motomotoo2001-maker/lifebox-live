@@ -4,6 +4,7 @@ extends Control
 signal resident_requested(character_id: StringName)
 signal save_requested
 signal load_requested
+signal action_requested(action_id: StringName)
 
 @onready var day_time_label: Label = $TopPanel/DayTimeLabel
 @onready var status_label: Label = $TopPanel/StatusLabel
@@ -11,6 +12,14 @@ signal load_requested
 @onready var event_label: Label = $EventPanel/EventLabel
 @onready var save_button: Button = $EventPanel/SaveButton
 @onready var load_button: Button = $EventPanel/LoadButton
+@onready var command_buttons: Array[Button] = [
+	$CommandPanel/ActionStrip/EatButton,
+	$CommandPanel/ActionStrip/ShowerButton,
+	$CommandPanel/ActionStrip/SleepButton,
+	$CommandPanel/ActionStrip/TVButton,
+	$CommandPanel/ActionStrip/ReadButton,
+	$CommandPanel/ActionStrip/RelaxButton,
+]
 @onready var name_label: Label = $ResidentPanel/NameLabel
 @onready var schedule_label: Label = $ResidentPanel/ScheduleLabel
 @onready var goal_label: Label = $ResidentPanel/GoalLabel
@@ -42,6 +51,7 @@ var _simulation_running: bool = true
 func _ready() -> void:
 	_connect_resident_buttons()
 	_connect_persistence_buttons()
+	_connect_command_buttons()
 	_apply_styles()
 	refresh()
 
@@ -86,6 +96,7 @@ func refresh() -> void:
 		status_label.text = "NO WORLD"
 		event_label.text = _latest_event
 		_clear_resident_panel()
+		_refresh_command_buttons()
 		return
 
 	var simulation_seconds: float = _world.clock.get_simulation_seconds()
@@ -105,6 +116,7 @@ func refresh() -> void:
 	]
 	event_label.text = _latest_event
 	_refresh_resident_buttons()
+	_refresh_command_buttons()
 
 	var character: CharacterState = _world.get_character(_selected_resident_id)
 	if character == null:
@@ -124,6 +136,38 @@ func refresh() -> void:
 	energy_label.text = "ENERGY %02d" % int(round(character.needs.energy.value))
 	social_label.text = "SOCIAL %02d" % int(round(character.needs.social.value))
 	mood_label.text = "MOOD %02d" % int(round(character.needs.mood.value))
+
+func _connect_command_buttons() -> void:
+	var action_ids: Array[StringName] = [
+		&"eat",
+		&"shower",
+		&"sleep",
+		&"watch_tv",
+		&"read",
+		&"relax",
+	]
+	for index in range(mini(command_buttons.size(), action_ids.size())):
+		var button: Button = command_buttons[index]
+		if button == null:
+			continue
+		button.pressed.connect(
+			_on_command_button_pressed.bind(action_ids[index])
+		)
+
+func _on_command_button_pressed(action_id: StringName) -> void:
+	if _world == null or _selected_resident_id == &"":
+		return
+	action_requested.emit(action_id)
+
+func _refresh_command_buttons() -> void:
+	var enabled := (
+		_world != null
+		and _selected_resident_id != &""
+		and _world.get_character(_selected_resident_id) != null
+	)
+	for button in command_buttons:
+		if button != null:
+			button.disabled = not enabled
 
 func _connect_persistence_buttons() -> void:
 	if is_instance_valid(save_button) and not save_button.pressed.is_connected(
@@ -261,7 +305,7 @@ func _clear_resident_panel() -> void:
 		bar.value = 0.0
 
 func _apply_styles() -> void:
-	for panel in [$TopPanel, $EventPanel, $ResidentPanel]:
+	for panel in [$TopPanel, $CommandPanel, $EventPanel, $ResidentPanel]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.05, 0.08, 0.13, 0.9)
 		style.border_color = Color("3b4d65")
@@ -276,6 +320,22 @@ func _apply_styles() -> void:
 	action_label.add_theme_font_size_override("font_size", 13)
 	action_label.modulate = Color("d5dde8")
 	event_label.add_theme_font_size_override("font_size", 14)
+
+	for command_button in command_buttons:
+		command_button.add_theme_font_size_override("font_size", 10)
+		var command_style := StyleBoxFlat.new()
+		command_style.bg_color = Color("172538")
+		command_style.border_color = Color("42617f")
+		command_style.set_border_width_all(1)
+		command_style.set_corner_radius_all(9)
+		command_button.add_theme_stylebox_override("normal", command_style)
+
+		var command_hover := StyleBoxFlat.new()
+		command_hover.bg_color = Color("243b54")
+		command_hover.border_color = Color("7da7d1")
+		command_hover.set_border_width_all(1)
+		command_hover.set_corner_radius_all(9)
+		command_button.add_theme_stylebox_override("hover", command_hover)
 
 	for persistence_button in [save_button, load_button]:
 		persistence_button.add_theme_font_size_override("font_size", 11)

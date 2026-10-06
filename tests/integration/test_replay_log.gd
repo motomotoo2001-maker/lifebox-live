@@ -76,13 +76,26 @@ func _test_log_contract(
 		{"character_id": "resident_a", "target_object_id": "chair_a"}
 	):
 		failures.append("second valid replay event must append")
+	if not log.append(
+		&"player_action",
+		{
+			"character_id": "resident_a",
+			"target_object_id": "chair_b",
+			"interaction_id": "relax",
+		}
+	):
+		failures.append("player_action replay event must append")
 
 	var events: Array = log.events()
-	if events.size() != 2:
-		failures.append("ReplayLog must expose two appended events")
+	if events.size() != 3:
+		failures.append("ReplayLog must expose three appended events")
 		return
 
-	if events[0].sequence != 1 or events[1].sequence != 2:
+	if (
+		events[0].sequence != 1
+		or events[1].sequence != 2
+		or events[2].sequence != 3
+	):
 		failures.append("ReplayLog sequence numbers must be deterministic and monotonic")
 	if events[0].kind != &"advance":
 		failures.append("ReplayEvent kind must be preserved")
@@ -95,16 +108,16 @@ func _test_log_contract(
 
 	var original_payload := {"real_delta": 2.0}
 	if not log.append(&"advance", original_payload):
-		failures.append("third valid replay event must append")
+		failures.append("fourth valid replay event must append")
 	original_payload["real_delta"] = 999.0
-	if not is_equal_approx(float(log.events()[2].payload["real_delta"]), 2.0):
+	if not is_equal_approx(float(log.events()[3].payload["real_delta"]), 2.0):
 		failures.append("ReplayLog must deep-copy appended payload")
 
 	if log.append(&"unknown", {}):
 		failures.append("ReplayLog must reject unknown event kind")
 	if log.append(&"advance", {"real_delta": NAN}):
 		failures.append("ReplayLog must reject non-finite advance delta")
-	if log.events().size() != 3:
+	if log.events().size() != 4:
 		failures.append("failed appends must not consume sequence or mutate event list")
 
 	var maxed = log_script.new()
