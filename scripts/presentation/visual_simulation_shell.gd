@@ -463,6 +463,27 @@ func validate_visual_state() -> Array[String]:
 
 	return errors
 
+func _target_display_name(target_id: StringName) -> String:
+	match target_id:
+		&"fridge_main":
+			return "fridge"
+		&"sofa_main":
+			return "sofa"
+		&"shower_main":
+			return "shower"
+		&"tv_main":
+			return "TV"
+		&"bathroom_sink_main":
+			return "bathroom sink"
+		&"bookshelf_main":
+			return "bookshelf"
+
+	var raw := str(target_id)
+	if raw.begins_with("bed_"):
+		var number := raw.trim_prefix("bed_").to_int()
+		return "bed %d" % number
+	return raw.replace("_", " ")
+
 func _on_actor_arrived(character_id: StringName) -> void:
 	if _world == null:
 		return
@@ -475,7 +496,12 @@ func _on_actor_arrived(character_id: StringName) -> void:
 	var display_name := (
 		character.display_name if character != null else str(character_id)
 	)
-	hud.set_latest_event("%s arrived at %s" % [display_name, target_id])
+	hud.set_latest_event(
+		"%s arrived at %s" % [
+			display_name,
+			_target_display_name(target_id),
+		]
+	)
 	var actor := actor_for(character_id)
 	if camera_director != null and actor != null:
 		camera_director.suggest_focus(
@@ -497,7 +523,12 @@ func _on_actor_failed(character_id: StringName) -> void:
 	var display_name := (
 		character.display_name if character != null else str(character_id)
 	)
-	hud.set_latest_event("%s movement failed: %s" % [display_name, target_id])
+	hud.set_latest_event(
+		"%s could not reach %s" % [
+			display_name,
+			_target_display_name(target_id),
+		]
+	)
 	_active_target_ids.erase(character_id)
 
 func _clear_actors() -> void:
