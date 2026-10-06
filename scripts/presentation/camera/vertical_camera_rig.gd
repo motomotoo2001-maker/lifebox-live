@@ -4,7 +4,7 @@ extends Node3D
 @export var establishing_position: Vector3 = Vector3(15.0, 15.0, 19.0)
 @export var establishing_target: Vector3 = Vector3(0.0, 0.6, 0.0)
 @export var establishing_ortho_size: float = 30.0
-@export var focus_ortho_size: float = 18.0
+@export var focus_ortho_size: float = 20.5
 @export var transition_speed: float = 4.5
 
 @onready var camera: Camera3D = $Camera3D
