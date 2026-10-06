@@ -107,7 +107,7 @@ func sync_visuals() -> void:
 			)
 			if active_target != intent.target_object_id:
 				actor.set_movement_target(
-					intent.target_position,
+					_presentation_target_for(character.id, intent),
 					intent.arrival_radius
 				)
 				_active_target_ids[character.id] = intent.target_object_id
@@ -115,6 +115,29 @@ func sync_visuals() -> void:
 			if _active_target_ids.has(character.id):
 				actor.stop_movement()
 				_active_target_ids.erase(character.id)
+
+func _presentation_target_for(
+	character_id: StringName,
+	intent: MovementIntent
+) -> Vector3:
+	if intent == null:
+		return Vector3.ZERO
+
+	var target := intent.target_position
+	if intent.target_object_id != &"sofa_main":
+		return target
+
+	var sofa_slots: Array[Vector3] = [
+		Vector3(-0.82, 0.0, -0.62),
+		Vector3(0.0, 0.0, -0.72),
+		Vector3(0.82, 0.0, -0.62),
+		Vector3(-0.82, 0.0, 0.48),
+		Vector3(0.0, 0.0, 0.58),
+		Vector3(0.82, 0.0, 0.48),
+	]
+	var suffix := str(character_id).get_slice("_", 1).to_int()
+	var slot_index := maxi(suffix - 1, 0) % sofa_slots.size()
+	return target + sofa_slots[slot_index]
 
 func _update_camera_director(delta: float) -> void:
 	if camera_director == null or _world == null:
