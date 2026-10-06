@@ -97,3 +97,11 @@ text = "Resident"
 font_size = 26
 outline_size = 8
 billboard = 1
+
+[node name="ActivityBadge" type="Label3D" parent="Visuals"]
+position = Vector3(0, 2.42, 0)
+text = ""
+font_size = 18
+outline_size = 7
+billboard = 1
+modulate = Color(1, 0.86, 0.42, 1)
