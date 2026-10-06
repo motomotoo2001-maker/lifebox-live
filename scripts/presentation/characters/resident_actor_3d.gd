@@ -13,6 +13,12 @@ signal movement_failed(character_id: StringName)
 @onready var head_mesh: MeshInstance3D = $Visuals/Head
 @onready var shadow_mesh: MeshInstance3D = $Visuals/Shadow
 @onready var name_label: Label3D = $Visuals/NameLabel
+@onready var leg_left: MeshInstance3D = $Visuals/LegLeft
+@onready var leg_right: MeshInstance3D = $Visuals/LegRight
+@onready var arm_left: MeshInstance3D = $Visuals/ArmLeft
+@onready var arm_right: MeshInstance3D = $Visuals/ArmRight
+@onready var hair_mesh: MeshInstance3D = $Visuals/Hair
+@onready var nose_mesh: MeshInstance3D = $Visuals/Nose
 
 var _character_id: StringName = &""
 var _pending_target: Vector3 = Vector3.ZERO
@@ -20,6 +26,7 @@ var _arrival_radius: float = 0.5
 var _has_target: bool = false
 var _target_applied: bool = false
 var _display_name: String = "Resident"
+var _visual_time: float = 0.0
 
 func _ready() -> void:
 	navigation_agent.velocity_computed.connect(_on_velocity_computed)
@@ -46,7 +53,6 @@ func set_movement_target(target: Vector3, arrival_radius: float) -> void:
 	if not _is_finite_vector(target):
 		_fail_movement()
 		return
-
 	_pending_target = target
 	_arrival_radius = _sanitize_radius(arrival_radius)
 	_has_target = true
@@ -59,7 +65,10 @@ func stop_movement() -> void:
 	if is_instance_valid(navigation_agent):
 		navigation_agent.velocity = Vector3.ZERO
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	_visual_time += delta
+	_animate_visuals()
+
 	if not _has_target:
 		return
 	if not is_instance_valid(navigation_agent):
@@ -92,6 +101,20 @@ func _physics_process(_delta: float) -> void:
 	else:
 		_on_velocity_computed(desired_velocity)
 
+func _animate_visuals() -> void:
+	if not is_instance_valid(visuals):
+		return
+
+	var moving: bool = _has_target or velocity.length_squared() > 0.01
+	var frequency := 8.0 if moving else 2.0
+	var amplitude := 0.035 if moving else 0.012
+	visuals.position.y = sin(_visual_time * frequency) * amplitude
+
+	if is_instance_valid(arm_left) and is_instance_valid(arm_right):
+		var swing := sin(_visual_time * frequency) * 0.22 if moving else 0.0
+		arm_left.rotation.x = swing
+		arm_right.rotation.x = -swing
+
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	if not _has_target:
 		return
@@ -107,24 +130,42 @@ func _face_velocity(value: Vector3) -> void:
 		return
 	visuals.rotation.y = atan2(-planar.x, -planar.z)
 
+func _material(
+	color: Color,
+	roughness: float = 0.82
+) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = roughness
+	return material
+
 func _apply_visual_style() -> void:
 	if not is_instance_valid(body_mesh):
 		return
 
-	var body_material := StandardMaterial3D.new()
-	body_material.albedo_color = resident_color
-	body_material.roughness = 0.82
-	body_mesh.material_override = body_material
+	body_mesh.material_override = _material(resident_color, 0.78)
+	var lower := resident_color.darkened(0.2)
+
+	for mesh in [leg_left, leg_right]:
+		if is_instance_valid(mesh):
+			mesh.material_override = _material(lower, 0.88)
+
+	for mesh in [arm_left, arm_right]:
+		if is_instance_valid(mesh):
+			mesh.material_override = _material(
+				resident_color.lightened(0.03),
+				0.82
+			)
 
 	if is_instance_valid(head_mesh):
-		var head_material := StandardMaterial3D.new()
-		head_material.albedo_color = resident_color.lightened(0.14)
-		head_material.roughness = 0.78
-		head_mesh.material_override = head_material
+		head_mesh.material_override = _material(Color("efc19c"), 0.72)
+	if is_instance_valid(nose_mesh):
+		nose_mesh.material_override = _material(Color("dfa982"), 0.78)
+	if is_instance_valid(hair_mesh):
+		hair_mesh.material_override = _material(Color("2b2630"), 0.86)
 
 	if is_instance_valid(shadow_mesh):
-		var shadow_material := StandardMaterial3D.new()
-		shadow_material.albedo_color = Color(0.02, 0.03, 0.05, 0.42)
+		var shadow_material := _material(Color(0.02, 0.03, 0.05, 0.34), 1.0)
 		shadow_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		shadow_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		shadow_mesh.material_override = shadow_material
