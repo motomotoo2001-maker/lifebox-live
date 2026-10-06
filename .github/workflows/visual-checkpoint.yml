@@ -1,0 +1,64 @@
+name: Visual Checkpoint
+
+on:
+  push:
+    branches:
+      - dev/plan-06-visual-simulation-shell
+    paths:
+      - 'scripts/presentation/**'
+      - 'scripts/debug/**'
+      - 'scenes/**'
+      - 'tests/runtime/**'
+      - '.github/workflows/visual-checkpoint.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: visual-checkpoint-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.7.2
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Scan project scripts
+        run: godot --headless --path . --editor --quit
+
+      - name: Render checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          xvfb-run -a godot             --path .             --rendering-method gl_compatibility             res://scenes/debug/visual_showcase.tscn             --             --capture="$PWD/artifacts/lifebox-visual-showcase.png"             --capture-after=4.0
+          test -s artifacts/lifebox-visual-showcase.png
+
+      - name: Run visual soak
+        shell: bash
+        run: |
+          set -euo pipefail
+          xvfb-run -a godot             --path .             --rendering-method gl_compatibility             res://scenes/debug/visual_showcase.tscn             --             --capture="$PWD/artifacts/lifebox-visual-soak.png"             --capture-after=12.0             --validate-visual-state
+          test -s artifacts/lifebox-visual-soak.png
+
+      - name: Upload checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifebox-visual-showcase
+          path: |
+            artifacts/lifebox-visual-showcase.png
+            artifacts/lifebox-visual-soak.png
+          if-no-files-found: error

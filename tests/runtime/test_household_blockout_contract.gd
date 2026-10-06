@@ -42,6 +42,22 @@ func run() -> Array[String]:
 	elif not root.get_node("Floor") is MeshInstance3D:
 		failures.append("Floor must be MeshInstance3D")
 
+	for visual_path in [
+		"Visuals",
+		"Visuals/RoomPads",
+		"Visuals/Walls",
+		"Visuals/Furniture",
+	]:
+		if not root.has_node(visual_path):
+			failures.append("Household blockout missing visual container %s" % visual_path)
+
+	for method_name in [
+		"get_resident_spawn",
+		"get_destination",
+	]:
+		if not root.has_method(method_name):
+			failures.append("Household blockout must expose %s()" % method_name)
+
 	if not root.has_node("Spawns"):
 		failures.append("Household blockout must contain Spawns")
 	else:

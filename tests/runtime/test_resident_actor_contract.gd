@@ -33,7 +33,13 @@ func run() -> Array[String]:
 		if not navigation_agent is NavigationAgent3D:
 			failures.append("NavigationAgent3D child must have NavigationAgent3D type")
 
-	for method_name in ["bind_character", "set_movement_target", "stop_movement"]:
+	for method_name in [
+		"bind_character",
+		"set_display_name",
+		"set_visual_color",
+		"set_movement_target",
+		"stop_movement",
+	]:
 		if not actor.has_method(method_name):
 			failures.append("ResidentActor3D must expose %s()" % method_name)
 
@@ -43,6 +49,23 @@ func run() -> Array[String]:
 
 	if actor.get("movement_speed") == null or float(actor.get("movement_speed")) <= 0.0:
 		failures.append("ResidentActor3D movement_speed must be positive")
+
+	for node_path in [
+		"Visuals",
+		"Visuals/Shadow",
+		"Visuals/Body",
+		"Visuals/Head",
+		"Visuals/NameLabel",
+	]:
+		if not actor.has_node(node_path):
+			failures.append("ResidentActor3D missing visual node %s" % node_path)
+
+	if actor.has_node("Visuals/Body") and not actor.get_node("Visuals/Body") is MeshInstance3D:
+		failures.append("ResidentActor3D Body must be MeshInstance3D")
+	if actor.has_node("Visuals/Head") and not actor.get_node("Visuals/Head") is MeshInstance3D:
+		failures.append("ResidentActor3D Head must be MeshInstance3D")
+	if actor.has_node("Visuals/NameLabel") and not actor.get_node("Visuals/NameLabel") is Label3D:
+		failures.append("ResidentActor3D NameLabel must be Label3D")
 
 	actor.free()
 	return failures

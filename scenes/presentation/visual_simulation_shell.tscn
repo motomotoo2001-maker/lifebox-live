@@ -1,0 +1,23 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/visual_simulation_shell.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/world/household_blockout.tscn" id="2_house"]
+[ext_resource type="PackedScene" path="res://scenes/camera/vertical_camera_rig.tscn" id="3_camera"]
+[ext_resource type="PackedScene" path="res://scenes/ui/visual_hud.tscn" id="4_hud"]
+[ext_resource type="Script" path="res://scripts/presentation/camera/camera_director.gd" id="5_director"]
+
+[node name="VisualSimulationShell" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="HouseholdBlockout" parent="." instance=ExtResource("2_house")]
+
+[node name="ResidentActors" type="Node3D" parent="."]
+
+[node name="VerticalCameraRig" parent="." instance=ExtResource("3_camera")]
+
+[node name="CameraDirector" type="Node" parent="."]
+script = ExtResource("5_director")
+
+[node name="HUDLayer" type="CanvasLayer" parent="."]
+
+[node name="VisualHUD" parent="HUDLayer" instance=ExtResource("4_hud")]

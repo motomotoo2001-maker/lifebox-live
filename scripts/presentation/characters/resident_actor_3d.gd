@@ -5,20 +5,42 @@ signal movement_arrived(character_id: StringName)
 signal movement_failed(character_id: StringName)
 
 @export var movement_speed: float = 2.5
+@export var resident_color: Color = Color("58a6ff")
 
 @onready var navigation_agent: NavigationAgent3D = $NavigationAgent3D
+@onready var visuals: Node3D = $Visuals
+@onready var body_mesh: MeshInstance3D = $Visuals/Body
+@onready var head_mesh: MeshInstance3D = $Visuals/Head
+@onready var shadow_mesh: MeshInstance3D = $Visuals/Shadow
+@onready var name_label: Label3D = $Visuals/NameLabel
 
 var _character_id: StringName = &""
 var _pending_target: Vector3 = Vector3.ZERO
 var _arrival_radius: float = 0.5
 var _has_target: bool = false
 var _target_applied: bool = false
+var _display_name: String = "Resident"
 
 func _ready() -> void:
 	navigation_agent.velocity_computed.connect(_on_velocity_computed)
+	_apply_visual_style()
+	_refresh_name_label()
 
 func bind_character(character_id: StringName) -> void:
 	_character_id = character_id
+	if _display_name == "Resident" and character_id != &"":
+		_display_name = str(character_id)
+	_refresh_name_label()
+
+func set_display_name(value: String) -> void:
+	_display_name = value.strip_edges()
+	if _display_name.is_empty():
+		_display_name = str(_character_id) if _character_id != &"" else "Resident"
+	_refresh_name_label()
+
+func set_visual_color(value: Color) -> void:
+	resident_color = value
+	_apply_visual_style()
 
 func set_movement_target(target: Vector3, arrival_radius: float) -> void:
 	if not _is_finite_vector(target):
@@ -62,7 +84,9 @@ func _physics_process(_delta: float) -> void:
 		_fail_movement()
 		return
 
-	var desired_velocity := global_position.direction_to(next_path_position) * movement_speed
+	var desired_velocity: Vector3 = (
+		global_position.direction_to(next_path_position) * movement_speed
+	)
 	if navigation_agent.avoidance_enabled:
 		navigation_agent.velocity = desired_velocity
 	else:
@@ -71,8 +95,46 @@ func _physics_process(_delta: float) -> void:
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	if not _has_target:
 		return
+	_face_velocity(safe_velocity)
 	velocity = safe_velocity
 	move_and_slide()
+
+func _face_velocity(value: Vector3) -> void:
+	if not is_instance_valid(visuals):
+		return
+	var planar := Vector3(value.x, 0.0, value.z)
+	if planar.length_squared() <= 0.0001:
+		return
+	visuals.rotation.y = atan2(-planar.x, -planar.z)
+
+func _apply_visual_style() -> void:
+	if not is_instance_valid(body_mesh):
+		return
+
+	var body_material := StandardMaterial3D.new()
+	body_material.albedo_color = resident_color
+	body_material.roughness = 0.82
+	body_mesh.material_override = body_material
+
+	if is_instance_valid(head_mesh):
+		var head_material := StandardMaterial3D.new()
+		head_material.albedo_color = resident_color.lightened(0.14)
+		head_material.roughness = 0.78
+		head_mesh.material_override = head_material
+
+	if is_instance_valid(shadow_mesh):
+		var shadow_material := StandardMaterial3D.new()
+		shadow_material.albedo_color = Color(0.02, 0.03, 0.05, 0.42)
+		shadow_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		shadow_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		shadow_mesh.material_override = shadow_material
+
+	if is_instance_valid(name_label):
+		name_label.modulate = Color.WHITE
+
+func _refresh_name_label() -> void:
+	if is_instance_valid(name_label):
+		name_label.text = _display_name
 
 func _arrive() -> void:
 	stop_movement()
