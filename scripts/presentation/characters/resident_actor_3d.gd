@@ -101,10 +101,24 @@ func set_activity_badge(text: String, duration: float = 0.0) -> void:
 		return
 	activity_badge.text = text.strip_edges()
 	activity_badge.visible = not activity_badge.text.is_empty()
+	activity_badge.modulate = _activity_badge_color(activity_badge.text)
 	if is_nan(duration) or is_inf(duration) or duration < 0.0:
 		_badge_time_remaining = 0.0
 	else:
 		_badge_time_remaining = duration
+
+func _activity_badge_color(text: String) -> Color:
+	match text.to_upper():
+		"SOCIAL":
+			return Color("c9a7ff")
+		"MEAL":
+			return Color("ffb36b")
+		"WORK":
+			return Color("77baff")
+		"FUN":
+			return Color("7fe0a1")
+		_:
+			return Color("ffe070")
 
 func clear_activity_badge() -> void:
 	_badge_time_remaining = 0.0
