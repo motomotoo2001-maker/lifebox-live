@@ -39,6 +39,15 @@ func _ready() -> void:
 		)
 	):
 		hud.action_requested.connect(_on_hud_action_requested)
+	if (
+		hud != null
+		and not hud.social_action_requested.is_connected(
+			_on_hud_social_action_requested
+		)
+	):
+		hud.social_action_requested.connect(
+			_on_hud_social_action_requested
+		)
 
 var _palette: Array[Color] = [
 	Color("58a6ff"),
@@ -402,6 +411,59 @@ func request_selected_action(action_id: StringName) -> bool:
 
 func _on_hud_action_requested(action_id: StringName) -> void:
 	request_selected_action(action_id)
+
+func request_selected_social_action(
+	target_id: StringName,
+	action_id: StringName
+) -> bool:
+	if (
+		_world == null
+		or _selected_resident_id == &""
+		or target_id == &""
+		or action_id == &""
+	):
+		return false
+
+	var accepted := _world.request_social_action(
+		_selected_resident_id,
+		target_id,
+		action_id
+	)
+	if hud != null:
+		var initiator := _world.get_character(_selected_resident_id)
+		var target := _world.get_character(target_id)
+		var initiator_name := (
+			initiator.display_name if initiator != null
+			else str(_selected_resident_id)
+		)
+		var target_name := (
+			target.display_name if target != null else str(target_id)
+		)
+		if accepted:
+			hud.set_latest_event(
+				"%s → %s: %s" % [
+					initiator_name,
+					target_name,
+					str(action_id).replace("_", " "),
+				]
+			)
+		else:
+			hud.set_latest_event(
+				"%s and %s are busy" % [
+					initiator_name,
+					target_name,
+				]
+			)
+
+	if accepted:
+		_manual_focus_remaining = maxf(manual_focus_seconds, 0.0)
+	return accepted
+
+func _on_hud_social_action_requested(
+	target_id: StringName,
+	action_id: StringName
+) -> void:
+	request_selected_social_action(target_id, action_id)
 
 func _command_target_for(
 	character_id: StringName,

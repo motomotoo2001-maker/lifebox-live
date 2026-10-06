@@ -505,6 +505,44 @@ func _is_finite_non_negative_number(value) -> bool:
 	var number := float(value)
 	return not is_nan(number) and not is_inf(number) and number >= 0.0
 
+func request_social_action(
+	initiator_id: StringName,
+	target_id: StringName,
+	action_id: StringName
+) -> bool:
+	if (
+		initiator_id == &""
+		or target_id == &""
+		or initiator_id == target_id
+		or not social_system.has_action(action_id)
+	):
+		return false
+
+	var initiator := get_character(initiator_id)
+	var target := get_character(target_id)
+	if initiator == null or target == null:
+		return false
+	if (
+		social_system.reservation_book.is_reserved(initiator_id)
+		or social_system.reservation_book.is_reserved(target_id)
+	):
+		return false
+
+	var initiator_executor: ActionExecutor = _executors.get(initiator_id)
+	var target_executor: ActionExecutor = _executors.get(target_id)
+
+	if initiator_executor != null and initiator_executor.is_active():
+		initiator_executor.cancel()
+	if target_executor != null and target_executor.is_active():
+		target_executor.cancel()
+
+	return social_system.request_session(
+		initiator_id,
+		target_id,
+		action_id,
+		_characters
+	)
+
 func request_smart_object_action(
 	character_id: StringName,
 	target_object_id: StringName,

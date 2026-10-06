@@ -51,6 +51,8 @@ func run() -> Array[String]:
 		"_on_hud_resident_requested",
 		"_on_hud_action_requested",
 		"request_selected_action",
+		"request_selected_social_action",
+		"_on_hud_social_action_requested",
 		"_command_target_for",
 		"presentation_state_for",
 		"_social_target_for",

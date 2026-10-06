@@ -24,6 +24,51 @@ func register_action(action: SocialActionDefinition) -> bool:
 	_actions_by_id[action.id] = action
 	return true
 
+func has_action(action_id: StringName) -> bool:
+	return action_id != &"" and _actions_by_id.has(action_id)
+
+func request_session(
+	initiator_id: StringName,
+	target_id: StringName,
+	action_id: StringName,
+	residents: Array
+) -> bool:
+	if (
+		initiator_id == &""
+		or target_id == &""
+		or initiator_id == target_id
+		or not has_action(action_id)
+	):
+		return false
+
+	var resident_by_id := _build_resident_lookup(residents)
+	if (
+		not resident_by_id.has(initiator_id)
+		or not resident_by_id.has(target_id)
+	):
+		return false
+
+	var initiator: CharacterState = resident_by_id[initiator_id]
+	var target: CharacterState = resident_by_id[target_id]
+	if not _is_eligible_resident(initiator):
+		return false
+	if not _is_eligible_resident(target):
+		return false
+
+	var action: SocialActionDefinition = _actions_by_id[action_id]
+	var session := reservation_book.reserve(
+		initiator.id,
+		target.id,
+		action.id,
+		action.duration_sim_seconds
+	)
+	if session == null:
+		return false
+
+	initiator.current_action_id = action.id
+	target.current_action_id = action.id
+	return true
+
 func active_sessions() -> Array[SocialSession]:
 	return reservation_book.active_sessions()
 

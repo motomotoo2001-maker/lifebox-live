@@ -57,6 +57,17 @@ static func replay(
 						% event.sequence
 					)
 					return errors
+			&"player_social_action":
+				if not world.request_social_action(
+					StringName(event.payload["initiator_id"]),
+					StringName(event.payload["target_id"]),
+					StringName(event.payload["action_id"])
+				):
+					errors.append(
+						"replay player_social_action rejected at sequence %d"
+						% event.sequence
+					)
+					return errors
 
 	return errors
 

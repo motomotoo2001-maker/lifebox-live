@@ -38,6 +38,12 @@ func run() -> Array[String]:
 		"TopPanel/ResidentStrip/ResidentButton4",
 		"TopPanel/ResidentStrip/ResidentButton5",
 		"TopPanel/ResidentStrip/ResidentButton6",
+		"SocialPanel",
+		"SocialPanel/TitleLabel",
+		"SocialPanel/TargetOption",
+		"SocialPanel/ChatButton",
+		"SocialPanel/ComplimentButton",
+		"SocialPanel/ArgueButton",
 		"CommandPanel",
 		"CommandPanel/TitleLabel",
 		"CommandPanel/ActionStrip",
@@ -70,6 +76,7 @@ func run() -> Array[String]:
 	for signal_name in [
 		"resident_requested",
 		"action_requested",
+		"social_action_requested",
 		"save_requested",
 		"load_requested",
 	]:
