@@ -37,6 +37,7 @@ func run() -> Array[String]:
 		"ResidentPanel/NameLabel",
 		"ResidentPanel/ScheduleLabel",
 		"ResidentPanel/GoalLabel",
+		"ResidentPanel/ActionLabel",
 		"ResidentPanel/MoneyLabel",
 		"ResidentPanel/HungerLabel",
 		"ResidentPanel/EnergyLabel",

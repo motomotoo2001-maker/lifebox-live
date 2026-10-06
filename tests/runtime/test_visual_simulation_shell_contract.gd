@@ -53,5 +53,38 @@ func run() -> Array[String]:
 		if not shell.has_method(method_name):
 			failures.append("VisualSimulationShell must expose %s()" % method_name)
 
+	if shell.has_method("set_simulation_paused") and shell.has_method("is_simulation_paused"):
+		shell.set_simulation_paused(true)
+		if not shell.is_simulation_paused():
+			failures.append("set_simulation_paused(true) must pause visual advance")
+		shell.set_simulation_paused(false)
+		if shell.is_simulation_paused():
+			failures.append("set_simulation_paused(false) must resume visual advance")
+
+	if shell.has_method("_presentation_target_for"):
+		var fridge_intent := MovementIntent.new(
+			&"fridge_main",
+			Vector3(1.0, 0.0, 1.0),
+			0.5
+		)
+		var fridge_target: Vector3 = shell._presentation_target_for(
+			&"resident_001",
+			fridge_intent
+		)
+		if fridge_target.is_equal_approx(fridge_intent.target_position):
+			failures.append("fridge presentation anchor must offset visual target")
+
+		var bed_intent := MovementIntent.new(
+			&"bed_01",
+			Vector3(2.0, 0.0, -3.0),
+			0.5
+		)
+		var bed_target: Vector3 = shell._presentation_target_for(
+			&"resident_001",
+			bed_intent
+		)
+		if bed_target.is_equal_approx(bed_intent.target_position):
+			failures.append("bed presentation anchor must offset visual target")
+
 	shell.free()
 	return failures
