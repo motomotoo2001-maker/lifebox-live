@@ -28,23 +28,21 @@ func _apply_floor_style() -> void:
 	if not is_instance_valid(floor_mesh):
 		return
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color("d7e0eb")
-	material.roughness = 0.95
+	material.albedo_color = Color("d6dde7")
+	material.roughness = 0.9
 	floor_mesh.material_override = material
 
 func _build_visual_blockout() -> void:
-	if not is_instance_valid(room_pads):
-		return
-	if room_pads.get_child_count() > 0:
+	if not is_instance_valid(room_pads) or room_pads.get_child_count() > 0:
 		return
 
 	var room_colors: Array[Color] = [
-		Color("32445d"),
-		Color("3a4d67"),
-		Color("354c5b"),
-		Color("443f61"),
-		Color("354b68"),
-		Color("2f594c"),
+		Color("40566f"),
+		Color("405b73"),
+		Color("405f65"),
+		Color("51496b"),
+		Color("3d5872"),
+		Color("356456"),
 	]
 	var room_names := [
 		&"Kitchen",
@@ -56,6 +54,7 @@ func _build_visual_blockout() -> void:
 	]
 	var x_positions := [-5.4, 0.0, 5.4]
 	var color_index := 0
+
 	for z in [-2.25, 2.25]:
 		for x in x_positions:
 			_make_box(
@@ -67,65 +66,187 @@ func _build_visual_blockout() -> void:
 			)
 			color_index += 1
 
-	# Cutaway walls: leave the camera-facing edge open.
-	var wall_color := Color("8797ab")
-	_make_box(walls, &"BackWall", Vector3(0.0, 0.45, -5.0), Vector3(16.0, 0.9, 0.16), wall_color)
-	_make_box(walls, &"LeftWall", Vector3(-8.0, 0.45, 0.0), Vector3(0.16, 0.9, 10.0), wall_color)
-	_make_box(walls, &"RightWall", Vector3(8.0, 0.45, 0.0), Vector3(0.16, 0.9, 10.0), wall_color)
-	_make_box(walls, &"CenterHorizontal", Vector3(0.0, 0.28, 0.0), Vector3(16.0, 0.56, 0.12), Color("718299"))
+	_build_walls()
+	_build_furniture()
+
+func _build_walls() -> void:
+	var outer := Color("9aaabd")
+	var inner := Color("7f90a6")
+	var height := 1.25
+
+	_make_box(
+		walls,
+		&"BackWall",
+		Vector3(0, height * 0.5, -5),
+		Vector3(16, height, 0.16),
+		outer
+	)
+	_make_box(
+		walls,
+		&"LeftWall",
+		Vector3(-8, height * 0.5, 0),
+		Vector3(0.16, height, 10),
+		outer
+	)
+	_make_box(
+		walls,
+		&"RightWall",
+		Vector3(8, height * 0.5, 0),
+		Vector3(0.16, height, 10),
+		outer
+	)
+
 	for x in [-2.7, 2.7]:
 		_make_box(
 			walls,
-			StringName("Divider_%s" % str(x)),
-			Vector3(x, 0.28, 0.0),
-			Vector3(0.12, 0.56, 10.0),
-			Color("718299")
+			StringName("DividerBack_%s" % x),
+			Vector3(x, height * 0.5, -2.85),
+			Vector3(0.12, height, 4.3),
+			inner
+		)
+		_make_box(
+			walls,
+			StringName("DividerFront_%s" % x),
+			Vector3(x, height * 0.5, 2.85),
+			Vector3(0.12, height, 4.3),
+			inner
 		)
 
-	_build_furniture()
+	var hall_segments := [
+		[-7.0, 2.0],
+		[-3.9, 1.8],
+		[-1.35, 1.5],
+		[1.35, 1.5],
+		[3.9, 1.8],
+		[7.0, 2.0],
+	]
+	for segment in hall_segments:
+		_make_box(
+			walls,
+			StringName("HallSeg_%s" % str(segment[0])),
+			Vector3(float(segment[0]), height * 0.5, 0),
+			Vector3(float(segment[1]), height, 0.12),
+			inner
+		)
 
 func _build_furniture() -> void:
 	var fridge := get_destination(&"Fridge")
 	if fridge != null:
-		_make_box(
-			furniture,
-			&"FridgeVisual",
-			fridge.position + Vector3(0.0, 0.9, 0.0),
-			Vector3(0.9, 1.8, 0.8),
-			Color("c7d4e3")
-		)
+		_build_fridge(fridge.position)
 
 	var sofa := get_destination(&"Sofa")
 	if sofa != null:
-		_make_box(
-			furniture,
-			&"SofaVisual",
-			sofa.position + Vector3(0.0, 0.35, 0.0),
-			Vector3(2.5, 0.7, 0.95),
-			Color("657b96")
-		)
+		_build_sofa(sofa.position)
 
 	var shower := get_destination(&"Shower")
 	if shower != null:
-		_make_box(
-			furniture,
-			&"ShowerVisual",
-			shower.position + Vector3(0.0, 0.32, 0.0),
-			Vector3(1.2, 0.64, 1.2),
-			Color("78a7b4")
-		)
+		_build_shower(shower.position)
 
 	for index in range(1, 7):
 		var bed := get_destination(StringName("Bed%02d" % index))
-		if bed == null:
-			continue
-		_make_box(
-			furniture,
-			StringName("Bed%02dVisual" % index),
-			bed.position + Vector3(0.0, 0.24, 0.0),
-			Vector3(1.55, 0.48, 1.05),
-			Color("7f8da2")
-		)
+		if bed != null:
+			_build_bed(index, bed.position)
+
+func _build_fridge(position_value: Vector3) -> void:
+	_make_box(
+		furniture,
+		&"FridgeBody",
+		position_value + Vector3(0, 0.82, 0),
+		Vector3(0.9, 1.64, 0.78),
+		Color("dce7ef")
+	)
+	_make_box(
+		furniture,
+		&"FridgeTop",
+		position_value + Vector3(0, 1.33, -0.405),
+		Vector3(0.78, 0.025, 0.03),
+		Color("8da0b4")
+	)
+	_make_box(
+		furniture,
+		&"FridgeHandle",
+		position_value + Vector3(0.29, 0.78, -0.42),
+		Vector3(0.05, 0.48, 0.04),
+		Color("6a7a8c")
+	)
+
+func _build_sofa(position_value: Vector3) -> void:
+	var color := Color("7289a4")
+	_make_box(
+		furniture,
+		&"SofaSeat",
+		position_value + Vector3(0, 0.28, 0),
+		Vector3(2.5, 0.5, 0.9),
+		color
+	)
+	_make_box(
+		furniture,
+		&"SofaBack",
+		position_value + Vector3(0, 0.72, 0.36),
+		Vector3(2.5, 0.65, 0.18),
+		color.darkened(0.12)
+	)
+	_make_box(
+		furniture,
+		&"SofaArmL",
+		position_value + Vector3(-1.18, 0.48, 0),
+		Vector3(0.18, 0.7, 0.92),
+		color.darkened(0.06)
+	)
+	_make_box(
+		furniture,
+		&"SofaArmR",
+		position_value + Vector3(1.18, 0.48, 0),
+		Vector3(0.18, 0.7, 0.92),
+		color.darkened(0.06)
+	)
+
+func _build_shower(position_value: Vector3) -> void:
+	_make_box(
+		furniture,
+		&"ShowerBase",
+		position_value + Vector3(0, 0.08, 0),
+		Vector3(1.25, 0.16, 1.25),
+		Color("c9e7e8")
+	)
+	_make_box(
+		furniture,
+		&"ShowerBack",
+		position_value + Vector3(0, 0.8, 0.55),
+		Vector3(1.25, 1.5, 0.08),
+		Color("78a7b4")
+	)
+	_make_box(
+		furniture,
+		&"ShowerSide",
+		position_value + Vector3(0.58, 0.65, 0),
+		Vector3(0.08, 1.2, 1.0),
+		Color("8fc0c5")
+	)
+
+func _build_bed(index: int, position_value: Vector3) -> void:
+	var base := Color("8798ad")
+	_make_box(
+		furniture,
+		StringName("Bed%02dBase" % index),
+		position_value + Vector3(0, 0.18, 0),
+		Vector3(1.55, 0.36, 1.05),
+		base
+	)
+	_make_box(
+		furniture,
+		StringName("Bed%02dBlanket" % index),
+		position_value + Vector3(0, 0.39, 0.1),
+		Vector3(1.45, 0.11, 0.66),
+		Color("a9bbd1")
+	)
+	_make_box(
+		furniture,
+		StringName("Bed%02dPillow" % index),
+		position_value + Vector3(0, 0.44, -0.31),
+		Vector3(0.72, 0.14, 0.28),
+		Color("e1e7ef")
+	)
 
 func _make_box(
 	parent: Node3D,
@@ -139,7 +260,7 @@ func _make_box(
 
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
-	material.roughness = 0.92
+	material.roughness = 0.88
 
 	var instance := MeshInstance3D.new()
 	instance.name = node_name
