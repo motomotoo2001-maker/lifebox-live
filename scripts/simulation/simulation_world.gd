@@ -363,7 +363,7 @@ func _validate_resident_planning_time(
 						DailyPlanningSystem.DAY_SECONDS
 					)
 					var hour := day_seconds / 3600.0
-					var expected_block := resident.schedule.definition.active_block_at(
+					var expected_block: ScheduleBlock = resident.schedule.definition.active_block_at(
 						hour
 					)
 					if expected_block != null:
