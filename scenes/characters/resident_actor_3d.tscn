@@ -1,6 +1,14 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/characters/resident_actor_3d.gd" id="1_script"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.38
+height = 1.32
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.42
+height = 0.84
 
 [node name="ResidentActor3D" type="CharacterBody3D"]
 script = ExtResource("1_script")
@@ -9,3 +17,23 @@ script = ExtResource("1_script")
 path_desired_distance = 0.25
 target_desired_distance = 0.5
 avoidance_enabled = true
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.78, 0)
+mesh = SubResource("CapsuleMesh_body")
+cast_shadow = 1
+
+[node name="Head" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 1.72, 0)
+mesh = SubResource("SphereMesh_head")
+cast_shadow = 1
+
+[node name="NameLabel" type="Label3D" parent="VisualRoot"]
+position = Vector3(0, 2.42, 0)
+text = "RESIDENT"
+font_size = 38
+outline_size = 9
+billboard = 1
+no_depth_test = true

@@ -1,0 +1,46 @@
+name: Showcase Capture
+
+on:
+  push:
+    branches:
+      - 'dev/plan-06-vertical-debug-showcase'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Verify tools
+        run: |
+          godot --version
+          command -v xvfb-run
+
+      - name: Render live showcase
+        run: |
+          xvfb-run -a godot --path . --rendering-method gl_compatibility -s res://tools/capture_live_showcase.gd
+          test -s lifebox_live_showcase.png
+          file lifebox_live_showcase.png
+
+      - name: Upload showcase PNG
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifebox-live-showcase
+          path: lifebox_live_showcase.png
+          if-no-files-found: error

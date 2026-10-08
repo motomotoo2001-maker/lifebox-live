@@ -46,3 +46,56 @@ jobs:
             echo "::error::Godot headless tests exceeded 360 seconds."
           fi
           exit "$status"
+
+  showcase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.2
+          use-dotnet: false
+          include-templates: false
+
+      - name: Build Godot script cache
+        run: godot --headless --path . --editor --quit
+
+      - name: Render live showcase
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a godot --path . --audio-driver Dummy --rendering-method gl_compatibility -s res://tools/capture_live_showcase.gd 2>&1 | tee showcase-render.log
+          status=${PIPESTATUS[0]}
+          test "$status" -eq 0
+          ! grep -E "SCRIPT ERROR:|ERROR:" showcase-render.log
+          test -s lifebox_live_showcase.png
+          file lifebox_live_showcase.png
+
+      - name: Upload live showcase
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifebox-live-showcase
+          path: lifebox_live_showcase.png
+          if-no-files-found: error
+
+
+      - name: Render 3D dollhouse showcase
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a godot --path . --audio-driver Dummy --rendering-method gl_compatibility -s res://tools/capture_live_3d_showcase.gd 2>&1 | tee showcase-3d-render.log
+          status=${PIPESTATUS[0]}
+          test "$status" -eq 0
+          ! grep -E "SCRIPT ERROR:|ERROR:" showcase-3d-render.log
+          test -s lifebox_live_3d_showcase.png
+          file lifebox_live_3d_showcase.png
+
+      - name: Upload 3D dollhouse showcase
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifebox-live-3d-showcase
+          path: lifebox_live_3d_showcase.png
+          if-no-files-found: error
